@@ -389,7 +389,24 @@ code,
 }
 
 /* ---------- Hero ---------- */
+/*
+ * --fade is how visible the code field is, from its bottom edge up (20rem tall). It used to
+ * fade out over the top 55%, so almost no code reached the buttons. Now it follows the old
+ * curve (1 at 9rem, falling) until two rem short of the buttons' band, is fully on across
+ * the band (the buttons' bottom edge is the hero body's bottom padding, 15rem; they are 3.1rem
+ * tall) and is gone again 1.4rem above it, which is above the paragraph's bottom edge (1.5rem
+ * over the buttons), so no code shows behind the headline or the paragraph.
+ * tests/hero-fade.test.mjs checks the numbers against the layout.
+ */
 .hero {
+  --fade: linear-gradient(
+    to top,
+    #000 9rem,
+    rgb(0 0 0 / 0.64) 13rem,
+    #000 15rem,
+    #000 18.1rem,
+    transparent 19.5rem
+  );
   position: relative;
   overflow: hidden;
   border-bottom: 1px solid var(--border);
@@ -411,10 +428,10 @@ code,
   line-height: 1.25;
   user-select: none;
   pointer-events: none;
-  /* Fades in from the bottom, and softens the left and right edges over 12 columns
+  /* Fades by --fade, and softens the left and right edges over 12 columns
      (EDGE_COLS in src/lib/ascii-field.ts) so the frame does not hard-clip. */
   mask-image:
-    linear-gradient(to bottom, transparent, #000 55%),
+    var(--fade),
     linear-gradient(to right, transparent, #000 12ch, #000 calc(100% - 12ch), transparent);
   mask-composite: intersect;
 }
@@ -446,7 +463,7 @@ code,
   height: 20rem;
   opacity: 0.6;
   pointer-events: none;
-  mask-image: linear-gradient(to bottom, transparent, #000 55%);
+  mask-image: var(--fade);
 }
 
 .hero.is-live .ascii {
@@ -781,6 +798,18 @@ code,
 
   .card {
     min-height: 0;
+  }
+
+  /* The band moves down with the hero body's bottom padding: 12rem here, so 3rem lower. */
+  .hero {
+    --fade: linear-gradient(
+      to top,
+      #000 9rem,
+      rgb(0 0 0 / 0.91) 10rem,
+      #000 12rem,
+      #000 15.1rem,
+      transparent 16.5rem
+    );
   }
 
   .hero-body {
