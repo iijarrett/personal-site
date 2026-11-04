@@ -10,7 +10,8 @@ export function initBar(): void {
   const header = document.querySelector<HTMLElement>(".site-header");
   if (!header) return;
   const root = document.documentElement;
-  const wide = matchMedia("(min-width: 641px)"); // the same breakpoint as the CSS
+  // The same query as the CSS: wide, and the primary pointer can hover (not a touch device).
+  const wide = matchMedia("(min-width: 641px) and (not ((hover: none) and (pointer: coarse)))");
   let state: BarState = { ...START, last: Math.max(0, scrollY) };
   let shown = false;
 

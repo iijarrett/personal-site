@@ -147,14 +147,6 @@ test("without a header it does nothing and does not throw", (t) => {
   assert.equal(dom.bar, "");
 });
 
-test("the script's breakpoint is the CSS's: 641px and wider is wide", () => {
-  assert.match(read("../src/scripts/bar.ts"), /matchMedia\("\(min-width: 641px\)"\)/);
-  assert.match(
-    read("../src/styles/global.css"),
-    /@media \(min-width: 641px\)\s*\{\s*html\.js:not\(\.bar-on\)/,
-  );
-  assert.match(
-    read("../src/styles/global.css"),
-    /@media \(max-width: 640px\)\s*\{\s*html\.js\.bar-off/,
-  );
+test("the script's wide query is the CSS's (checked in full in tests/bar-media.test.mjs)", () => {
+  assert.match(read("../src/scripts/bar.ts"), /matchMedia\(\s*"\(min-width: 641px\) and /);
 });

@@ -157,14 +157,20 @@ code,
   transition: none;
 }
 
-@media (min-width: 641px) {
+/*
+ * Wide means a wide screen whose primary pointer can hover. A touch device (hover: none and
+ * pointer: coarse, the primary pointer, so a laptop with a mouse and a touchscreen is not one)
+ * gets the narrow rules at any width: it cannot wheel or hover to bring a hidden bar back.
+ * src/scripts/bar.ts asks the same two queries; tests/bar-media.test.mjs holds them together.
+ */
+@media (min-width: 641px) and (not ((hover: none) and (pointer: coarse))) {
   html.js:not(.bar-on) {
     --bar-y: -100%;
     --float: var(--border);
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 640px), (hover: none) and (pointer: coarse) {
   html.js.bar-off {
     --bar-y: -100%;
     --float: var(--border);
