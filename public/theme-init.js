@@ -1,4 +1,5 @@
-// Head script: applies a saved light theme before first paint (see tests/theme.test.mjs).
+// Head script: the .js marker, and a saved light theme before first paint.
+document.documentElement.classList.add("js");
 try {
   if (localStorage.getItem("theme") === "light") {
     document.documentElement.dataset.theme = "light";

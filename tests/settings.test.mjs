@@ -92,11 +92,17 @@ test("the panel sits flush under the button and never outgrows a phone", () => {
   assert.match(panel, /font-family: var\(--font-ui\)/);
 });
 
-test("on a phone the brand has its own row and the button ends the last nav row", () => {
+test("on a phone the brand has its own row, and the settings button is pinned at the bottom right of the header", () => {
   const phone = css.match(/@media \(max-width: 36rem\)\s*\{([\s\S]*?)\n\}\n/)?.[1] ?? "";
   assert.match(phone, /\.brand\s*\{\s*flex-basis: 100%/);
   assert.match(phone, /\.site-nav\s*\{\s*flex: 1 1 0/);
-  assert.match(phone, /\.settings\s*\{\s*align-self: flex-end/);
+  const settings = settingsCss.match(/\.settings\s*\{[^}]*\}/)?.[0] ?? "";
+  assert.match(settings, /position: absolute/);
+  assert.match(settings, /bottom: 0\.5rem/);
+  assert.match(
+    settings,
+    /right: calc\(var\(--space-3\) \+ max\(0px, \(100% - var\(--page\)\) \/ 2\)\)/,
+  );
 });
 
 // ---------- Contrast, in both themes ----------

@@ -17,62 +17,64 @@ const isCurrent = (href: string) => current === href || current.startsWith(href)
 
 <header class="site-header">
   <a class="skip-link" href="#main">Skip to content</a>
-  <div class="wrap">
-    <a class="brand" href="/" aria-label="JD, home"><span>&gt;</span> jd</a>
-    <nav class="site-nav" aria-label="Main">
-      <ul>
-        {
-          links.map((link) => (
-            <li>
-              <a href={link.href} aria-current={isCurrent(link.href) ? "page" : undefined}>
-                {link.label}
-              </a>
-            </li>
-          ))
-        }
-        <li><a href="https://notes.jarrettd.com/">Knowledge Base</a></li>
-      </ul>
-    </nav>
-    <div class="settings">
-      <button
-        class="settings-btn"
-        type="button"
-        aria-label="Display settings"
-        aria-expanded="false"
-        aria-controls="settings-panel"
+  <div class="bar">
+    <div class="wrap">
+      <a class="brand" href="/" aria-label="JD, home"><span>&gt;</span> jd</a>
+      <nav class="site-nav" aria-label="Main">
+        <ul>
+          {
+            links.map((link) => (
+              <li>
+                <a href={link.href} aria-current={isCurrent(link.href) ? "page" : undefined}>
+                  {link.label}
+                </a>
+              </li>
+            ))
+          }
+          <li><a href="https://notes.jarrettd.com/">Knowledge Base</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+  <div class="settings">
+    <button
+      class="settings-btn"
+      type="button"
+      aria-label="Display settings"
+      aria-expanded="false"
+      aria-controls="settings-panel"
+    >
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        aria-hidden="true"
+        focusable="false"
       >
-        <svg
-          width="22"
-          height="22"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          aria-hidden="true"
-          focusable="false"
-        >
-          <path d="M4 7h9M17 7h3M4 17h3M11 17h9"></path>
-          <circle cx="15" cy="7" r="2"></circle>
-          <circle cx="9" cy="17" r="2"></circle>
-        </svg>
-      </button>
-      <div class="settings-panel" id="settings-panel" hidden>
-        <div role="group" aria-labelledby="set-theme">
-          <p class="label" id="set-theme">Theme</p>
-          <div class="seg">
-            <button type="button" data-key="theme" data-value="dark" aria-pressed="true">Dark</button>
-            <button type="button" data-key="theme" data-value="light" aria-pressed="false">
-              Light
-            </button>
-          </div>
+        <path d="M4 7h9M17 7h3M4 17h3M11 17h9"></path>
+        <circle cx="15" cy="7" r="2"></circle>
+        <circle cx="9" cy="17" r="2"></circle>
+      </svg>
+    </button>
+    <div class="settings-panel" id="settings-panel" hidden>
+      <div role="group" aria-labelledby="set-theme">
+        <p class="label" id="set-theme">Theme</p>
+        <div class="seg">
+          <button type="button" data-key="theme" data-value="dark" aria-pressed="true">Dark</button>
+          <button type="button" data-key="theme" data-value="light" aria-pressed="false">
+            Light
+          </button>
         </div>
-        <div role="group" aria-labelledby="set-motion">
-          <p class="label" id="set-motion">Motion</p>
-          <div class="seg">
-            <button type="button" data-key="motion" data-value="on" aria-pressed="true">On</button>
-            <button type="button" data-key="motion" data-value="off" aria-pressed="false">Off</button>
-          </div>
+      </div>
+      <div role="group" aria-labelledby="set-motion">
+        <p class="label" id="set-motion">Motion</p>
+        <div class="seg">
+          <button type="button" data-key="motion" data-value="on" aria-pressed="true">On</button>
+          <button type="button" data-key="motion" data-value="off" aria-pressed="false">Off</button>
         </div>
       </div>
     </div>

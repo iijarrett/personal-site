@@ -116,15 +116,64 @@ code,
 .site-header {
   position: relative;
   z-index: 5;
+}
+
+.bar {
+  background: var(--bg);
   border-bottom: 1px solid var(--border);
 }
 
+/* The right padding keeps the nav clear of the settings button, which sits over it. */
 .site-header .wrap {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2) var(--space-4);
   padding-block: var(--space-3);
+  padding-right: calc(var(--space-3) + 2.75rem + var(--space-4));
+}
+
+/*
+ * With JavaScript the bar hides when the page is scrolled down and comes back on scroll up
+ * (src/scripts/bar.ts decides, through the bar-on and bar-off classes on <html>; the head
+ * script adds .js). Without JavaScript none of this applies and the header is always there.
+ * The header sticks to the top but is transparent and lets clicks through, so only the bar,
+ * the settings button and a focused skip link take the pointer. Wide screens start with the
+ * bar hidden, narrow ones with it showing, so there is no flicker before the script runs.
+ * The settings button never moves; with the bar away it gets its own outline.
+ */
+.js .site-header {
+  position: sticky;
+  top: 0;
+  pointer-events: none;
+}
+
+.js .bar {
+  transform: translateY(var(--bar-y, 0));
+  transition: transform 0.25s ease;
+}
+
+.no-fx .bar {
+  transition: none;
+}
+
+@media (min-width: 641px) {
+  html.js:not(.bar-on) {
+    --bar-y: -100%;
+    --float: var(--border);
+  }
+}
+
+@media (max-width: 640px) {
+  html.js.bar-off {
+    --bar-y: -100%;
+    --float: var(--border);
+  }
+}
+
+/* A focused element is never left under the header (WCAG 2.4.11). */
+.js {
+  scroll-padding-top: 5rem;
 }
 
 .brand {
@@ -169,12 +218,20 @@ code,
 /* It reserves its space at once (no layout shift when it appears) but stays invisible, and
    out of the tab order, until the script marks it .is-ready. With JavaScript off it never is. */
 .settings {
-  position: relative;
-  margin-block: -0.375rem;
+  position: absolute;
+  bottom: 0.5rem;
+  right: calc(var(--space-3) + max(0px, (100% - var(--page)) / 2));
 }
 
 .settings:not(.is-ready) {
   visibility: hidden;
+}
+
+/* Under .js the header lets clicks through (see the header rules), so these take them. */
+.js .bar,
+.js .settings,
+.js .skip-link {
+  pointer-events: auto;
 }
 
 .settings-btn {
@@ -183,8 +240,8 @@ code,
   width: 2.75rem;
   height: 2.75rem;
   padding: 0;
-  background: none;
-  border: 1px solid transparent;
+  background: var(--bg);
+  border: 1px solid var(--float, transparent);
   border-radius: var(--radius);
   color: var(--muted);
   cursor: pointer;
@@ -687,8 +744,8 @@ code,
     flex: 1 1 0;
   }
 
-  .settings {
-    align-self: flex-end;
+  .js {
+    scroll-padding-top: 9rem;
   }
 }
 

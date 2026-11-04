@@ -61,7 +61,8 @@ test("the head script is a plain blocking script from the same origin, after the
 
 /** Runs public/theme-init.js against a fake page and storage. */
 function runInit({ stored, blocked = false, hasMeta = true }) {
-  const root = { dataset: {} };
+  const added = [];
+  const root = { dataset: {}, classList: { add: (name) => added.push(name) } };
   const meta = { attributes: {}, setAttribute: (name, value) => (meta.attributes[name] = value) };
   const context = {
     localStorage: {
@@ -77,7 +78,7 @@ function runInit({ stored, blocked = false, hasMeta = true }) {
     },
   };
   vm.runInNewContext(init, context);
-  return { theme: root.dataset.theme, color: meta.attributes.content };
+  return { theme: root.dataset.theme, color: meta.attributes.content, classes: added };
 }
 
 test("a stored light theme is applied before paint, with the matching theme-color", () => {
@@ -88,7 +89,11 @@ test("a stored light theme is applied before paint, with the matching theme-colo
 
 test("anything but a stored light stays dark and touches nothing", () => {
   for (const stored of [null, undefined, "", "dark", "Light", "LIGHT", "1", "garbage"]) {
-    assert.deepEqual(runInit({ stored }), { theme: undefined, color: undefined }, String(stored));
+    assert.deepEqual(
+      runInit({ stored }),
+      { theme: undefined, color: undefined, classes: ["js"] },
+      String(stored),
+    );
   }
 });
 
@@ -96,6 +101,7 @@ test("blocked storage keeps the site dark and does not throw", () => {
   assert.deepEqual(runInit({ stored: "light", blocked: true }), {
     theme: undefined,
     color: undefined,
+    classes: ["js"],
   });
 });
 
@@ -108,7 +114,7 @@ test("the head script keeps to the rules every built script follows", () => {
     assert.ok(!banned.test(init), `theme-init.js matches ${banned}`);
   }
   assert.ok(!/https?:\/\//.test(init));
-  assert.ok(init.length < 400, `theme-init.js is ${init.length} bytes`);
+  assert.ok(init.length < 450, `theme-init.js is ${init.length} bytes`);
 });
 
 import { parseTheme, THEME_COLOR, THEME_KEY } from "../src/lib/theme.ts";
@@ -126,4 +132,34 @@ test("the TypeScript side agrees with the head script on the key and with the to
   assert.equal(THEME_COLOR.dark, bgOf(dark));
   assert.equal(THEME_COLOR.light, bgOf(light));
   assert.ok(init.includes(`"${THEME_COLOR.light}"`), "theme-init.js has a different light colour");
+});
+
+test("the head script marks the page as scripted (.js) in every case, even with storage blocked", () => {
+  for (const options of [
+    { stored: null },
+    { stored: "light" },
+    { stored: "dark" },
+    { stored: "light", blocked: true },
+    { stored: "light", hasMeta: false },
+  ]) {
+    assert.deepEqual(runInit(options).classes, ["js"], JSON.stringify(options));
+  }
+});
+
+test("the .js class goes on before storage is touched, so a storage error cannot stop it", () => {
+  assert.match(init, /^\/\/[^\n]*\ndocument\.documentElement\.classList\.add\("js"\);\ntry \{/);
+  const order = [];
+  vm.runInNewContext(init, {
+    localStorage: {
+      getItem() {
+        order.push("read");
+        return null;
+      },
+    },
+    document: {
+      documentElement: { dataset: {}, classList: { add: (name) => order.push(name) } },
+      querySelector: () => null,
+    },
+  });
+  assert.deepEqual(order, ["js", "read"]);
 });
