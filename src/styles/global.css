@@ -140,6 +140,7 @@ code,
 }
 
 .site-nav a {
+  font-family: var(--font-ui);
   color: var(--text);
   text-decoration: none;
   padding-block: var(--space-1);
@@ -171,6 +172,10 @@ code,
 
 .site-footer p {
   margin: 0;
+}
+
+.site-footer a {
+  font-family: var(--font-ui);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -214,8 +219,8 @@ code,
   border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text);
-  font-family: var(--font-mono);
-  font-size: 0.875rem;
+  font-family: var(--font-ui);
+  font-size: 0.9375rem;
   text-decoration: none;
   transition:
     border-color 0.15s,
