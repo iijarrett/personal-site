@@ -9,4 +9,4 @@ npm ci --ignore-scripts
 npm run verify
 ```
 
-Built with help from Claude Code and Codex.
+Built, tested, and hardened with help from Claude Code and Codex.
