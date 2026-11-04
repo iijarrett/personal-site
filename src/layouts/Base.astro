@@ -47,5 +47,8 @@ const fullTitle = Astro.url.pathname === "/" ? title : `${title} | JD`;
       <slot />
     </main>
     <Footer />
+    <script>
+      import "../scripts/interactive.ts";
+    </script>
   </body>
 </html>

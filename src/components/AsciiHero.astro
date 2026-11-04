@@ -1,7 +1,9 @@
 ---
-import { asciiFrame } from "../lib/ascii-frame";
+import { asciiTiers } from "../lib/ascii-frame";
 
-const frame = asciiFrame().join("\n");
+const tiers = asciiTiers();
 ---
 
-<pre class="ascii" aria-hidden="true">{frame}</pre>
+<div class="ascii" aria-hidden="true">
+  {tiers.map((text, tier) => <pre class={`t${tier}`}>{text}</pre>)}
+</div>

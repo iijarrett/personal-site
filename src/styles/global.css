@@ -69,7 +69,7 @@ a:hover {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--ring);
   outline-offset: 3px;
   border-radius: 2px;
 }
@@ -227,6 +227,19 @@ code,
   background: var(--surface);
 }
 
+[hidden] {
+  display: none !important;
+}
+
+.motion-toggle {
+  background: none;
+  cursor: pointer;
+}
+
+.motion-toggle[aria-pressed="true"] {
+  border-color: var(--accent);
+}
+
 .btn-primary {
   background: var(--accent-text);
   border-color: var(--accent-text);
@@ -245,10 +258,13 @@ code,
   border-bottom: 1px solid var(--border);
 }
 
+/* Three stacked layers, one opacity each (src/lib/ascii-field.ts: TIER_ALPHA). */
 .ascii {
   position: absolute;
   bottom: 0;
   left: 50%;
+  display: grid;
+  width: 100ch;
   margin: 0;
   transform: translateX(-50%);
   color: var(--accent);
@@ -258,7 +274,46 @@ code,
   line-height: 1.25;
   user-select: none;
   pointer-events: none;
+  /* Fades in from the bottom, and softens the left and right edges over 12 columns
+     (EDGE_COLS in src/lib/ascii-field.ts) so the frame does not hard-clip. */
+  mask-image:
+    linear-gradient(to bottom, transparent, #000 55%),
+    linear-gradient(to right, transparent, #000 12ch, #000 calc(100% - 12ch), transparent);
+  mask-composite: intersect;
+}
+
+.ascii pre {
+  grid-area: 1 / 1;
+  margin: 0;
+  font: inherit;
+}
+
+.ascii .t0 {
+  opacity: 0.18;
+}
+
+.ascii .t1 {
+  opacity: 0.42;
+}
+
+.ascii .t2 {
+  opacity: 0.8;
+}
+
+/* The live canvas sits exactly over the static frame (20 rows of 1.25 x 0.8rem). */
+.field {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 20rem;
+  opacity: 0.6;
+  pointer-events: none;
   mask-image: linear-gradient(to bottom, transparent, #000 55%);
+}
+
+.hero.is-live .ascii {
+  visibility: hidden;
 }
 
 .hero-body {
@@ -327,20 +382,76 @@ code,
 
 .card {
   position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   min-height: 15rem;
   padding: var(--space-4);
-  transition: background-color 0.2s;
+  transition:
+    background-color 0.25s,
+    box-shadow 0.25s;
 }
 
-.card:hover {
-  background: var(--surface);
+/*
+ * The tile glow is plain CSS, no script. A gradient layer is brightest at the
+ * bottom edge and gone by 65% of the tile's height. Every device gets exactly one
+ * of two effects: where there is hover, the hovered or focused tile lights up;
+ * where there is none, every tile carries the gradient all the time.
+ */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--glow) var(--glow-hover), transparent),
+    transparent 65%
+  );
+  transition: opacity 0.25s;
+}
+
+@media (hover: hover) {
+  .card:hover {
+    background: var(--surface);
+  }
+
+  .card:hover,
+  .card:has(a:focus-visible) {
+    z-index: 1;
+    box-shadow:
+      inset 0 0 0 1px var(--ring),
+      0 0 1rem color-mix(in srgb, var(--ring) var(--halo), transparent);
+  }
+
+  .card:hover::before,
+  .card:has(a:focus-visible)::before {
+    opacity: 1;
+  }
+}
+
+@media (hover: none) {
+  .card::before {
+    opacity: 1;
+    background: linear-gradient(
+      to top,
+      color-mix(in srgb, var(--glow) var(--glow-rest), transparent),
+      transparent 65%
+    );
+  }
+}
+
+/* The footer toggle (and prefers-reduced-motion, above) make every state instant. */
+.no-fx .card,
+.no-fx .card::before {
+  transition: none;
 }
 
 .card:has(a:focus-visible) {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--ring);
   outline-offset: -2px;
 }
 

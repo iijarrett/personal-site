@@ -10,6 +10,16 @@
   --accent: #bb9af7; /* 7.4:1 on --surface */
   --accent-text: #bb9af7;
   --on-accent: #16161e; /* text on an --accent-text fill: 7.8:1 */
+  /* The tile glow: a bottom-up gradient in --glow. Each strength is its alpha at the
+     bottom edge. tests/glow-contrast.test.mjs holds all of them to 4.5:1 text contrast. */
+  --glow: #bb9af7;
+  --glow-rest: 12%; /* always on where there is no hover (hover: none) */
+  --glow-hover: 20%; /* the hovered or focused tile (hover: hover) */
+  --halo: 14%; /* the lit tile's faint outer glow, in --ring */
+  /* The colour of edges that are not text: the hover ring, its halo and every focus
+     outline. WCAG 1.4.11 wants 3:1 against what they sit on; tests/glow-contrast.test.mjs
+     checks it against both --bg and --surface. */
+  --ring: #bb9af7; /* 7.4:1 on --surface */
 
   --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
@@ -38,5 +48,10 @@
     --accent: #9854f1; /* 3.3:1 on --bg: focus rings and decoration only */
     --accent-text: #7433d0; /* 5.2:1 on --bg, 4.6:1 on --surface: links and text */
     --on-accent: #ffffff; /* 6.7:1 on --accent-text */
+    --glow: #efe2ff; /* pale lavender: a purple tint would darken the page and sink text below 4.5:1 */
+    --glow-rest: 60%;
+    --glow-hover: 80%;
+    --halo: 8%;
+    --ring: #7433d0; /* --accent is 2.97:1 on the hover surface, under 3:1; this is 4.6:1 on --surface, 5.2:1 on --bg */
   }
 }
