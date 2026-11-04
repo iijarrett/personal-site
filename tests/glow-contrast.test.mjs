@@ -16,7 +16,8 @@ import { test } from "node:test";
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const tokens = read("../src/styles/tokens.css");
 const css = read("../src/styles/global.css");
-const split = tokens.indexOf("@media (prefers-color-scheme: light)");
+const split = tokens.indexOf('html[data-theme="light"]');
+assert.ok(split > 0, "tokens.css has no html[data-theme=light] block");
 const themes = { dark: tokens.slice(0, split), light: tokens.slice(split) };
 
 /** The token a CSS declaration uses, found by pattern so renaming it in the CSS cannot dodge a test. */

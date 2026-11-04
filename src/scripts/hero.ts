@@ -316,10 +316,12 @@ async function start(
     update();
   }).observe(hero);
   document.addEventListener("visibilitychange", update);
-  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+  // The theme is the data-theme attribute on <html> (set by public/theme-init.js and the
+  // settings menu), not the OS setting. Its accent colour is read again when it changes.
+  new MutationObserver(() => {
     readAccent();
     if (live) draw();
-  });
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
   subscribe((next) => {
     mode = next;

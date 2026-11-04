@@ -352,3 +352,27 @@ test("the canvas follows the <pre>'s font size when it changes after start", asy
   );
   assert.equal(dom.canvas.height, Math.round(preRect().height));
 });
+
+test("the canvas follows the data-theme attribute: the new accent is read and drawn at once", async (t) => {
+  const { dom } = await startHero(t);
+  const [observer] = dom.themeObservers;
+  assert.ok(observer, "the hero does not watch the theme");
+  assert.deepEqual(observer.targets, [dom.documentElement]);
+  assert.deepEqual(observer.options, { attributes: true, attributeFilter: ["data-theme"] });
+  assert.equal(dom.ctx.fillStyle, "#bb9af7");
+  const drawn = dom.ctx.draws.length;
+  dom.setTheme("#9854f1");
+  assert.equal(dom.ctx.draws.length, drawn + 1, "the canvas was not repainted");
+  assert.equal(dom.ctx.fillStyle, "#9854f1");
+});
+
+test("a paused canvas is repainted in the new theme too, and does not start running", async (t) => {
+  const { dom, host } = await startHero(t);
+  host.set(mode({ motionOn: false }));
+  assert.equal(dom.pendingFrames(), 0);
+  const drawn = dom.ctx.draws.length;
+  dom.setTheme("#9854f1");
+  assert.equal(dom.ctx.draws.length, drawn + 1);
+  assert.equal(dom.ctx.fillStyle, "#9854f1");
+  assert.equal(dom.pendingFrames(), 0);
+});
