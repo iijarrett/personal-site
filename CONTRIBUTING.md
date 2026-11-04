@@ -1,4 +1,4 @@
-# Portfolio site (JD)
+# Personal site (JD)
 
 Static, hardened, edge-hosted personal portfolio for jarrettd.com. The plan (stack, hardening, phases) is kept outside this repo in the "Portfolio Site Roadmap" sheet; if you need it, ask the owner for the file. The look-and-feel prototype is a separate project, `portfolio-prototype`, in the same parent folder.
 
