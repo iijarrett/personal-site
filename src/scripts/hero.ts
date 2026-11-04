@@ -4,7 +4,7 @@
  * starts at t = 0 with the outer columns (beyond the static frame's 100) at zero
  * opacity and the frame's soft edge applied, so its first frame is the static frame
  * and the swap is invisible. The outer columns then fade in. Starts after first
- * paint. Off-screen and hidden tabs pause it, and so does the footer toggle: that
+ * paint. Off-screen and hidden tabs pause it, and so does the Motion switch in the settings menu: that
  * cancels the pending frame at once and leaves the canvas showing the frame it
  * stopped on, with no swap back to the static frame. Turning it on again resumes
  * from that frame.
@@ -316,10 +316,12 @@ async function start(
     update();
   }).observe(hero);
   document.addEventListener("visibilitychange", update);
-  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+  // The theme is the data-theme attribute on <html> (set by public/theme-init.js and the
+  // settings menu), not the OS setting. Its accent colour is read again when it changes.
+  new MutationObserver(() => {
     readAccent();
     if (live) draw();
-  });
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
   subscribe((next) => {
     mode = next;

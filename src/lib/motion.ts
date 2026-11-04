@@ -12,7 +12,7 @@ export function parseMotionPref(raw: string | null | undefined): MotionPref {
 }
 
 export interface MotionEnv {
-  /** The footer toggle. */
+  /** The Motion switch in the settings menu. */
   motionOn: boolean;
   /** prefers-reduced-motion: reduce. */
   reducedMotion: boolean;

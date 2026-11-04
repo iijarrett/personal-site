@@ -106,6 +106,8 @@ code,
 }
 
 .site-header {
+  position: relative;
+  z-index: 5;
   border-bottom: 1px solid var(--border);
 }
 
@@ -113,12 +115,12 @@ code,
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-2) var(--space-4);
   padding-block: var(--space-3);
 }
 
 .brand {
+  margin-right: auto;
   font-family: var(--font-mono);
   font-weight: 400;
   color: var(--text);
@@ -140,6 +142,7 @@ code,
 }
 
 .site-nav a {
+  font-family: var(--font-ui);
   color: var(--text);
   text-decoration: none;
   padding-block: var(--space-1);
@@ -152,6 +155,91 @@ code,
 
 .site-nav a[aria-current="page"] {
   border-bottom-color: var(--accent);
+}
+
+/* ---------- Settings menu ---------- */
+/* It reserves its space at once (no layout shift when it appears) but stays invisible, and
+   out of the tab order, until the script marks it .is-ready. With JavaScript off it never is. */
+.settings {
+  position: relative;
+  margin-block: -0.375rem;
+}
+
+.settings:not(.is-ready) {
+  visibility: hidden;
+}
+
+.settings-btn {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.settings-btn:hover,
+.settings-btn[aria-expanded="true"] {
+  color: var(--text);
+  border-color: var(--border);
+}
+
+/* Flush under the button, so the pointer can cross into it without leaving the menu. It opens
+   at once, so reduced motion and the motion switch have nothing to turn off. */
+.settings-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: max-content;
+  max-width: calc(100vw - 2rem);
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+}
+
+.settings-panel .label {
+  margin: 0 0 var(--space-1);
+}
+
+.seg {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.seg button {
+  flex: 1;
+  min-height: 2.25rem;
+  padding: 0 var(--space-3);
+  background: none;
+  border: 0;
+  border-radius: 0;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.seg button:first-child {
+  border-radius: 0.4rem 0 0 0.4rem;
+}
+
+.seg button:last-child {
+  border-radius: 0 0.4rem 0.4rem 0;
+}
+
+.seg button[aria-pressed="true"] {
+  background: var(--accent-text);
+  color: var(--on-accent);
 }
 
 .site-footer {
@@ -171,6 +259,10 @@ code,
 
 .site-footer p {
   margin: 0;
+}
+
+.site-footer a {
+  font-family: var(--font-ui);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -214,8 +306,8 @@ code,
   border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text);
-  font-family: var(--font-mono);
-  font-size: 0.875rem;
+  font-family: var(--font-ui);
+  font-size: 0.9375rem;
   text-decoration: none;
   transition:
     border-color 0.15s,
@@ -229,15 +321,6 @@ code,
 
 [hidden] {
   display: none !important;
-}
-
-.motion-toggle {
-  background: none;
-  cursor: pointer;
-}
-
-.motion-toggle[aria-pressed="true"] {
-  border-color: var(--accent);
 }
 
 .btn-primary {
@@ -582,6 +665,22 @@ code,
   .bento-intro {
     grid-column: 1 / -1;
     grid-row: auto;
+  }
+}
+
+/* On a phone the brand gets its own row, and the settings button sits at the right end of the
+   last nav row, so the focus order (brand, nav, button) is also the reading order. */
+@media (max-width: 36rem) {
+  .brand {
+    flex-basis: 100%;
+  }
+
+  .site-nav {
+    flex: 1 1 0;
+  }
+
+  .settings {
+    align-self: flex-end;
   }
 }
 

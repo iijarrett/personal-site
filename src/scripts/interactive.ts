@@ -5,7 +5,9 @@
  */
 
 import { initHero } from "./hero.ts";
-import { initMotion, subscribe } from "./motion-state.ts";
+import { initMotion, isMotionOn, setMotionOn, subscribe } from "./motion-state.ts";
+import { initSettings } from "./settings.ts";
 
 initMotion();
+initSettings({ isOn: isMotionOn, set: setMotionOn });
 initHero(subscribe);

@@ -31,12 +31,21 @@ class FakeContext {
 }
 
 export function installFakeDom({ viewportWidth = 1000, heroHeight = 600, fontPx = 12.8 } = {}) {
-  const state = { fontPx, viewportWidth, heroHeight, clock: 0, nextFrame: 1, hidden: false };
+  const state = {
+    fontPx,
+    viewportWidth,
+    heroHeight,
+    clock: 0,
+    nextFrame: 1,
+    hidden: false,
+    accent: "#bb9af7",
+  };
   const pending = new Map(); // requestAnimationFrame callbacks waiting for a frame
   const cancelled = [];
   const idleTasks = [];
   const resizeObservers = [];
   const intersectionObservers = [];
+  const mutationObservers = [];
   const documentListeners = new Map();
 
   const charWidth = () => state.fontPx * 0.6;
@@ -143,6 +152,7 @@ export function installFakeDom({ viewportWidth = 1000, heroHeight = 600, fontPx 
     get hidden() {
       return state.hidden;
     },
+    documentElement: new FakeElement("html"),
     fonts: { load: async () => [] },
     createElement: (tag) => new FakeElement(tag),
     querySelector: (selector) => root.querySelector(selector),
@@ -157,8 +167,9 @@ export function installFakeDom({ viewportWidth = 1000, heroHeight = 600, fontPx 
       this.targets = [];
       list.push(this);
     }
-    observe(target) {
+    observe(target, options) {
       this.targets.push(target);
+      this.options = options;
     }
   }
 
@@ -175,11 +186,16 @@ export function installFakeDom({ viewportWidth = 1000, heroHeight = 600, fontPx 
             fontSize: `${state.fontPx}px`,
             fontFamily: '"JetBrains Mono", monospace',
           }
-        : { getPropertyValue: (name) => (name === "--accent" ? "#bb9af7" : "") },
+        : { getPropertyValue: (name) => (name === "--accent" ? state.accent : "") },
     matchMedia: () => ({ matches: false, addEventListener() {} }),
     ResizeObserver: class extends FakeObserver {
       constructor(callback) {
         super(callback, resizeObservers);
+      }
+    },
+    MutationObserver: class extends FakeObserver {
+      constructor(callback) {
+        super(callback, mutationObservers);
       }
     },
     IntersectionObserver: class extends FakeObserver {
@@ -245,6 +261,15 @@ export function installFakeDom({ viewportWidth = 1000, heroHeight = 600, fontPx 
     intersect(isIntersecting) {
       for (const observer of intersectionObservers) observer.callback([{ isIntersecting }]);
     },
+    /** The theme changing: --accent now computes to `accent`, and attribute observers fire. */
+    setTheme(accent) {
+      state.accent = accent;
+      for (const observer of mutationObservers) observer.callback([]);
+    },
+    get themeObservers() {
+      return mutationObservers;
+    },
+    documentElement: document.documentElement,
     setTabHidden(hidden) {
       state.hidden = hidden;
       for (const listener of documentListeners.get("visibilitychange") ?? []) listener();
