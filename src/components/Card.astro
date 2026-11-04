@@ -1,0 +1,23 @@
+---
+interface Props {
+  href: string;
+  kind: string;
+  title: string;
+  summary: string;
+  tags?: string[];
+  status?: string;
+  external?: boolean;
+}
+
+const { href, kind, title, summary, tags = [], status, external = false } = Astro.props;
+---
+
+<article class="card">
+  <p class="label">{kind}{external && <span class="sr-only"> (external site)</span>}</p>
+  <h3><a href={href}>{title}{external && <span aria-hidden="true"> &#8599;</span>}</a></h3>
+  <p class="card-summary">{summary}</p>
+  <ul class="tags" aria-label="Tags">
+    {tags.map((tag) => <li>{tag}</li>)}
+    {status && <li class="status">{status}</li>}
+  </ul>
+</article>

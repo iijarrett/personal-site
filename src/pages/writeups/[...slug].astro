@@ -1,0 +1,26 @@
+---
+import { getCollection, render } from "astro:content";
+import Page from "../../layouts/Page.astro";
+import { isoDate } from "../../lib/format";
+
+export async function getStaticPaths() {
+  const writeups = await getCollection("writeups", ({ data }) => !data.draft);
+  return writeups.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<Page title={entry.data.title} description={entry.data.summary}>
+  <p class="label">
+    <time datetime={isoDate(entry.data.date)}>{isoDate(entry.data.date)}</time> · {
+      entry.data.platform
+    }
+  </p>
+  <h1>{entry.data.title}</h1>
+  <div class="prose">
+    <Content />
+  </div>
+  <p><a href="/writeups/">All writeups</a></p>
+</Page>

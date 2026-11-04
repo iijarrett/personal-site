@@ -1,0 +1,26 @@
+---
+import { getCollection } from "astro:content";
+import Page from "../../layouts/Page.astro";
+import { statusLabel } from "../../lib/format";
+
+const projects = (await getCollection("projects")).sort((a, b) => a.data.order - b.data.order);
+---
+
+<Page title="Projects" description="Case studies and builds, with the reasoning behind each choice.">
+  <h1>Projects</h1>
+  <ul class="rows">
+    {
+      projects.map((project) => (
+        <li>
+          <p class="label">
+            {project.data.kind} <span class="status">{statusLabel(project.data.status)}</span>
+          </p>
+          <h2>
+            <a href={`/projects/${project.id}/`}>{project.data.title}</a>
+          </h2>
+          <p>{project.data.summary}</p>
+        </li>
+      ))
+    }
+  </ul>
+</Page>

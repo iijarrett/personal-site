@@ -1,0 +1,30 @@
+---
+import { getCollection } from "astro:content";
+import Page from "../../layouts/Page.astro";
+import { isoDate } from "../../lib/format";
+
+const writeups = (await getCollection("writeups", ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+);
+---
+
+<Page title="Writeups" description="Lab and challenge writeups, newest first.">
+  <h1>Writeups</h1>
+  <p>Retired and self-built labs only. Active Hack The Box machines are never written up.</p>
+  <ul class="rows">
+    {
+      writeups.map((entry) => (
+        <li>
+          <p class="label">
+            <time datetime={isoDate(entry.data.date)}>{isoDate(entry.data.date)}</time> ·{" "}
+            {entry.data.platform}
+          </p>
+          <h2>
+            <a href={`/writeups/${entry.id}/`}>{entry.data.title}</a>
+          </h2>
+          <p>{entry.data.summary}</p>
+        </li>
+      ))
+    }
+  </ul>
+</Page>

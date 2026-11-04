@@ -1,0 +1,56 @@
+---
+import Page from "../layouts/Page.astro";
+
+interface Channel {
+  name: string;
+  detail: string;
+  icon: string;
+  href?: string;
+}
+
+// Placeholders: add the real URL as `href` and the entry becomes a link.
+const channels: Channel[] = [
+  { name: "Email", detail: "Address to be added", icon: "M3 6h18v12H3zM3 7l9 6 9-6" },
+  { name: "GitHub", detail: "Code and configs", icon: "M8 7l-5 5 5 5M16 7l5 5-5 5" },
+  {
+    name: "LinkedIn",
+    detail: "Experience",
+    icon: "M4 4h16v16H4zM8 10v7M8 7v.01M12 17v-4a2 2 0 0 1 4 0v4",
+  },
+  {
+    name: "PGP key",
+    detail: "Fingerprint to be added",
+    icon: "M7 14a3 3 0 1 0 0-.01M10 12l10-8M17 6l3 3",
+  },
+];
+---
+
+<Page title="Contact" description="Ways to get in touch.">
+  <h1>Contact</h1>
+  <p>Open to internships and entry-level security roles. Details below are placeholders.</p>
+  <ul class="channels">
+    {
+      channels.map((channel) => (
+        <li>
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d={channel.icon} />
+          </svg>
+          <span>
+            <strong>{channel.href ? <a href={channel.href}>{channel.name}</a> : channel.name}</strong>
+            <span class="label">{channel.detail}</span>
+          </span>
+        </li>
+      ))
+    }
+  </ul>
+</Page>

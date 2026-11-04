@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.astro/
+.wrangler/
+coverage/
+.lighthouseci/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db

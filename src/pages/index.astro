@@ -1,0 +1,74 @@
+---
+import { getCollection } from "astro:content";
+import AsciiHero from "../components/AsciiHero.astro";
+import Card from "../components/Card.astro";
+import Base from "../layouts/Base.astro";
+import { statusLabel } from "../lib/format";
+
+const projects = (await getCollection("projects")).sort((a, b) => a.data.order - b.data.order);
+const [latest] = (await getCollection("writeups", ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+);
+---
+
+<Base
+  title="JD | Cybersecurity portfolio"
+  description="Projects, labs and writeups from a cybersecurity engineering student."
+>
+  <section class="hero" aria-labelledby="hero-title">
+    <AsciiHero />
+    <div class="wrap hero-body">
+      <p class="label">Cybersecurity engineering</p>
+      <h1 id="hero-title">JD</h1>
+      <p class="pitch">
+        I build hardened systems and small security tools, and I document every step in the open.
+      </p>
+      <p class="actions">
+        <a class="btn btn-primary" href="/projects/">See the work</a>
+        <a class="btn" href="/security/">How this site is secured</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="wrap section" aria-labelledby="work-title">
+    <div class="bento">
+      <div class="bento-intro">
+        <p class="label">Portfolio</p>
+        <h2 id="work-title">What I'm building.</h2>
+        <p>Projects, labs and writeups, published as I finish them.</p>
+        <p><a class="btn" href="/projects/">All projects</a></p>
+      </div>
+      {
+        projects.map((project) => (
+          <Card
+            href={`/projects/${project.id}/`}
+            kind={project.data.kind}
+            title={project.data.title}
+            summary={project.data.summary}
+            tags={project.data.tags}
+            status={statusLabel(project.data.status)}
+          />
+        ))
+      }
+      {
+        latest && (
+          <Card
+            href={`/writeups/${latest.id}/`}
+            kind="Writeup"
+            title={latest.data.title}
+            summary={latest.data.summary}
+            tags={latest.data.tags}
+          />
+        )
+      }
+      <Card
+        href="https://notes.jarrettd.com/"
+        kind="Notes"
+        title="Knowledge base"
+        summary="Curated study notes, linked as a graph. Opens on its own subdomain."
+        tags={["notes", "reference"]}
+        external={true}
+      />
+    </div>
+  </section>
+</Base>
