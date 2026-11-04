@@ -52,3 +52,37 @@ test("--font-ui is used for the nav, footer links and buttons and nothing else",
   assert.match(css, /body\s*\{[^}]*font-family:\s*var\(--font-sans\)/);
   assert.match(css, /\.label\s*\{[^}]*font-family:\s*var\(--font-mono\)/);
 });
+
+// ---------- The skip link ----------
+
+test("the skip link is the first focusable element: first in the header, and the header is first in the body", () => {
+  const base = read("../src/layouts/Base.astro");
+  const header = read("../src/components/Header.astro");
+  assert.ok(!/skip-link/.test(base), "Base.astro still has its own skip link");
+  assert.match(base, /<body>\s*<Header /);
+  const skip = header.indexOf('class="skip-link"');
+  assert.ok(skip > 0, "Header.astro has no skip link");
+  assert.match(header, /<header class="site-header">\s*<a class="skip-link" href="#main">/);
+  for (const later of ['class="brand"', 'class="site-nav"', 'class="settings"']) {
+    assert.ok(skip < header.indexOf(later), `the skip link must come before ${later}`);
+  }
+});
+
+test("a focused skip link sits under the header bar at the page's left edge, so it covers none of it", () => {
+  const rule = css.match(/\n\.skip-link\s*\{[^}]*\}/)?.[0] ?? "";
+  assert.match(rule, /position: absolute/);
+  assert.match(rule, /top: calc\(100% \+ var\(--space-2\)\)/, "it must start below the header");
+  assert.match(rule, /left: calc\(var\(--space-3\) \+ max\(0px, \(100% - var\(--page\)\) \/ 2\)\)/);
+  assert.ok(!/translateY|transform/.test(rule), "the old slide-down-over-the-brand is back");
+  assert.ok(!/\btop: var\(--space-2\)/.test(rule));
+});
+
+test("until it is focused the skip link is visually hidden, but never display:none or visibility:hidden", () => {
+  const rule = css.match(/\.skip-link:not\(:focus\)\s*\{[^}]*\}/)?.[0] ?? "";
+  assert.match(rule, /clip-path: inset\(50%\)/);
+  assert.match(rule, /overflow: hidden/);
+  assert.ok(
+    !/display:\s*none|visibility:\s*hidden/.test(rule),
+    "that would take it out of the tab order",
+  );
+});
