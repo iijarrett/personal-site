@@ -137,14 +137,14 @@ export function installSettingsDom({ theme, storage = "ok" } = {}) {
     return event;
   };
 
-  /** Focus moving to `to` (or to nothing): focusout on the old element, focus on the new. */
+  /** Focus moving to `to` (or to nothing): focusout on the old element, focusin on the new. */
   page.moveFocus = (to, visible = false) => {
     const from = document.activeElement;
     if (from === to) return;
     document.activeElement = to;
     if (to) to.focusVisible = visible;
     if (from) dispatch(from, "focusout", { relatedTarget: to });
-    if (to) dispatch(to, "focus", {}, { bubbles: false });
+    if (to) dispatch(to, "focusin", { relatedTarget: from });
   };
 
   const stored = new Map();

@@ -328,3 +328,108 @@ test("a click that is not on a choice changes nothing", (t) => {
   assert.equal(dom.root.dataset.theme, undefined);
   assert.deepEqual(dom.motionCalls, []);
 });
+
+// ---------- Hover, focus and pin are independent (cases from review) ----------
+
+test("(a) hover-opened, then keyboard focus enters the last option: the pointer leaving keeps it open and focus where it is", (t) => {
+  const dom = start(t);
+  dom.focusTo(dom.outside, true);
+  dom.pointerEnter();
+  assert.equal(dom.open, true);
+  dom.focusTo(dom.choices.off, true); // Shift+Tab from the page into the last option
+  dom.pointerLeave();
+  assert.equal(dom.open, true, "the panel was hidden while focus was inside it");
+  assert.equal(dom.expanded, "true");
+  assert.equal(dom.document.activeElement, dom.choices.off, "focus was lost");
+  // Focus leaving is what finally closes it.
+  dom.focusTo(dom.outside, true);
+  assert.equal(dom.open, false);
+});
+
+test("(b) hovering over the menu, then Tabbing out: it stays open until the pointer leaves", (t) => {
+  const dom = start(t);
+  dom.pointerEnter();
+  dom.focusTo(dom.button, true);
+  dom.focusTo(dom.outside, true); // Tab out
+  assert.equal(dom.open, true, "it closed with the pointer still over it");
+  dom.pointerLeave();
+  assert.equal(dom.open, false);
+});
+
+test("hover then leave with no focus closes it", (t) => {
+  const dom = start(t);
+  dom.pointerEnter();
+  assert.equal(dom.open, true);
+  dom.pointerLeave();
+  assert.equal(dom.open, false);
+  assert.equal(dom.expanded, "false");
+});
+
+test("Tab in then Tab out with no hover closes it", (t) => {
+  const dom = start(t);
+  dom.focusTo(dom.button, true);
+  assert.equal(dom.open, true);
+  dom.focusTo(dom.choices.dark, true);
+  dom.focusTo(dom.outside, true);
+  assert.equal(dom.open, false);
+});
+
+test("a click pin survives the pointer leaving", (t) => {
+  const dom = start(t);
+  dom.pointerEnter();
+  dom.click(dom.button);
+  dom.pointerLeave();
+  assert.equal(dom.open, true);
+  assert.equal(dom.expanded, "true");
+});
+
+test("Escape while hovered closes it and it stays closed until the pointer re-enters", (t) => {
+  const dom = start(t);
+  dom.pointerEnter();
+  dom.key("Escape");
+  assert.equal(dom.open, false);
+  assert.equal(dom.expanded, "false");
+  dom.pointerLeave();
+  assert.equal(dom.open, false);
+  dom.pointerEnter();
+  assert.equal(dom.open, true);
+});
+
+test("Escape from an option while hovered closes it, returns focus to the button and does not reopen it", (t) => {
+  const dom = start(t);
+  dom.focusTo(dom.outside, true);
+  dom.pointerEnter();
+  dom.focusTo(dom.choices.off, true);
+  dom.key("Escape");
+  assert.equal(dom.open, false);
+  assert.equal(dom.document.activeElement, dom.button);
+  // The pointer is still over it and focus is on the button, but both are dismissed.
+  assert.equal(dom.expanded, "false");
+  dom.pointerLeave();
+  dom.pointerEnter();
+  assert.equal(dom.open, true, "a fresh hover did not reopen it");
+});
+
+test("a second click on the button closes a pinned menu even while the pointer is over it", (t) => {
+  const dom = start(t);
+  dom.pointerEnter();
+  dom.click(dom.button);
+  dom.click(dom.button);
+  assert.equal(dom.open, false);
+  dom.pointerLeave();
+  dom.pointerEnter();
+  assert.equal(dom.open, true);
+});
+
+test("touch: a tap opens it, nothing else changes it, and a tap outside closes it", (t) => {
+  const dom = start(t);
+  dom.pointerEnter("touch"); // the pointer events that come with a tap are ignored
+  assert.equal(dom.open, false);
+  dom.click(dom.button);
+  assert.equal(dom.open, true);
+  dom.pointerLeave("touch");
+  assert.equal(dom.open, true);
+  dom.pointerDown(dom.outside);
+  assert.equal(dom.open, false);
+  assert.equal(dom.expanded, "false");
+});

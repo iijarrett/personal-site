@@ -63,10 +63,11 @@ export function initSettings(motion: MotionSwitch): void {
   panel.addEventListener("mousedown", (event) => event.preventDefault());
 
   button.addEventListener("click", () => send("click"));
-  // Tabbing to the button opens the menu. A mouse press focuses it too, but that is the
-  // click's job, so only keyboard focus counts.
-  button.addEventListener("focus", () => {
-    if (!restoring && button.matches(":focus-visible")) send("focus");
+  // Keyboard focus anywhere in the box counts, on the button or on an option, so a menu that
+  // hover opened stays open while focus is in it. A mouse press that focuses something does
+  // not count: that is the click's job.
+  box.addEventListener("focusin", (event) => {
+    if (!restoring && (event.target as Element).matches(":focus-visible")) send("focus");
   });
   // Hover is for a mouse. On touch the pointer events come with the tap, which the click handles.
   box.addEventListener("pointerenter", (event) => {
