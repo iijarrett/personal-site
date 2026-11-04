@@ -110,3 +110,20 @@ test("the head script keeps to the rules every built script follows", () => {
   assert.ok(!/https?:\/\//.test(init));
   assert.ok(init.length < 400, `theme-init.js is ${init.length} bytes`);
 });
+
+import { parseTheme, THEME_COLOR, THEME_KEY } from "../src/lib/theme.ts";
+
+test("parseTheme is light only for exactly light, and dark for anything else", () => {
+  for (const raw of [null, undefined, "", "dark", "Light", "LIGHT", "1", "garbage"]) {
+    assert.equal(parseTheme(raw), "dark", String(raw));
+  }
+  assert.equal(parseTheme("light"), "light");
+});
+
+test("the TypeScript side agrees with the head script on the key and with the tokens on the colours", () => {
+  assert.equal(THEME_KEY, "theme");
+  assert.ok(init.includes(`getItem("${THEME_KEY}")`));
+  assert.equal(THEME_COLOR.dark, bgOf(dark));
+  assert.equal(THEME_COLOR.light, bgOf(light));
+  assert.ok(init.includes(`"${THEME_COLOR.light}"`), "theme-init.js has a different light colour");
+});

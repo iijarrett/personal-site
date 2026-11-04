@@ -1,6 +1,6 @@
 /**
- * Shared motion state: the footer toggle, the OS reduced-motion setting and the
- * pointer type, combined by motionMode() and published to the effects.
+ * Shared motion state: the Motion switch in the settings menu, the OS reduced-motion
+ * setting and the pointer type, combined by motionMode() and published to the effects.
  */
 
 import { MOTION_KEY, type MotionMode, motionMode, parseMotionPref } from "../lib/motion.ts";
@@ -47,27 +47,19 @@ export function subscribe(listener: (mode: MotionMode) => void): void {
   listener(currentMode());
 }
 
-function initToggle(): void {
-  const button = document.querySelector<HTMLButtonElement>(".motion-toggle");
-  if (!button) return;
-  const state = button.querySelector("span");
-  const render = (): void => {
-    button.setAttribute("aria-pressed", String(motionOn));
-    if (state) state.textContent = motionOn ? ": on" : ": off";
-  };
-  render();
-  button.hidden = false; // it ships hidden, so there is no dead control without JavaScript
-  button.addEventListener("click", () => {
-    motionOn = !motionOn;
-    savePref(motionOn);
-    render();
-    publish();
-  });
+export function isMotionOn(): boolean {
+  return motionOn;
+}
+
+/** The Motion switch in the settings menu: remembers the choice and tells every effect. */
+export function setMotionOn(on: boolean): void {
+  motionOn = on;
+  savePref(on);
+  publish();
 }
 
 export function initMotion(): void {
   reducedQuery.addEventListener("change", publish);
   hoverQuery.addEventListener("change", publish);
   document.documentElement.classList.toggle("no-fx", !currentMode().fades);
-  initToggle();
 }
