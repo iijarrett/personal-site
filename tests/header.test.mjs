@@ -60,7 +60,7 @@ test("the bar starts hidden on wide screens and shown on narrow ones, before the
   );
   assert.match(
     css,
-    /@media [^{]*\(max-width: 640px\)[^{]*\{\s*html\.js\.bar-off\s*\{\s*--bar-y: -100%;\s*--float: var\(--muted\);\s*\}\s*\}/,
+    /@media not \(\(min-width: 641px\) and \(hover: hover\)\)\s*\{\s*html\.js\.bar-off\s*\{\s*--bar-y: -100%;\s*--float: var\(--muted\);\s*\}\s*\}/,
   );
 });
 

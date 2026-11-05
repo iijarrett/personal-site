@@ -158,19 +158,20 @@ code,
 }
 
 /*
- * Wide means a wide screen whose primary pointer can hover. A touch device (hover: none and
- * pointer: coarse, the primary pointer, so a laptop with a mouse and a touchscreen is not one)
- * gets the narrow rules at any width: it cannot wheel or hover to bring a hidden bar back.
- * src/scripts/bar.ts asks the same two queries; tests/bar-media.test.mjs holds them together.
+ * One definition of wide: a screen over 640px whose primary pointer can hover. Narrow is exactly
+ * its negation, so every viewport (fractional widths included) and every pointer gets one layout
+ * and never none. A device that cannot hover (a phone, a tablet, a stylus-only screen) has no
+ * wheel or hover to bring a hidden bar back, so it gets the narrow rules at any width.
+ * src/scripts/bar.ts asks the same wide query; tests/bar-media.test.mjs holds them together.
  */
-@media (min-width: 641px) and (not ((hover: none) and (pointer: coarse))) {
+@media (min-width: 641px) and (hover: hover) {
   html.js:not(.bar-on) {
     --bar-y: -100%;
     --float: var(--muted);
   }
 }
 
-@media (max-width: 640px), (hover: none) and (pointer: coarse) {
+@media not ((min-width: 641px) and (hover: hover)) {
   html.js.bar-off {
     --bar-y: -100%;
     --float: var(--muted);

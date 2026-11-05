@@ -148,5 +148,8 @@ test("without a header it does nothing and does not throw", (t) => {
 });
 
 test("the script's wide query is the CSS's (checked in full in tests/bar-media.test.mjs)", () => {
-  assert.match(read("../src/scripts/bar.ts"), /matchMedia\(\s*"\(min-width: 641px\) and /);
+  assert.match(
+    read("../src/scripts/bar.ts"),
+    /matchMedia\("\(min-width: 641px\) and \(hover: hover\)"\)/,
+  );
 });

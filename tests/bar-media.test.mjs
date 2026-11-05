@@ -5,9 +5,12 @@ import { test } from "node:test";
 // The header bar has a wide layout (starts hidden, comes back on a wheel-up, the mouse at the top
 // edge or keyboard focus) and a narrow one (visible at the top, hides on scroll down, returns on
 // scroll up). Which one a device gets is decided by media queries written in two places, the CSS
-// and src/scripts/bar.ts, and they must agree exactly. A device is "touch" when its PRIMARY
-// pointer cannot hover and is coarse. A touch device gets the narrow layout at any width; a
-// laptop with a mouse as its primary pointer stays on the wide one even with a touchscreen.
+// and src/scripts/bar.ts, and they must agree exactly.
+//
+// Wide is ONE definition: a screen over 640px whose primary pointer can hover. Narrow is its exact
+// negation in the CSS, so every viewport and every pointer gets exactly one layout, fractional
+// widths included (the old pair, min-width: 641px against max-width: 640px, left 640 to 641 with
+// no layout at all, which happens under browser zoom).
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const css = read("../src/styles/global.css").replace(/\/\*[\s\S]*?\*\//g, "");
@@ -41,6 +44,10 @@ function parse(query) {
     return node;
   }
   function and() {
+    if (peek() === "not") {
+      take("not");
+      return { not: condition() };
+    }
     const parts = [condition()];
     while (peek() === "and") {
       take("and");
@@ -61,7 +68,7 @@ function parse(query) {
   return tree;
 }
 
-/** Whether `node` is true for a device: { width, hover: "hover" | "none", pointer: "fine" | "coarse" | "none" }. */
+/** Whether `node` is true for a device: { width, hover: "hover" | "on-demand" | "none", pointer: "fine" | "coarse" | "none" }. */
 function matches(node, device) {
   if (node.or) return node.or.some((alternative) => matches(alternative, device));
   if (node.and) return node.and.every((part) => matches(part, device));
@@ -99,9 +106,10 @@ test("the script asks exactly the query the CSS uses for the wide layout", () =>
   assert.equal(WIDE_JS, WIDE_CSS);
 });
 
-test("the queries read as written: wide is a wide screen that is not touch-primary, narrow is the rest", () => {
-  assert.equal(WIDE_CSS, "(min-width: 641px) and (not ((hover: none) and (pointer: coarse)))");
-  assert.equal(NARROW_CSS, "(max-width: 640px), (hover: none) and (pointer: coarse)");
+test("wide is one definition, and narrow is written as exactly its negation", () => {
+  assert.equal(WIDE_CSS, "(min-width: 641px) and (hover: hover)");
+  assert.equal(NARROW_CSS, `not (${WIDE_CSS})`);
+  assert.ok(!/pointer:/.test(WIDE_CSS + NARROW_CSS), "the pointer: coarse part is gone");
 });
 
 // ---------- What each device gets ----------
@@ -114,7 +122,14 @@ const devices = [
   ["a desktop with a mouse, 1057 px", { width: 1057, hover: "hover", pointer: "fine" }, "wide"],
   ["a big monitor with a mouse, 2560 px", { width: 2560, hover: "hover", pointer: "fine" }, "wide"],
   ["a mouse at exactly 641 px", { width: 641, hover: "hover", pointer: "fine" }, "wide"],
+  ["a mouse at 641.5 px (browser zoom)", { width: 641.5, hover: "hover", pointer: "fine" }, "wide"],
   ["a mouse at exactly 640 px", { width: 640, hover: "hover", pointer: "fine" }, "narrow"],
+  [
+    "a mouse at 640.5 px (browser zoom)",
+    { width: 640.5, hover: "hover", pointer: "fine" },
+    "narrow",
+  ],
+  ["a mouse at 640.99 px", { width: 640.99, hover: "hover", pointer: "fine" }, "narrow"],
   ["a mouse in a narrow window, 500 px", { width: 500, hover: "hover", pointer: "fine" }, "narrow"],
   ["a phone, 390 px", { width: 390, hover: "none", pointer: "coarse" }, "narrow"],
   ["a tablet in portrait, 820 px", { width: 820, hover: "none", pointer: "coarse" }, "narrow"],
@@ -131,9 +146,19 @@ const devices = [
     "wide",
   ],
   [
-    "a stylus-primary device that cannot hover, 1024 px",
+    "a stylus-only wide device (cannot hover, fine pointer), 1024 px: now narrow, so its header is visible and follows scroll",
     { width: 1024, hover: "none", pointer: "fine" },
-    "wide",
+    "narrow",
+  ],
+  [
+    "a device whose hover is on-demand, 1024 px",
+    { width: 1024, hover: "on-demand", pointer: "coarse" },
+    "narrow",
+  ],
+  [
+    "a device with no pointer at all, 1024 px",
+    { width: 1024, hover: "none", pointer: "none" },
+    "narrow",
   ],
 ];
 
@@ -143,29 +168,62 @@ for (const [name, device, expected] of devices) {
   });
 }
 
-test("every device gets exactly one layout: the two queries are exact opposites", () => {
-  for (let width = 200; width <= 2600; width += 1) {
-    for (const hover of ["hover", "none"]) {
+/** Every width worth trying: whole pixels, and fractions around the breakpoint and elsewhere. */
+function widths() {
+  const out = [];
+  for (let width = 200; width <= 2600; width += 1) out.push(width);
+  for (const width of [640, 640.4, 640.5, 640.99, 641, 641.5]) out.push(width);
+  for (let width = 600; width <= 700; width += 0.25) out.push(width);
+  out.push(640.0001, 640.9999, 640.999999, 641.0001);
+  return out;
+}
+
+test("every width, hover and pointer gets exactly one layout: the two queries are exact opposites", () => {
+  let checked = 0;
+  for (const width of widths()) {
+    for (const hover of ["hover", "on-demand", "none"]) {
       for (const pointer of ["fine", "coarse", "none"]) {
         const device = { width, hover, pointer };
         const rules = [matches(wide, device), matches(narrow, device)];
         assert.equal(rules.filter(Boolean).length, 1, JSON.stringify(device));
+        checked++;
+      }
+    }
+  }
+  assert.ok(checked > 20000, `only ${checked} combinations were checked`);
+});
+
+test("the fractional widths around the breakpoint, with every hover and pointer, each get one layout", () => {
+  for (const width of [640, 640.4, 640.5, 640.99, 641, 641.5]) {
+    for (const hover of ["hover", "on-demand", "none"]) {
+      for (const pointer of ["fine", "coarse", "none"]) {
+        const device = { width, hover, pointer };
+        assert.notEqual(matches(wide, device), matches(narrow, device), JSON.stringify(device));
       }
     }
   }
 });
 
-test("width alone no longer decides: a touch device is narrow at any width, and a mouse is wide from 641 px", () => {
-  for (const width of [641, 768, 820, 1024, 1366, 1920]) {
-    assert.equal(layoutOf({ width, hover: "none", pointer: "coarse" }), "narrow", `touch ${width}`);
-    assert.equal(layoutOf({ width, hover: "hover", pointer: "fine" }), "wide", `mouse ${width}`);
+test("hover decides, not pointer: any pointer type with hover is wide from 641 px, and none without it is", () => {
+  for (const width of [641, 641.5, 820, 1366, 1920]) {
+    for (const pointer of ["fine", "coarse", "none"]) {
+      assert.equal(
+        layoutOf({ width, hover: "hover", pointer }),
+        "wide",
+        `hover ${pointer} ${width}`,
+      );
+      assert.equal(
+        layoutOf({ width, hover: "none", pointer }),
+        "narrow",
+        `no hover ${pointer} ${width}`,
+      );
+    }
   }
 });
 
 // ---------- The rules those layouts switch on ----------
 
 test("the hide rules still need .js, so with JavaScript off the header is always visible and nothing sticks", () => {
-  // Both layouts only set --bar-y under html.js, and the sticky header and the transform need .js too.
   assert.match(css, /@media [^{]*\{\s*html\.js:not\(\.bar-on\)\s*\{\s*--bar-y: -100%/);
   assert.match(css, /@media [^{]*\{\s*html\.js\.bar-off\s*\{\s*--bar-y: -100%/);
   assert.match(css, /\.js \.site-header\s*\{\s*position: sticky/);
