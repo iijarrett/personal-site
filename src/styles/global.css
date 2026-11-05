@@ -190,9 +190,11 @@ html.js.bar-off {
   }
 }
 
-/* A focused element is never left under the header (WCAG 2.4.11). */
+/* A focused element is never left under the header (WCAG 2.4.11). The values are the tallest the
+   header measures, rounded up (tests/fixtures/header-heights.json): 6.02rem where the nav wraps
+   at 577 to 610px, 8.04rem on a phone, and 15.62rem on a phone at 200% text. */
 .js {
-  scroll-padding-top: 5rem;
+  scroll-padding-top: 6.1rem;
 }
 
 .brand {
@@ -523,9 +525,13 @@ html.js.bar-off {
  * 4.5:1 over the brightest glyph at full opacity, and a border at 3:1: tests/hero-buttons.test.mjs.
  * The primary also carries the glow a hovered tile gets (the same gradient, ring and halo),
  * always on and static, so it needs no hover and no motion.
+ * Each button has a 1px keyline in the page colour just outside its border. The code can reach
+ * the button's edge at its brightest (a hex digit under the cursor), and a border measured against
+ * that is only 2.2 to 2.9:1 in the two themes; against the keyline it is 5 to 8:1.
  */
 .actions .btn {
   background: color-mix(in srgb, var(--bg) 30%, transparent);
+  box-shadow: 0 0 0 1px var(--bg);
 }
 
 .actions .btn-primary {
@@ -538,6 +544,7 @@ html.js.bar-off {
     color-mix(in srgb, var(--bg) 55%, transparent);
   border-color: var(--ring);
   box-shadow:
+    0 0 0 1px var(--bg),
     inset 0 0 0 1px var(--ring),
     0 0 1rem color-mix(in srgb, var(--ring) var(--halo), transparent);
 }
@@ -800,7 +807,7 @@ html.js.bar-off {
   }
 
   .js {
-    scroll-padding-top: 9rem;
+    scroll-padding-top: 16rem;
   }
 }
 

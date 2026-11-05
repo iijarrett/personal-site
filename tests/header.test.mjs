@@ -91,14 +91,73 @@ test("with the bar away, the settings button gets its own outline and a solid ba
 
 // ---------- Focus is never left under the header (WCAG 2.4.11) ----------
 
-test("scroll-padding-top covers the sticky header at both widths, so a focused element is not hidden under it", () => {
-  const rem = (pattern) => Number.parseFloat(css.match(pattern)?.[1] ?? "NaN");
-  const wide = rem(/\n\.js\s*\{\s*scroll-padding-top: ([\d.]+)rem;/);
-  const phone = rem(/\.js\s*\{\s*scroll-padding-top: ([\d.]+)rem;\s*\}\s*\}\s*\n/);
-  // Measured header heights: 61 px on a wide screen, 129 px with the nav on two rows on a phone.
-  assert.ok(wide >= 61 / 16, `wide scroll-padding-top ${wide}rem`);
-  assert.ok(phone >= 129 / 16, `phone scroll-padding-top ${phone}rem`);
-  assert.ok(phone > wide);
+// The header's real heights, measured in a browser (see the fixture's own note): each row is a
+// viewport width at a text size, with the bar shown. rootPx is the browser's default font size,
+// which is also what rem means inside a media query, so a phone layout (max-width: 36rem) applies
+// when the width is at most 36 * rootPx.
+const measured = JSON.parse(
+  readFileSync(new URL("./fixtures/header-heights.json", import.meta.url), "utf8"),
+);
+const remOf = (pattern, what) => {
+  const value = Number.parseFloat(css.match(pattern)?.[1] ?? "NaN");
+  assert.ok(Number.isFinite(value), `no ${what}`);
+  return value;
+};
+const paddings = {
+  wide: remOf(/\n\.js\s*\{\s*scroll-padding-top: ([\d.]+)rem;/, "base scroll-padding-top"),
+  phone: remOf(
+    /@media \(max-width: 36rem\)\s*\{[\s\S]*?\.js\s*\{\s*scroll-padding-top: ([\d.]+)rem;/,
+    "phone scroll-padding-top",
+  ),
+};
+const layoutOf = (row) => (row.width <= 36 * row.rootPx ? "phone" : "wide");
+
+test("scroll-padding-top is at least the measured header height at every measured width and text size", () => {
+  assert.ok(measured.rows.length >= 20);
+  for (const row of measured.rows) {
+    const padding = paddings[layoutOf(row) === "phone" ? "phone" : "wide"] * row.rootPx;
+    assert.ok(
+      padding >= row.headerPx,
+      `${row.text} text, ${row.width}px: the header is ${row.headerPx}px, scroll-padding-top ${padding}px`,
+    );
+  }
+});
+
+test("the measurements cover the widths and text sizes that were asked for, in both themes", () => {
+  assert.equal(measured.themesAgree, true, "dark and light headers differ in height");
+  for (const text of ["100%", "200%"]) {
+    const widths = measured.rows.filter((row) => row.text === text).map((row) => row.width);
+    for (const width of [320, 360, 390, 640, 641, 820]) {
+      assert.ok(widths.includes(width), `${text} ${width}px was not measured`);
+    }
+  }
+  // The band where the nav wraps under the brand just above the phone layout, at 100% and 200%.
+  for (const [text, width] of [
+    ["100%", 577],
+    ["100%", 607],
+    ["200%", 1154],
+  ]) {
+    assert.ok(
+      measured.rows.some((row) => row.text === text && row.width === width),
+      `${text} ${width}px`,
+    );
+  }
+  for (const row of measured.rows) {
+    assert.ok(Math.abs(row.headerPx / row.rootPx - row.headerRem) < 0.01, JSON.stringify(row));
+  }
+});
+
+test("the padding is only as high as it needs to be: within half a rem of the tallest header in its layout", () => {
+  for (const layout of ["wide", "phone"]) {
+    const tallest = Math.max(
+      ...measured.rows.filter((row) => layoutOf(row) === layout).map((row) => row.headerRem),
+    );
+    assert.ok(paddings[layout] >= tallest, `${layout}: ${paddings[layout]}rem under ${tallest}rem`);
+    assert.ok(
+      paddings[layout] - tallest <= 0.5,
+      `${layout}: ${paddings[layout]}rem is far over ${tallest}rem`,
+    );
+  }
 });
 
 test("the skip link and the settings panel stay on top of the page, inside the header's stacking context", () => {

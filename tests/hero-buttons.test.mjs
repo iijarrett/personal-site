@@ -116,34 +116,81 @@ for (const [name, block] of Object.entries(themes)) {
     over(mix(bg, glyph, WORST), declarations, withGlow);
   const bareBehind = (declarations, withGlow) => over(bg, declarations, withGlow);
 
-  for (const [label, declarations, withGlow] of [
+  for (const [label, declarations, hasGlow] of [
     ["secondary", secondary, false],
     ["primary", primary, true],
   ]) {
-    test(`${name}: the ${label} button's text is at least 4.5:1 over the brightest glyph at full opacity`, () => {
-      const ratio = contrast(c("--text"), worstBehind(declarations, withGlow));
-      assert.ok(ratio >= 4.5, `${name} ${label} text is ${ratio.toFixed(2)}:1`);
-    });
+    // The glow tints the fill toward the glow colour: that lowers the text's contrast in the dark
+    // theme and raises it in the light one. So the worst case is the lower of "glow at its peak"
+    // and "no glow at all", and both are checked.
+    const glows = hasGlow ? [true, false] : [false];
+    const glowName = (withGlow) => (withGlow ? "glow at its peak" : "no glow");
 
-    test(`${name}: the ${label} button's border is at least 3:1 over the brightest glyph and over the bare page`, () => {
+    for (const withGlow of glows) {
+      test(`${name}: the ${label} button's text is at least 4.5:1 over the brightest glyph at full opacity, with ${glowName(withGlow)}`, () => {
+        const ratio = contrast(c("--text"), worstBehind(declarations, withGlow));
+        assert.ok(
+          ratio >= 4.5,
+          `${name} ${label} text is ${ratio.toFixed(2)}:1 with ${glowName(withGlow)}`,
+        );
+      });
+
+      test(`${name}: the ${label} button's border is at least 3:1 against what is inside it, over the brightest glyph and over the bare page, with ${glowName(withGlow)}`, () => {
+        const token = borderOf(declarations);
+        assert.ok(token, `${label} has no border-color token`);
+        const worst = contrast(c(token), worstBehind(declarations, withGlow));
+        assert.ok(
+          worst >= 3,
+          `${name} ${label} border ${token} is ${worst.toFixed(2)}:1 over a glyph`,
+        );
+        const bare = contrast(c(token), bareBehind(declarations, withGlow));
+        assert.ok(
+          bare >= 3,
+          `${name} ${label} border ${token} is ${bare.toFixed(2)}:1 on the page`,
+        );
+      });
+
+      test(`${name}: the ${label} button's text reads at least as well with no glyph behind it, with ${glowName(withGlow)}`, () => {
+        const worst = contrast(c("--text"), worstBehind(declarations, withGlow));
+        const bare = contrast(c("--text"), bareBehind(declarations, withGlow));
+        assert.ok(bare >= worst - 1e-9, `bare ${bare.toFixed(2)} < worst ${worst.toFixed(2)}`);
+      });
+    }
+
+    test(`${name}: the ${label} button's border is at least 3:1 against what is just outside it, where the unfaded code can reach its edge`, () => {
       const token = borderOf(declarations);
-      assert.ok(token, `${label} has no border-color token`);
-      const worst = contrast(c(token), worstBehind(declarations, withGlow));
+      const shadow = declarations.replace(/\s+/g, " ").match(/box-shadow: ([^;]*);/)?.[1] ?? "";
+      // A keyline: a 1px ring in a flat token, the first (outermost) shadow, directly outside the border.
+      const keyline = shadow.match(/^0 0 0 1px var\((--[\w-]+)\)/)?.[1];
+      // Without one, the neighbour is the brightest glyph at full opacity, tinted by the halo for the primary.
+      let outside = keyline ? c(keyline) : mix(bg, glyph, WORST);
+      if (!keyline && hasGlow) outside = mix(outside, c("--ring"), percent(block, "--halo"));
+      const ratio = contrast(c(token), outside);
       assert.ok(
-        worst >= 3,
-        `${name} ${label} border ${token} is ${worst.toFixed(2)}:1 over a glyph`,
+        ratio >= 3,
+        `${name} ${label} border ${token} is ${ratio.toFixed(2)}:1 against ${keyline ?? "unfaded code"} just outside it`,
       );
-      const bare = contrast(c(token), bareBehind(declarations, withGlow));
-      assert.ok(bare >= 3, `${name} ${label} border ${token} is ${bare.toFixed(2)}:1 on the page`);
-    });
-
-    test(`${name}: the ${label} button's text reads at least as well with no glyph behind it`, () => {
-      const worst = contrast(c("--text"), worstBehind(declarations, withGlow));
-      const bare = contrast(c("--text"), bareBehind(declarations, withGlow));
-      assert.ok(bare >= worst - 1e-9, `bare ${bare.toFixed(2)} < worst ${worst.toFixed(2)}`);
+      // The keyline must be opaque, or it is not a keyline.
+      if (keyline) assert.equal(keyline, "--bg");
     });
   }
 }
+
+test("both hero buttons have the keyline that makes the outside neighbour the page, not the code", () => {
+  for (const declarations of [secondary, primary]) {
+    const shadow = declarations.replace(/\s+/g, " ").match(/box-shadow: ([^;]*);/)?.[1] ?? "";
+    assert.match(shadow, /^0 0 0 1px var\(--bg\)(,|$)/, "the first shadow is not the keyline");
+  }
+  // And it is needed: without it, the border against the brightest code outside is under 3:1 in at least one theme.
+  const unprotected = Object.values(themes).map((block) => {
+    const code = mix(colour(block, "--bg"), colour(block, "--accent"), WORST);
+    return Math.min(
+      contrast(colour(block, borderOf(secondary)), code),
+      contrast(colour(block, borderOf(primary)), code),
+    );
+  });
+  assert.ok(Math.min(...unprotected) < 3, `the keyline is not needed: ${unprotected}`);
+});
 
 test("the hover state is an opaque surface, which hides the code and only raises contrast", () => {
   assert.match(rule(".actions .btn:hover"), /background-color: var\(--surface\)/);
