@@ -53,15 +53,13 @@ test("the plain header rule does not swallow clicks: that is only done under .js
   assert.ok(plain.length > 0 && !/pointer-events/.test(plain), plain);
 });
 
-test("the bar starts hidden on wide screens and shown on narrow ones, before the script runs", () => {
+test("the bar's hide rules: bar-off hides at any width, and before the script a wide screen starts hidden", () => {
+  assert.match(css, /\nhtml\.js\.bar-off\s*\{\s*--bar-y: -100%;\s*--float: var\(--muted\);\s*\}/);
   assert.match(
     css,
-    /@media [^{]*\(min-width: 641px\)[^{]*\{\s*html\.js:not\(\.bar-on\)\s*\{\s*--bar-y: -100%;\s*--float: var\(--muted\);\s*\}\s*\}/,
+    /@media \(min-width: 641px\) and \(hover: hover\)\s*\{\s*html\.js:not\(\.bar-on\):not\(\.bar-off\)\s*\{\s*--bar-y: -100%;\s*--float: var\(--muted\);\s*\}/,
   );
-  assert.match(
-    css,
-    /@media not \(\(min-width: 641px\) and \(hover: hover\)\)\s*\{\s*html\.js\.bar-off\s*\{\s*--bar-y: -100%;\s*--float: var\(--muted\);\s*\}\s*\}/,
-  );
+  assert.ok(!/@media not /.test(css), "a separate narrow media query is back");
 });
 
 test("the header sticks but lets clicks through, and only the bar, the button and the skip link take them", () => {

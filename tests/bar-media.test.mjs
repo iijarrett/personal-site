@@ -97,8 +97,9 @@ const preludeBefore = (selector) => {
   assert.ok(found, `no @media block around ${selector}`);
   return found[1];
 };
-const WIDE_CSS = preludeBefore("html.js:not(.bar-on)");
-const NARROW_CSS = preludeBefore("html.js.bar-off");
+const WIDE_CSS = preludeBefore("html.js:not(.bar-on):not(.bar-off)");
+/** Narrow is whatever wide is not. The CSS no longer writes it out: once the script has run, bar-off hides at any width. */
+const NARROW = `not (${WIDE_CSS})`;
 const WIDE_JS = script.match(/matchMedia\(\s*"([^"]+)"\s*\)/)?.[1];
 
 test("the script asks exactly the query the CSS uses for the wide layout", () => {
@@ -106,16 +107,19 @@ test("the script asks exactly the query the CSS uses for the wide layout", () =>
   assert.equal(WIDE_JS, WIDE_CSS);
 });
 
-test("wide is one definition, and narrow is written as exactly its negation", () => {
+test("wide is one definition, in one place in the CSS, with no pointer: part and no second width query for the bar", () => {
   assert.equal(WIDE_CSS, "(min-width: 641px) and (hover: hover)");
-  assert.equal(NARROW_CSS, `not (${WIDE_CSS})`);
-  assert.ok(!/pointer:/.test(WIDE_CSS + NARROW_CSS), "the pointer: coarse part is gone");
+  assert.ok(!/pointer:/.test(WIDE_CSS), "the pointer: coarse part is gone");
+  const barQueries = [...css.matchAll(/@media\s+([^{]*?)\s*\{/g)]
+    .map((match) => match[1])
+    .filter((query) => /hover/.test(query) && /641px/.test(query));
+  assert.deepEqual(barQueries, [WIDE_CSS]);
 });
 
 // ---------- What each device gets ----------
 
 const wide = parse(WIDE_CSS);
-const narrow = parse(NARROW_CSS);
+const narrow = parse(NARROW);
 const layoutOf = (device) => (matches(wide, device) ? "wide" : "narrow");
 
 const devices = [
@@ -224,8 +228,11 @@ test("hover decides, not pointer: any pointer type with hover is wide from 641 p
 // ---------- The rules those layouts switch on ----------
 
 test("the hide rules still need .js, so with JavaScript off the header is always visible and nothing sticks", () => {
-  assert.match(css, /@media [^{]*\{\s*html\.js:not\(\.bar-on\)\s*\{\s*--bar-y: -100%/);
-  assert.match(css, /@media [^{]*\{\s*html\.js\.bar-off\s*\{\s*--bar-y: -100%/);
+  assert.match(css, /\nhtml\.js\.bar-off\s*\{\s*--bar-y: -100%/);
+  assert.match(
+    css,
+    /@media [^{]*\{\s*html\.js:not\(\.bar-on\):not\(\.bar-off\)\s*\{\s*--bar-y: -100%/,
+  );
   assert.match(css, /\.js \.site-header\s*\{\s*position: sticky/);
   assert.ok(!/\n\.site-header\s*\{[^}]*(sticky|--bar-y|pointer-events)/.test(css));
   assert.ok(!/\n\.bar\s*\{[^}]*(transform|--bar-y)/.test(css));

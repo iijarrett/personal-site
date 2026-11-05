@@ -139,6 +139,17 @@ test("crossing the breakpoint re-decides at once", (t) => {
   assert.equal(dom.bar, "bar-off");
 });
 
+test("if the script throws before it has decided, no marker class is left, so the CSS failsafe can show the bar", (t) => {
+  const dom = installBarDom({ wide: true });
+  t.after(() => dom.restore());
+  globalThis.matchMedia = () => {
+    throw new Error("matchMedia is not available");
+  };
+  assert.throws(() => initBar(), /matchMedia is not available/);
+  assert.deepEqual(dom.classes(), []);
+  assert.equal(dom.bar, "");
+});
+
 test("without a header it does nothing and does not throw", (t) => {
   const dom = installBarDom();
   t.after(() => dom.restore());
