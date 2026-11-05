@@ -56,11 +56,11 @@ test("the plain header rule does not swallow clicks: that is only done under .js
 test("the bar starts hidden on wide screens and shown on narrow ones, before the script runs", () => {
   assert.match(
     css,
-    /@media [^{]*\(min-width: 641px\)[^{]*\{\s*html\.js:not\(\.bar-on\)\s*\{\s*--bar-y: -100%;\s*--float: var\(--border\);\s*\}\s*\}/,
+    /@media [^{]*\(min-width: 641px\)[^{]*\{\s*html\.js:not\(\.bar-on\)\s*\{\s*--bar-y: -100%;\s*--float: var\(--muted\);\s*\}\s*\}/,
   );
   assert.match(
     css,
-    /@media [^{]*\(max-width: 640px\)[^{]*\{\s*html\.js\.bar-off\s*\{\s*--bar-y: -100%;\s*--float: var\(--border\);\s*\}\s*\}/,
+    /@media [^{]*\(max-width: 640px\)[^{]*\{\s*html\.js\.bar-off\s*\{\s*--bar-y: -100%;\s*--float: var\(--muted\);\s*\}\s*\}/,
   );
 });
 

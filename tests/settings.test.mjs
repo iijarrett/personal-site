@@ -439,3 +439,60 @@ test("touch: a tap opens it, nothing else changes it, and a tap outside closes i
   assert.equal(dom.open, false);
   assert.equal(dom.expanded, "false");
 });
+
+// ---------- The controls' borders (WCAG 1.4.11: 3:1 against what they sit on) ----------
+//
+// Three borders identify a control: the segmented control's, the settings button's outline while
+// the bar is away (--float) and its border while the menu is open (which hover shares). The
+// settings button has a solid --bg fill, so it always sits on --bg inside; the segmented control
+// sits on the panel (--surface); and over page content behind either can be --bg or a tile's
+// --surface. Each is checked against all of those, in both themes, using the token the CSS uses.
+
+const tokenIn = (text, pattern, what) => {
+  const found = text.match(pattern);
+  assert.ok(found, `global.css has no ${what}`);
+  return found[1];
+};
+const controlBorders = {
+  "the segmented control": tokenIn(
+    css,
+    /\.seg\s*\{[^}]*border: 1px solid var\((--[\w-]+)\)/,
+    ".seg border",
+  ),
+  "the settings button's open-state border": tokenIn(
+    css,
+    /\.settings-btn\[aria-expanded="true"\]\s*\{[^}]*border-color: var\((--[\w-]+)\)/,
+    "open-state border",
+  ),
+};
+const floatTokens = [...css.matchAll(/--float: var\((--[\w-]+)\)/g)].map((match) => match[1]);
+
+test("the three control borders no longer use the old --border", () => {
+  assert.equal(floatTokens.length, 2, "expected --float in the wide and the narrow rule");
+  assert.equal(new Set(floatTokens).size, 1, "the two --float rules differ");
+  controlBorders["the settings button's outline while the bar is away"] = floatTokens[0];
+  for (const [what, token] of Object.entries(controlBorders)) {
+    assert.notEqual(token, "--border", `${what} still uses --border`);
+  }
+});
+
+test("the settings button keeps a solid --bg fill, so its border always sits against --bg inside", () => {
+  assert.match(css, /\.settings-btn\s*\{[^}]*background: var\(--bg\)/);
+  assert.match(css, /\.settings-btn\s*\{[^}]*border: 1px solid var\(--float, transparent\)/);
+});
+
+for (const [name, block] of Object.entries(themes)) {
+  test(`${name}: the segmented control, the floating outline and the open-state border are 3:1 on --bg and --surface`, () => {
+    const borders = {
+      ...controlBorders,
+      "the settings button's outline while the bar is away": floatTokens[0],
+    };
+    assert.equal(Object.keys(borders).length, 3);
+    for (const [what, token] of Object.entries(borders)) {
+      for (const base of ["--bg", "--surface"]) {
+        const ratio = contrast(colour(block, token), colour(block, base));
+        assert.ok(ratio >= 3, `${name}: ${what} (${token}) on ${base} is ${ratio.toFixed(2)}:1`);
+      }
+    }
+  });
+}

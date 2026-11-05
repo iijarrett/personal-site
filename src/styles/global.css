@@ -166,14 +166,14 @@ code,
 @media (min-width: 641px) and (not ((hover: none) and (pointer: coarse))) {
   html.js:not(.bar-on) {
     --bar-y: -100%;
-    --float: var(--border);
+    --float: var(--muted);
   }
 }
 
 @media (max-width: 640px), (hover: none) and (pointer: coarse) {
   html.js.bar-off {
     --bar-y: -100%;
-    --float: var(--border);
+    --float: var(--muted);
   }
 }
 
@@ -256,7 +256,7 @@ code,
 .settings-btn:hover,
 .settings-btn[aria-expanded="true"] {
   color: var(--text);
-  border-color: var(--border);
+  border-color: var(--muted);
 }
 
 /* Flush under the button, so the pointer can cross into it without leaving the menu. It opens
@@ -284,7 +284,7 @@ code,
 
 .seg {
   display: flex;
-  border: 1px solid var(--border);
+  border: 1px solid var(--muted);
   border-radius: var(--radius);
 }
 
