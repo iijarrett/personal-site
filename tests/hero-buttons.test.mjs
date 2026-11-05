@@ -27,7 +27,10 @@ const fillOf = (declarations) => {
   assert.ok(match, "no fill made from the page colour");
   return Number.parseInt(match[1], 10) / 100;
 };
-const borderOf = (declarations) => declarations.match(/border-color: var\((--[\w-]+)\)/)?.[1];
+/** A rule's own border-color token, or else the base .btn border it inherits. */
+const borderOf = (declarations) =>
+  declarations.match(/border-color: var\((--[\w-]+)\)/)?.[1] ??
+  rule(".btn").match(/border: 1px solid var\((--[\w-]+)\)/)?.[1];
 
 const secondary = rule(".actions .btn");
 const primary = rule(".actions .btn-primary");
@@ -150,10 +153,54 @@ test("the hover state is an opaque surface, which hides the code and only raises
   }
 });
 
-test("only the hero buttons were restyled: the other .btn on the site keeps its plain look", () => {
+test("only the hero buttons were restyled: the other .btn on the site keeps its plain, fill-less look", () => {
   assert.ok(!/(^|[\s;])background:/.test(rule(".btn")), "the base .btn grew a background");
   assert.match(
     read("../src/pages/index.astro"),
     /<a class="btn" href="\/projects\/">All projects<\/a>/,
   );
 });
+
+// ---------- "All projects": the plain .btn, which has no fill and sits on the page ----------
+
+test("every .btn on the site is one of the three this file measures, so none was missed", () => {
+  const pages = ["index"].map((name) => read(`../src/pages/${name}.astro`));
+  const found = pages.flatMap((page) => [...page.matchAll(/class="(btn[^"]*)"/g)].map((m) => m[1]));
+  assert.deepEqual(found.sort(), ["btn", "btn", "btn btn-primary"]);
+  for (const other of [
+    "../src/components/Header.astro",
+    "../src/components/Footer.astro",
+    "../src/components/Card.astro",
+    "../src/layouts/Page.astro",
+    "../src/layouts/Base.astro",
+  ]) {
+    // A whole class name: "settings-btn" is a different class.
+    assert.ok(!/class="(?:[^"]*\s)?btn(?:\s[^"]*)?"/.test(read(other)), `${other} uses .btn`);
+  }
+});
+
+test("the base .btn border is --muted, not the old --border", () => {
+  assert.equal(rule(".btn").match(/border: 1px solid var\((--[\w-]+)\)/)?.[1], "--muted");
+  assert.equal(borderOf(secondary), "--muted", "the hero secondary no longer sets its own");
+  assert.equal(borderOf(primary), "--ring");
+  assert.ok(!/border[^;]*var\(--border\)/.test(rule(".btn")), "a .btn border still uses --border");
+});
+
+for (const [name, block] of Object.entries(themes)) {
+  const c = (token) => colour(block, token);
+  const token = borderOf(rule(".btn"));
+
+  test(`${name}: the All projects border is at least 3:1 on the page and on a hovered tile's surface`, () => {
+    for (const base of ["--bg", "--surface"]) {
+      const ratio = contrast(c(token), c(base));
+      assert.ok(ratio >= 3, `${name} ${token} on ${base} is ${ratio.toFixed(2)}:1`);
+    }
+  });
+
+  test(`${name}: the All projects text is at least 4.5:1 on the page and on the hover surface`, () => {
+    for (const base of ["--bg", "--surface"]) {
+      const ratio = contrast(c("--text"), c(base));
+      assert.ok(ratio >= 4.5, `${name} --text on ${base} is ${ratio.toFixed(2)}:1`);
+    }
+  });
+}

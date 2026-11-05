@@ -374,7 +374,7 @@ code,
 .btn {
   display: inline-block;
   padding: 0.7rem 1.1rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--muted);
   border-radius: var(--radius);
   color: var(--text);
   font-family: var(--font-ui);
@@ -513,7 +513,6 @@ code,
  */
 .actions .btn {
   background: color-mix(in srgb, var(--bg) 30%, transparent);
-  border-color: var(--muted);
 }
 
 .actions .btn-primary {
