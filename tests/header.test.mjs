@@ -112,13 +112,18 @@ const paddings = {
 };
 const layoutOf = (row) => (row.width <= 36 * row.rootPx ? "phone" : "wide");
 
-test("scroll-padding-top is at least the measured header height at every measured width and text size", () => {
+// Header height depends on the system UI font, and only headless Chrome on Windows was measured,
+// so the padding must clear every measured header by this much.
+const MARGIN_REM = 0.5;
+
+test("scroll-padding-top clears the measured header height by the safety margin at every measured width and text size", () => {
   assert.ok(measured.rows.length >= 20);
   for (const row of measured.rows) {
-    const padding = paddings[layoutOf(row) === "phone" ? "phone" : "wide"] * row.rootPx;
+    const padding = paddings[layoutOf(row)] * row.rootPx;
+    const needed = row.headerPx + MARGIN_REM * row.rootPx;
     assert.ok(
-      padding >= row.headerPx,
-      `${row.text} text, ${row.width}px: the header is ${row.headerPx}px, scroll-padding-top ${padding}px`,
+      padding >= needed,
+      `${row.text} text, ${row.width}px: the header is ${row.headerPx}px, so scroll-padding-top must be at least ${needed}px, and it is ${padding}px`,
     );
   }
 });
@@ -147,15 +152,18 @@ test("the measurements cover the widths and text sizes that were asked for, in b
   }
 });
 
-test("the padding is only as high as it needs to be: within half a rem of the tallest header in its layout", () => {
+test("the padding is only as high as it needs to be: the safety margin plus at most half a rem of rounding over the tallest header in its layout", () => {
   for (const layout of ["wide", "phone"]) {
     const tallest = Math.max(
       ...measured.rows.filter((row) => layoutOf(row) === layout).map((row) => row.headerRem),
     );
-    assert.ok(paddings[layout] >= tallest, `${layout}: ${paddings[layout]}rem under ${tallest}rem`);
     assert.ok(
-      paddings[layout] - tallest <= 0.5,
-      `${layout}: ${paddings[layout]}rem is far over ${tallest}rem`,
+      paddings[layout] >= tallest + MARGIN_REM,
+      `${layout}: ${paddings[layout]}rem is under ${tallest}rem plus the ${MARGIN_REM}rem margin`,
+    );
+    assert.ok(
+      paddings[layout] - tallest <= MARGIN_REM + 0.5,
+      `${layout}: ${paddings[layout]}rem is far over ${tallest}rem plus the margin`,
     );
   }
 });

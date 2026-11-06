@@ -191,10 +191,11 @@ html.js.bar-off {
 }
 
 /* A focused element is never left under the header (WCAG 2.4.11). The values are the tallest the
-   header measures, rounded up (tests/fixtures/header-heights.json): 6.02rem where the nav wraps
-   at 577 to 610px, 8.04rem on a phone, and 15.62rem on a phone at 200% text. */
+   header measures plus 0.5rem of margin, because the height depends on the system UI font and
+   only headless Chrome on Windows was measured (tests/fixtures/header-heights.json): 6.02rem
+   where the nav wraps at 577 to 610px, and 15.62rem on a phone at 200% text. */
 .js {
-  scroll-padding-top: 6.1rem;
+  scroll-padding-top: 6.6rem;
 }
 
 .brand {
@@ -807,7 +808,7 @@ html.js.bar-off {
   }
 
   .js {
-    scroll-padding-top: 16rem;
+    scroll-padding-top: 16.5rem;
   }
 }
 
