@@ -192,10 +192,10 @@ html.js.bar-off {
 
 /* A focused element is never left under the header (WCAG 2.4.11). The values are the tallest the
    header measures plus 0.5rem of margin, because the height depends on the system UI font and
-   only headless Chrome on Windows was measured (tests/fixtures/header-heights.json): 6.02rem
-   where the nav wraps at 577 to 610px, and 15.62rem on a phone at 200% text. */
+   only headless Chrome on Windows was measured (tests/fixtures/header-heights.json): 3.83rem
+   in the one-row layout, and 9.47rem on a phone at 200% text, where the nav takes three rows. */
 .js {
-  scroll-padding-top: 6.6rem;
+  scroll-padding-top: 4.4rem;
 }
 
 .brand {
@@ -796,19 +796,36 @@ html.js.bar-off {
   }
 }
 
-/* On a phone the brand gets its own row, and the settings button sits at the right end of the
-   last nav row, so the focus order (brand, nav, button) is also the reading order. */
+/* On a phone the brand gets its own row, as tall as the settings button, which sits at the right
+   end of that row (the markup order, and so the focus order, is still brand, nav, button). The
+   nav has the full width of the row below it. */
 @media (max-width: 36rem) {
+  .site-header .wrap {
+    padding-block: var(--space-1) var(--space-2);
+    padding-right: var(--space-3);
+    row-gap: var(--space-1);
+  }
+
   .brand {
     flex-basis: 100%;
+    line-height: 2.75rem;
   }
 
   .site-nav {
-    flex: 1 1 0;
+    flex: 1 1 100%;
+  }
+
+  .site-nav ul {
+    column-gap: 0.75rem;
+  }
+
+  .settings {
+    top: var(--space-1);
+    bottom: auto;
   }
 
   .js {
-    scroll-padding-top: 16.5rem;
+    scroll-padding-top: 10rem;
   }
 }
 

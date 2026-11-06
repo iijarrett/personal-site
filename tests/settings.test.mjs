@@ -92,17 +92,54 @@ test("the panel sits flush under the button and never outgrows a phone", () => {
   assert.match(panel, /font-family: var\(--font-ui\)/);
 });
 
-test("on a phone the brand has its own row, and the settings button is pinned at the bottom right of the header", () => {
+test("on a phone the settings button is on the brand row, right-aligned and centred with it; the markup order is unchanged", () => {
   const phone = css.match(/@media \(max-width: 36rem\)\s*\{([\s\S]*?)\n\}\n/)?.[1] ?? "";
-  assert.match(phone, /\.brand\s*\{\s*flex-basis: 100%/);
-  assert.match(phone, /\.site-nav\s*\{\s*flex: 1 1 0/);
-  const settings = settingsCss.match(/\.settings\s*\{[^}]*\}/)?.[0] ?? "";
+  const rule = (selector) =>
+    phone.match(new RegExp(`${selector.replace(/[.]/g, "\\.")}\\s*\\{([^}]*)\\}`))?.[1] ?? "";
+  const length = (text, property) => text.match(new RegExp(`${property}: ([\\d.]+)rem`))?.[1] ?? "";
+  // The brand row is as tall as the button, so the brand text and the button share a centre.
+  const button = css.match(/\.settings-btn\s*\{[^}]*\}/)?.[0] ?? "";
+  assert.equal(length(button, "height"), "2.75");
+  assert.equal(length(rule(".brand"), "line-height"), "2.75");
+  assert.match(rule(".brand"), /flex-basis: 100%/);
+  // The button sits at the top of the header, at the top of that row (the wrap's top padding).
+  assert.match(rule(".site-header .wrap"), /padding-block: var\(--space-1\) /);
+  assert.match(rule(".settings"), /top: var\(--space-1\)/);
+  assert.match(rule(".settings"), /bottom: auto/);
+  // The nav gets the full row below, so the right padding that kept it clear of the button is gone.
+  assert.match(rule(".site-nav"), /flex: 1 1 100%/);
+  assert.match(rule(".site-header .wrap"), /padding-right: var\(--space-3\)/);
+  // The base rule, which a desktop still uses: bottom right, absolute, never in the flow.
+  const settings = css.match(/\.settings\s*\{[^}]*\}/)?.[0] ?? "";
   assert.match(settings, /position: absolute/);
   assert.match(settings, /bottom: 0\.5rem/);
   assert.match(
     settings,
     /right: calc\(var\(--space-3\) \+ max\(0px, \(100% - var\(--page\)\) \/ 2\)\)/,
   );
+  // Placement is CSS only: the markup is still brand, nav, then the button.
+  const order = ['class="brand"', 'class="site-nav"', 'class="settings-btn"'].map((needle) =>
+    header.indexOf(needle),
+  );
+  assert.ok(order[0] > 0 && order[0] < order[1] && order[1] < order[2], order.join());
+});
+
+test("on a phone the nav is tightened only by its gap: the type stays 15px or larger and the links keep a 24px tap area", () => {
+  const phone = css.match(/@media \(max-width: 36rem\)\s*\{([\s\S]*?)\n\}\n/)?.[1] ?? "";
+  assert.ok(!/font-size/.test(phone), "the phone rules change a font size");
+  const base = Number.parseFloat(css.match(/\nbody\s*\{[^}]*font-size: ([\d.]+)rem/)?.[1] ?? "NaN");
+  assert.ok(base * 16 >= 15, `body text is ${base * 16}px`);
+  // A link is its line plus 0.25rem above and below, so well over 24px at the default size.
+  const link = css.match(/\.site-nav a\s*\{[^}]*\}/)?.[0] ?? "";
+  assert.match(link, /padding-block: var\(--space-1\)/);
+  assert.ok(base * 16 * 1.6 + 2 * 4 >= 24);
+  const gap = Number.parseFloat(phone.match(/column-gap: ([\d.]+)rem/)?.[1] ?? "NaN");
+  assert.ok(gap >= 0.5 && gap <= 1, `the phone nav gap is ${gap}rem`);
+});
+
+test("the nav link to the notes site is labelled Notes, and nothing still calls it Knowledge Base", () => {
+  assert.match(header, /<a href="https:\/\/notes\.jarrettd\.com\/">Notes<\/a>/);
+  assert.ok(!/Knowledge Base/.test(header));
 });
 
 // ---------- Contrast, in both themes ----------

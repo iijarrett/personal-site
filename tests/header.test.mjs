@@ -136,7 +136,7 @@ test("the measurements cover the widths and text sizes that were asked for, in b
       assert.ok(widths.includes(width), `${text} ${width}px was not measured`);
     }
   }
-  // The band where the nav wraps under the brand just above the phone layout, at 100% and 200%.
+  // Widths either side of the phone layout's edge (36rem is 576px at 100%), and the edge at 200%.
   for (const [text, width] of [
     ["100%", 577],
     ["100%", 607],
