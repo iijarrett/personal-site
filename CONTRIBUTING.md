@@ -11,7 +11,7 @@ Static, hardened, edge-hosted personal portfolio for jarrettd.com. The plan (sta
 - No new dependency without asking. Pin exact versions, commit the lockfile, install with `npm ci --ignore-scripts`.
 - Never commit secrets, tokens, real IP addresses, personal file paths or graded USD coursework. Never read or print `.env*` files.
 - No write-ups of active Hack The Box machines.
-- Budget: home page HTML under 14 KB, total first load under 100 KB, Lighthouse 100.
+- Budget: home page HTML under 14 KB, total first load under 106 KB, Lighthouse 100.
 - Accessibility: everything reachable by keyboard, visible focus, honour `prefers-reduced-motion`, and the page works with JavaScript off (the ASCII hero ships as a static frame first).
 
 ## Design

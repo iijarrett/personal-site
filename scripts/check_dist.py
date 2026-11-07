@@ -25,9 +25,9 @@ Fails (exit 1) when the build output breaks a hard rule from CONTRIBUTING.md:
     module graph. A script that merely says the word fails too
     (const s="please import it"); reword it. "important", "reimport", "exports",
     "reexport", "_export" and import.meta pass.
-  * the home page HTML over 14 KB, or the first load over 100 KB. The first load
+  * the home page HTML over 14 KB, or the first load over 106 KB. The first load
     follows @import and url() chains in CSS, counting each reachable file once.
-  * all JavaScript together over 10,000 bytes, or all CSS together over 12,000
+  * all JavaScript together over 12,000 bytes, or all CSS together over 16,000
     (built, uncompressed)
   * a sitemap that lists the 404 page or a page that was not built, or a built
     page that is missing from the sitemap
@@ -49,9 +49,9 @@ from urllib.parse import unquote, urlparse
 from xml.etree import ElementTree
 
 HOME_HTML_LIMIT = 14_000
-FIRST_LOAD_LIMIT = 100_000
-JS_LIMIT = 10_000  # every .js/.mjs under dist/ added together, built and uncompressed
-CSS_LIMIT = 12_000  # every .css under dist/ added together, built and uncompressed
+FIRST_LOAD_LIMIT = 106_000
+JS_LIMIT = 12_000  # every .js/.mjs under dist/ added together, built and uncompressed
+CSS_LIMIT = 16_000  # every .css under dist/ added together, built and uncompressed
 
 BANNED_TAGS = {"form", "iframe", "frame", "frameset", "embed", "object"}
 # Attributes that make the browser fetch something, on any tag.

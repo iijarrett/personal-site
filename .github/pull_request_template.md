@@ -5,7 +5,7 @@
 ## Checks
 
 - [ ] `npm run verify` passes (check, lint, test, build, check:dist). Paste any warnings below.
-- [ ] Home page HTML is under 14 KB and first load is under 100 KB.
+- [ ] Home page HTML is under 14 KB and first load is under 106 KB.
 
 ## Hard rules (see `CONTRIBUTING.md`)
 

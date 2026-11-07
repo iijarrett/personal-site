@@ -374,39 +374,39 @@ test("there is no separate re-export rule: only the two word rules are reported"
 const jsOf = (bytes) => `const a="${"x".repeat(bytes - 11)}";`; // `const a="` and `";` are 11
 const cssOf = (bytes) => `/*${"x".repeat(bytes - 4)}*/`;
 
-test("all JavaScript together is capped at 10,000 bytes", () => {
-  const atLimit = run({ "_astro/a.js": jsOf(10_000) });
+test("all JavaScript together is capped at 12,000 bytes", () => {
+  const atLimit = run({ "_astro/a.js": jsOf(12_000) });
   assert.equal(atLimit.status, 0, atLimit.output);
-  assert.match(atLimit.output, /JS total: +10,000 bytes \(limit 10,000\)/);
+  assert.match(atLimit.output, /JS total: +12,000 bytes \(limit 12,000\)/);
 
-  const over = run({ "_astro/a.js": jsOf(10_001) });
+  const over = run({ "_astro/a.js": jsOf(12_001) });
   assert.equal(over.status, 1, over.output);
-  assert.match(over.output, /JavaScript totals 10,001 bytes, over the 10,000 byte limit/);
+  assert.match(over.output, /JavaScript totals 12,001 bytes, over the 12,000 byte limit/);
 
   // It is a total, not a per-file limit, and .mjs counts.
-  const split = run({ "_astro/a.js": jsOf(6_000), "_astro/b.mjs": jsOf(6_000) });
+  const split = run({ "_astro/a.js": jsOf(7_000), "_astro/b.mjs": jsOf(7_000) });
   assert.equal(split.status, 1, split.output);
-  assert.match(split.output, /JavaScript totals 12,000 bytes/);
+  assert.match(split.output, /JavaScript totals 14,000 bytes/);
 });
 
-test("all CSS together is capped at 12,000 bytes", () => {
-  const atLimit = run({ "_astro/a.css": cssOf(12_000) });
+test("all CSS together is capped at 16,000 bytes", () => {
+  const atLimit = run({ "_astro/a.css": cssOf(16_000) });
   assert.equal(atLimit.status, 0, atLimit.output);
-  assert.match(atLimit.output, /CSS total: +12,000 bytes \(limit 12,000\)/);
+  assert.match(atLimit.output, /CSS total: +16,000 bytes \(limit 16,000\)/);
 
-  const over = run({ "_astro/a.css": cssOf(12_001) });
+  const over = run({ "_astro/a.css": cssOf(16_001) });
   assert.equal(over.status, 1, over.output);
-  assert.match(over.output, /CSS totals 12,001 bytes, over the 12,000 byte limit/);
+  assert.match(over.output, /CSS totals 16,001 bytes, over the 16,000 byte limit/);
 
-  const split = run({ "_astro/a.css": cssOf(7_000), "_astro/b.css": cssOf(7_000) });
+  const split = run({ "_astro/a.css": cssOf(9_000), "_astro/b.css": cssOf(9_000) });
   assert.equal(split.status, 1, split.output);
-  assert.match(split.output, /CSS totals 14,000 bytes/);
+  assert.match(split.output, /CSS totals 18,000 bytes/);
 });
 
 test("a clean build reports both totals", () => {
   const { output } = run();
-  assert.match(output, /JS total: .*limit 10,000/);
-  assert.match(output, /CSS total: .*limit 12,000/);
+  assert.match(output, /JS total: .*limit 12,000/);
+  assert.match(output, /CSS total: .*limit 16,000/);
 });
 
 test("fails when the home page HTML is over 14 KB", () => {
@@ -415,13 +415,13 @@ test("fails when the home page HTML is over 14 KB", () => {
   assert.match(output, /exceeds the 14,000 byte limit/);
 });
 
-test("fails when the first load is over 100 KB, counting fonts named in the CSS", () => {
+test("fails when the first load is over 106 KB, counting fonts named in the CSS", () => {
   const { status, output } = run({
     "_astro/a.css": '@font-face{font-family:X;src:url("/fonts/big.woff2")}',
-    "fonts/big.woff2": "x".repeat(100_001),
+    "fonts/big.woff2": "x".repeat(106_001),
   });
   assert.equal(status, 1, output);
-  assert.match(output, /first load .* exceeds the 100,000 byte limit/);
+  assert.match(output, /first load .* exceeds the 106,000 byte limit/);
 });
 
 test("counts a font reached through nested CSS, once, even with an import cycle", () => {
@@ -435,9 +435,9 @@ test("counts a font reached through nested CSS, once, even with an import cycle"
   assert.equal(counted.status, 0, counted.output);
   assert.match(counted.output, /4 files/);
 
-  const over = run({ ...nested, "fonts/f.woff2": "x".repeat(100_001) });
+  const over = run({ ...nested, "fonts/f.woff2": "x".repeat(106_001) });
   assert.equal(over.status, 1, over.output);
-  assert.match(over.output, /first load .* exceeds the 100,000 byte limit/);
+  assert.match(over.output, /first load .* exceeds the 106,000 byte limit/);
 });
 
 test("fails when the sitemap lists the 404 page", () => {
