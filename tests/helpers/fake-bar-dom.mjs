@@ -2,7 +2,17 @@
 // scroll, wheel and pointer events, the <html> classes, the header's focus events and a media
 // query. Nothing here is a spec-accurate DOM.
 
-export function installBarDom({ wide = true, scrollY = 0 } = {}) {
+// `focusVisible` puts keyboard focus inside the header before the script starts (a late bundle).
+// `scrollHeight` and `innerHeight` give the page its real scroll range, 0 to scrollHeight -
+// innerHeight. `failHeaderListener` makes header.addEventListener throw for that event type.
+export function installBarDom({
+  wide = true,
+  scrollY = 0,
+  focusVisible = false,
+  scrollHeight = 5000,
+  innerHeight = 800,
+  failHeaderListener = null,
+} = {}) {
   const state = { scrollY, wide };
   const windowListeners = new Map();
   const rootListeners = new Map();
@@ -16,12 +26,18 @@ export function installBarDom({ wide = true, scrollY = 0 } = {}) {
   };
 
   const inside = { name: "a link inside the header" };
+  const addToHeader = add(headerListeners);
   const header = {
-    addEventListener: add(headerListeners),
+    addEventListener(type, listener) {
+      if (type === failHeaderListener) throw new Error(`cannot listen for ${type}`);
+      addToHeader(type, listener);
+    },
     contains: (node) => node === inside,
     getBoundingClientRect: () => ({ bottom: 61 }),
+    matches: (selector) => selector === ":has(:focus-visible)" && focusVisible,
   };
   const root = {
+    scrollHeight,
     addEventListener: add(rootListeners),
     classList: {
       toggle(name, force) {
@@ -44,6 +60,7 @@ export function installBarDom({ wide = true, scrollY = 0 } = {}) {
 
   const installed = {
     document,
+    innerHeight,
     addEventListener: add(windowListeners),
     matchMedia: () => media,
   };

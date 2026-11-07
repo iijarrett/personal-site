@@ -12,30 +12,34 @@ export function initBar(): void {
   const root = document.documentElement;
   // The same query as the CSS: a screen over 640px whose primary pointer can hover.
   const wide = matchMedia("(min-width: 641px) and (hover: hover)");
-  let state: BarState = { ...START, last: Math.max(0, scrollY) };
+  // The scroll position clamped to the page's real range, so an overscroll bounce at either end
+  // (iOS rubber-banding) is not read as scrolling.
+  const pos = (): number => Math.max(0, Math.min(scrollY, root.scrollHeight - innerHeight));
+  // The bundle can run late, with keyboard focus already in the header.
+  let state: BarState = { ...START, last: pos(), focus: header.matches(":has(:focus-visible)") };
   let shown = false;
+  // Handlers do nothing until setup has finished, so a throw part-way through leaves no marker
+  // class behind and the CSS failsafe stays in charge.
+  let live = false;
 
   const update = (next: BarState = state): void => {
+    if (!live) return;
     state = next;
-    shown = barShown(state, wide.matches, scrollY <= 0);
+    shown = barShown(state, wide.matches, !pos());
     root.classList.toggle("bar-on", shown);
     root.classList.toggle("bar-off", !shown);
   };
 
-  // Scrolling negative (an overscroll bounce) counts as the top.
-  addEventListener("scroll", () => update(scrolled(state, Math.max(0, scrollY))), {
-    passive: true,
-  });
-  addEventListener("wheel", (event) => update(wheel(state, event.deltaY, scrollY <= 0)), {
-    passive: true,
-  });
+  const passive = { passive: true };
+  addEventListener("scroll", () => update(scrolled(state, pos())), passive);
+  addEventListener("wheel", (event) => update(wheel(state, event.deltaY, !pos())), passive);
   addEventListener(
     "pointermove",
     (event) => {
       if (event.pointerType !== "mouse") return;
       update(pointerAt(state, event.clientY, shown, header.getBoundingClientRect().bottom));
     },
-    { passive: true },
+    passive,
   );
   root.addEventListener("pointerleave", () => update({ ...state, edge: false }));
   // Only keyboard focus counts: a mouse click on the settings button should not bring the nav.
@@ -46,5 +50,6 @@ export function initBar(): void {
     if (!header.contains(event.relatedTarget as Node | null)) update({ ...state, focus: false });
   });
   wide.addEventListener("change", () => update());
+  live = true;
   update();
 }

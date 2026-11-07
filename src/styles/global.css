@@ -166,6 +166,9 @@ code,
  * Before the script has run there is no marker. A wide screen starts with the bar hidden, so it
  * never flashes into view and away, but if the script never runs (the bundle fails to load or
  * throws) a CSS animation shows the bar again after 3s. A narrow screen starts with it shown.
+ * The animation is outside the media query, so crossing the breakpoint does not restart it. A
+ * header with keyboard focus in it is never hidden by the pre-script state (a bare `header`
+ * does the job: the site header is the only <header> element).
  * The head script's .js is required for all of it, so without JavaScript nothing hides.
  */
 html.js.bar-off {
@@ -174,14 +177,14 @@ html.js.bar-off {
 }
 
 @media (min-width: 641px) and (hover: hover) {
-  html.js:not(.bar-on):not(.bar-off) {
+  html.js:not(.bar-on, .bar-off, :has(header :focus-visible)) {
     --bar-y: -100%;
     --float: var(--muted);
   }
+}
 
-  html.js:not(.bar-on):not(.bar-off) .bar {
-    animation: bar-failsafe 1ms 3s forwards;
-  }
+html.js:not(.bar-on, .bar-off) .bar {
+  animation: bar-failsafe 1ms 3s forwards;
 }
 
 @keyframes bar-failsafe {
@@ -250,6 +253,7 @@ html.js.bar-off {
 }
 
 /* Under .js the header lets clicks through (see the header rules), so these take them. */
+/* biome-ignore lint/style/noDescendingSpecificity: the pre-script bar rules above are more specific, and none of them sets pointer-events */
 .js .bar,
 .js .settings,
 .js .skip-link {

@@ -150,6 +150,64 @@ test("if the script throws before it has decided, no marker class is left, so th
   assert.equal(dom.bar, "");
 });
 
+test("a bundle that runs late, with keyboard focus already in the header, starts with the bar shown and holding", (t) => {
+  const dom = start(t, { wide: true, focusVisible: true });
+  assert.equal(dom.bar, "bar-on");
+  dom.scrollTo(500);
+  assert.equal(dom.bar, "bar-on", "the focus holds it against scrolling down");
+  dom.focusOut(null);
+  assert.equal(dom.bar, "bar-off");
+});
+
+test("a late bundle with focus in the header that is not keyboard focus (a click) still starts hidden", (t) => {
+  assert.equal(start(t, { wide: true, focusVisible: false }).bar, "bar-off");
+});
+
+test("a rubber-band rebound at the bottom of the page is not scrolling up", (t) => {
+  // The page scrolls from 0 to 2000 - 800 = 1200.
+  const dom = start(t, { wide: true, scrollHeight: 2000, innerHeight: 800 });
+  dom.wheel(-10);
+  assert.equal(dom.bar, "bar-on");
+  dom.scrollTo(1200);
+  assert.equal(dom.bar, "bar-off");
+  dom.scrollTo(1240); // pulled past the end
+  dom.scrollTo(1200); // and the rebound
+  assert.equal(dom.bar, "bar-off");
+  dom.scrollTo(1180); // a real scroll up still shows it
+  assert.equal(dom.bar, "bar-on");
+});
+
+test("a page no taller than the window has a scroll range of 0, not a negative one", (t) => {
+  const dom = start(t, { wide: true, scrollHeight: 700, innerHeight: 800 });
+  dom.wheel(-10);
+  assert.equal(dom.bar, "bar-on");
+  dom.scrollTo(30); // a position outside the range counts as 0: not a move down
+  assert.equal(dom.bar, "bar-on");
+});
+
+test("if setup throws after the scroll listener is registered, the handlers leave no marker and the failsafe stays in charge", (t) => {
+  // header.addEventListener runs after the scroll listener, so by then it is already registered.
+  const dom = installBarDom({ wide: true, failHeaderListener: "focusout" });
+  t.after(() => dom.restore());
+  assert.throws(() => initBar(), /cannot listen for focusout/);
+  assert.equal(dom.bar, "", "no decision was made");
+  for (const step of [
+    () => dom.scrollTo(500),
+    () => dom.scrollTo(100),
+    () => dom.wheel(-50),
+    () => dom.pointer(3),
+    () => dom.pointer(400),
+    () => dom.pointerLeaveWindow(),
+    () => dom.focusIn(true),
+    () => dom.focusOut(null),
+    () => dom.setWide(false),
+    () => dom.setWide(true),
+  ]) {
+    step();
+    assert.deepEqual(dom.classes(), [], "a handler set a marker after a failed setup");
+  }
+});
+
 test("without a header it does nothing and does not throw", (t) => {
   const dom = installBarDom();
   t.after(() => dom.restore());

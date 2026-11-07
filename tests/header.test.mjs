@@ -57,7 +57,7 @@ test("the bar's hide rules: bar-off hides at any width, and before the script a 
   assert.match(css, /\nhtml\.js\.bar-off\s*\{\s*--bar-y: -100%;\s*--float: var\(--muted\);\s*\}/);
   assert.match(
     css,
-    /@media \(min-width: 641px\) and \(hover: hover\)\s*\{\s*html\.js:not\(\.bar-on\):not\(\.bar-off\)\s*\{\s*--bar-y: -100%;\s*--float: var\(--muted\);\s*\}/,
+    /@media \(min-width: 641px\) and \(hover: hover\)\s*\{\s*html\.js:not\(\.bar-on, \.bar-off, :has\(header :focus-visible\)\)\s*\{\s*--bar-y: -100%;\s*--float: var\(--muted\);\s*\}/,
   );
   assert.ok(!/@media not /.test(css), "a separate narrow media query is back");
 });

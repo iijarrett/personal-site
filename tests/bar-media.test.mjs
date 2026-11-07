@@ -97,7 +97,7 @@ const preludeBefore = (selector) => {
   assert.ok(found, `no @media block around ${selector}`);
   return found[1];
 };
-const WIDE_CSS = preludeBefore("html.js:not(.bar-on):not(.bar-off)");
+const WIDE_CSS = preludeBefore("html.js:not(.bar-on, .bar-off, :has(header :focus-visible))");
 /** Narrow is whatever wide is not. The CSS no longer writes it out: once the script has run, bar-off hides at any width. */
 const NARROW = `not (${WIDE_CSS})`;
 const WIDE_JS = script.match(/matchMedia\(\s*"([^"]+)"\s*\)/)?.[1];
@@ -231,7 +231,7 @@ test("the hide rules still need .js, so with JavaScript off the header is always
   assert.match(css, /\nhtml\.js\.bar-off\s*\{\s*--bar-y: -100%/);
   assert.match(
     css,
-    /@media [^{]*\{\s*html\.js:not\(\.bar-on\):not\(\.bar-off\)\s*\{\s*--bar-y: -100%/,
+    /@media [^{]*\{\s*html\.js:not\(\.bar-on, \.bar-off, :has\(header :focus-visible\)\)\s*\{\s*--bar-y: -100%/,
   );
   assert.match(css, /\.js \.site-header\s*\{\s*position: sticky/);
   assert.ok(!/\n\.site-header\s*\{[^}]*(sticky|--bar-y|pointer-events)/.test(css));
