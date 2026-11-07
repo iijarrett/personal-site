@@ -224,8 +224,8 @@ test("a harmless script passes, and the script guard has no allowlist", () => {
 // import.meta. It does not try to read binding names or tell a static import from a
 // dynamic one, so Unicode names, comments, line breaks and odd spacing cannot slip
 // past it; and it cannot tell a statement from a string or a comment either, so those
-// fail too. Until the game phase (when modules or lazy loading may be wanted, and a real
-// tokenizer with them) nothing in the built JS may say the word.
+// fail too. The one exception is the narrow lazy-load form tested further down. Anything
+// wider needs a real tokenizer first.
 
 const importForms = [
   // the re-check findings
@@ -290,7 +290,7 @@ for (const [label, source] of [...importForms, ...exportForms]) {
     assert.ok(output.includes(`FAIL _astro/a.js: ${label} in script`), output);
     assert.match(
       output,
-      /one self-contained file with no imports or exports/,
+      /Built scripts have no imports or exports\. The one exception/,
       "the message should say what to do",
     );
   });
@@ -312,6 +312,238 @@ test("an entry script that imports another file fails, whether or not that file 
   });
   assert.equal(missing.status, 1, missing.output);
   assert.match(missing.output, /FAIL _astro\/entry\.js: the word "import" in script/);
+});
+
+// ---- lazy loading: one narrow, exact import() of a built file --------------------------
+//
+// A page script may say import("./name.js") for a built .js file in its own folder. That
+// file is a lazy script: it may export but never import. Everything else about imports
+// and exports is unchanged, and the lazy file is scanned like any other script.
+
+const entryPage = page('<script type="module" src="/_astro/entry.js"></script>');
+const lazyFile = "function go(){}export{go as initArcade};";
+const lazyBuild = (entry, lazy = lazyFile, extra = {}) =>
+  run({
+    "index.html": entryPage,
+    "_astro/entry.js": entry,
+    ...(lazy === null ? {} : { "_astro/arcade.abc.js": lazy }),
+    ...extra,
+  });
+
+test("a page script may import() one built same-folder file, and that file may export", () => {
+  for (const quote of ['"', "'", "`"]) {
+    const entry = `const a=1;a&&import(${quote}./arcade.abc.js${quote}).then(m=>m.initArcade());`;
+    const { status, output } = lazyBuild(entry);
+    assert.equal(status, 0, `${quote}\n${output}`);
+  }
+});
+
+test("the lazy file counts toward the JS total but not toward the first load", () => {
+  const { status, output } = lazyBuild(
+    'import("./arcade.abc.js");',
+    `export const a="${"x".repeat(9_000)}";`,
+  );
+  assert.equal(status, 0, output);
+  assert.match(output, /JS total: +9,\d{3} bytes/);
+  assert.match(output, / 3 files/); // index.html, the stylesheet, entry.js
+});
+
+test("a lazy file may not import, statically or dynamically, so the graph stays one level deep", () => {
+  for (const lazy of [
+    'import"./x.js";export const a=1;',
+    'import{a}from"./entry.js";export{a};',
+    'export const a=1;const f=()=>import("./entry.js");',
+    'export const a=1;const f=()=>import("./arcade.abc.js");',
+  ]) {
+    const { status, output } = lazyBuild('import("./arcade.abc.js");', lazy);
+    assert.equal(status, 1, `${lazy}\n${output}`);
+    assert.ok(
+      output.includes(`FAIL _astro/arcade.abc.js: ${IMPORT_WORD} in script`),
+      `${lazy}\n${output}`,
+    );
+  }
+});
+
+test("a page script that is not lazy still may not export, even when it imports a lazy file", () => {
+  const { status, output } = lazyBuild('export const a=1;import("./arcade.abc.js");');
+  assert.equal(status, 1, output);
+  assert.ok(output.includes(`FAIL _astro/entry.js: ${EXPORT_WORD} in script`), output);
+  assert.doesNotMatch(output, /FAIL _astro\/entry\.js: the word "import"/);
+});
+
+test("export is only allowed in a file a page script names: an unreferenced file still fails", () => {
+  const { status, output } = lazyBuild("const a=1;", lazyFile);
+  assert.equal(status, 1, output);
+  assert.ok(output.includes(`FAIL _astro/arcade.abc.js: ${EXPORT_WORD} in script`), output);
+});
+
+test("the target must be a built .js file, or the import() fails like any import", () => {
+  for (const entry of [
+    'import("./gone.js");',
+    'import("./arcade.abc.mjs");', // only .js targets qualify
+    'import("./sub/arcade.abc.js");', // another folder
+  ]) {
+    // The .mjs and subfolder targets are built too, so only the shape of the import is at fault.
+    const built = { "_astro/arcade.abc.mjs": lazyFile, "_astro/sub/arcade.abc.js": lazyFile };
+    const { status, output } = lazyBuild(entry, lazyFile, built);
+    assert.equal(status, 1, `${entry}\n${output}`);
+    assert.ok(
+      output.includes(`FAIL _astro/entry.js: ${IMPORT_WORD} in script`),
+      `${entry}\n${output}`,
+    );
+  }
+});
+
+test("only the exact form qualifies: spacing, comments, other paths, URLs and computed names all fail", () => {
+  const notExact = [
+    "import ('./arcade.abc.js')",
+    'import("./arcade.abc.js" )',
+    'import( "./arcade.abc.js")',
+    'import/* c */("./arcade.abc.js")',
+    'import("/_astro/arcade.abc.js")',
+    'import("../_astro/arcade.abc.js")',
+    'import("arcade.abc.js")',
+    'import("./arcade.abc.js?v=1")',
+    'import("./arcade.abc.js#x")',
+    'import("./arcade.abc.js",{})',
+    'import("./arcade.abc.js"+x)',
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: this is script source text, not a template
+    "import(`./arcade.abc.js${x}`)",
+    'import("./arcade.abc.js\\u0000")',
+    "import(u)",
+    'import("data:text/javascript,1")',
+    'import("https://cdn.example/x.js")',
+    'import"./arcade.abc.js"',
+    'import{initArcade}from"./arcade.abc.js"',
+    'import("./arcade.abc.js").then(()=>import("./other.js"))', // a second, missing target
+  ];
+  for (const entry of notExact) {
+    const { status, output } = lazyBuild(`const a=1;${entry};`, `${lazyFile}`);
+    assert.equal(status, 1, `${entry}\n${output}`);
+    assert.ok(
+      output.includes(`FAIL _astro/entry.js: ${IMPORT_WORD} in script`),
+      `${entry}\n${output}`,
+    );
+  }
+});
+
+test("a lazy file is scanned like any other script: eval, fetch, URLs and the rest still fail in it", () => {
+  for (const [label, body] of [
+    ["eval", 'eval("1")'],
+    ["fetch", "fetch(u)"],
+    ["innerHTML", "el.innerHTML=1"],
+    ["an absolute http(s):// URL", 'const u="https://example.com/x"'],
+    ['createElement("script")', 'document.createElement("script")'],
+  ]) {
+    const { status, output } = lazyBuild('import("./arcade.abc.js");', `export const a=1;${body};`);
+    assert.equal(status, 1, `${body}\n${output}`);
+    assert.ok(
+      output.includes(`FAIL _astro/arcade.abc.js: ${label} in script`),
+      `${body}\n${output}`,
+    );
+  }
+});
+
+test("a chain fails: the lazy file may not import() another, so there is no second level", () => {
+  const { status, output } = lazyBuild(
+    'import("./arcade.abc.js");',
+    'export const a=1;import("./deeper.abc.js");',
+    { "_astro/deeper.abc.js": "export const b=2;" },
+  );
+  assert.equal(status, 1, output);
+  assert.ok(output.includes(`FAIL _astro/arcade.abc.js: ${IMPORT_WORD} in script`), output);
+});
+
+test("the hint names the one exception", () => {
+  const { output } = lazyBuild('import"./x.js";');
+  assert.match(output, /may say import\("\.\/file\.js"\) for a built \.js file in its own folder/);
+});
+
+const REEXPORT = "a re-export (export ... from)";
+
+test("a lazy file may not re-export: export ... from is refused in every spelling", () => {
+  for (const body of [
+    'export * from "../missing.mjs";',
+    'export{x}from"./other.js";',
+    'export * as ns from "data:text/javascript,export const a=1";',
+    'export*from/* c */"./m.js";',
+    'export {x} from // c\n "./m.js";',
+    "export * from`./m.js`;",
+    'export {y} from\n"./m.js";',
+  ]) {
+    const { status, output } = lazyBuild('import("./arcade.abc.js");', `export const a=1;${body}`);
+    assert.equal(status, 1, `${body}\n${output}`);
+    assert.ok(
+      output.includes(`FAIL _astro/arcade.abc.js: ${REEXPORT} in script`),
+      `${body}\n${output}`,
+    );
+    assert.match(output, /may export its own names only/);
+  }
+});
+
+test("things that only look like a re-export pass: Array.from, a variable or key called from, export of a local", () => {
+  const lazy =
+    'const from=1,o={from:2};export const a=Array.from("ab").length+from+o.from;export{from as b};';
+  const { status, output } = lazyBuild('import("./arcade.abc.js");', lazy);
+  assert.equal(status, 0, output);
+});
+
+test("only a script a page loads can make a file lazy: a string, comment or property call elsewhere grants nothing", () => {
+  for (const other of [
+    "const s='import(\"./entry.js\")';",
+    '/*import("./entry.js")*/',
+    'x.import("./entry.js");',
+  ]) {
+    const { status, output } = run({
+      "index.html": entryPage,
+      "_astro/entry.js": "export const a=1;",
+      "_astro/other.js": other,
+    });
+    assert.equal(status, 1, `${other}\n${output}`);
+    assert.ok(
+      output.includes(`FAIL _astro/entry.js: ${EXPORT_WORD} in script`),
+      `${other}\n${output}`,
+    );
+  }
+});
+
+test("a script a page loads cannot also be a lazy script", () => {
+  const both = page(
+    '<script type="module" src="/_astro/entry.js"></script><script type="module" src="/_astro/second.js"></script>',
+  );
+  const { status, output } = run({
+    "index.html": both,
+    "_astro/entry.js": 'import("./second.js");',
+    "_astro/second.js": "export const a=1;",
+  });
+  assert.equal(status, 1, output);
+  assert.match(output, /FAIL _astro\/second\.js: is loaded by a page and also named by import\(\)/);
+});
+
+test("the name must match the built file's letter case exactly", () => {
+  const { status, output } = lazyBuild('import("./ARCADE.abc.js");');
+  assert.equal(status, 1, output);
+  assert.ok(output.includes(`FAIL _astro/entry.js: ${IMPORT_WORD} in script`), output);
+});
+
+test("a nested import() cannot hide behind a permitted one", () => {
+  for (const entry of ['import(import("./arcade.abc.js"));', 'import(("./arcade.abc.js"));']) {
+    const { status, output } = lazyBuild(entry);
+    assert.equal(status, 1, `${entry}\n${output}`);
+    assert.ok(
+      output.includes(`FAIL _astro/entry.js: ${IMPORT_WORD} in script`),
+      `${entry}\n${output}`,
+    );
+  }
+});
+
+test("a script that any page loads counts as a page script, whichever page it is", () => {
+  const { status, output } = run({
+    "about/index.html": page('<script type="module" src="/_astro/entry.js"></script>'),
+    "_astro/entry.js": 'import("./arcade.abc.js");',
+    "_astro/arcade.abc.js": lazyFile,
+  });
+  assert.equal(status, 0, output);
 });
 
 test("the old import-following is gone: the first load counts only what the page and its CSS reach", () => {
@@ -362,7 +594,7 @@ test("import.meta passes, and so do other words that merely contain the letters"
   assert.equal(status, 0, output);
 });
 
-test("there is no separate re-export rule: only the two word rules are reported", () => {
+test("outside a lazy file there is no separate re-export rule: only the two word rules are reported", () => {
   const { output } = run({ "_astro/a.js": 'export * from "./m.js";' });
   assert.ok(output.includes(`FAIL _astro/a.js: ${EXPORT_WORD} in script`), output);
   assert.doesNotMatch(output, /re-export/);
@@ -374,19 +606,19 @@ test("there is no separate re-export rule: only the two word rules are reported"
 const jsOf = (bytes) => `const a="${"x".repeat(bytes - 11)}";`; // `const a="` and `";` are 11
 const cssOf = (bytes) => `/*${"x".repeat(bytes - 4)}*/`;
 
-test("all JavaScript together is capped at 12,000 bytes", () => {
-  const atLimit = run({ "_astro/a.js": jsOf(12_000) });
+test("all JavaScript together is capped at 22,000 bytes", () => {
+  const atLimit = run({ "_astro/a.js": jsOf(22_000) });
   assert.equal(atLimit.status, 0, atLimit.output);
-  assert.match(atLimit.output, /JS total: +12,000 bytes \(limit 12,000\)/);
+  assert.match(atLimit.output, /JS total: +22,000 bytes \(limit 22,000\)/);
 
-  const over = run({ "_astro/a.js": jsOf(12_001) });
+  const over = run({ "_astro/a.js": jsOf(22_001) });
   assert.equal(over.status, 1, over.output);
-  assert.match(over.output, /JavaScript totals 12,001 bytes, over the 12,000 byte limit/);
+  assert.match(over.output, /JavaScript totals 22,001 bytes, over the 22,000 byte limit/);
 
   // It is a total, not a per-file limit, and .mjs counts.
-  const split = run({ "_astro/a.js": jsOf(7_000), "_astro/b.mjs": jsOf(7_000) });
+  const split = run({ "_astro/a.js": jsOf(12_000), "_astro/b.mjs": jsOf(12_000) });
   assert.equal(split.status, 1, split.output);
-  assert.match(split.output, /JavaScript totals 14,000 bytes/);
+  assert.match(split.output, /JavaScript totals 24,000 bytes/);
 });
 
 test("all CSS together is capped at 16,000 bytes", () => {
@@ -405,7 +637,7 @@ test("all CSS together is capped at 16,000 bytes", () => {
 
 test("a clean build reports both totals", () => {
   const { output } = run();
-  assert.match(output, /JS total: .*limit 12,000/);
+  assert.match(output, /JS total: .*limit 22,000/);
   assert.match(output, /CSS total: .*limit 16,000/);
 });
 

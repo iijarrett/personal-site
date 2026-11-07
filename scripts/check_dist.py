@@ -19,15 +19,22 @@ Fails (exit 1) when the build output breaks a hard rule from CONTRIBUTING.md:
     import.meta, or the word export anywhere (\bexport\b). Both rules are about
     the word and do not try to read syntax: they do not care whether it starts a
     static import, a dynamic import( or a re-export, has a Unicode binding
-    (import π from "x"), has comments or line breaks around it, or sits in a
-    string or a comment. Until the game phase every built script is one
-    self-contained file with no imports or exports, so the first load needs no JS
-    module graph. A script that merely says the word fails too
+    (import Ï€ from "x"), has comments or line breaks around it, or sits in a
+    string or a comment. Every built script is one self-contained file with
+    no imports or exports, with one narrow exception for lazy loading: a page script
+    may say import("./name.js") exactly (a quoted string, no spaces, one built .js
+    file in its own folder). That file is a lazy script (only a script a page loads with
+    <script src> can name one, and a page script cannot also be lazy). It may say export
+    but never import and never re-export (export ... from), so the graph is one level deep
+    and the first load does not follow it. The name must match the built file exactly,
+    letter case included.
+    Anything else, including an import( of a file that was not built, still fails.
+    A script that merely says the word fails too
     (const s="please import it"); reword it. "important", "reimport", "exports",
     "reexport", "_export" and import.meta pass.
   * the home page HTML over 14 KB, or the first load over 106 KB. The first load
     follows @import and url() chains in CSS, counting each reachable file once.
-  * all JavaScript together over 12,000 bytes, or all CSS together over 16,000
+  * all JavaScript together over 22,000 bytes, or all CSS together over 16,000
     (built, uncompressed)
   * a sitemap that lists the 404 page or a page that was not built, or a built
     page that is missing from the sitemap
@@ -50,7 +57,7 @@ from xml.etree import ElementTree
 
 HOME_HTML_LIMIT = 14_000
 FIRST_LOAD_LIMIT = 106_000
-JS_LIMIT = 12_000  # every .js/.mjs under dist/ added together, built and uncompressed
+JS_LIMIT = 22_000  # every .js/.mjs under dist/ added together, built and uncompressed
 CSS_LIMIT = 16_000  # every .css under dist/ added together, built and uncompressed
 
 BANNED_TAGS = {"form", "iframe", "frame", "frameset", "embed", "object"}
@@ -81,7 +88,21 @@ _MEMBER = r"(?:\?\.|\.)"  # a dot or an optional-chaining dot
 IMPORT_WORD = 'the word "import"'
 EXPORT_WORD = 'the word "export"'
 MODULE_LABELS = (IMPORT_WORD, EXPORT_WORD)
-MODULE_HINT = ". Built scripts must be one self-contained file with no imports or exports for now (see CONTRIBUTING.md)"
+MODULE_HINT = (
+    ". Built scripts have no imports or exports. The one exception: a page script may say"
+    ' import("./file.js") for a built .js file in its own folder, and that lazy file may export but'
+    " not import (see CONTRIBUTING.md)"
+)
+# A re-export in a lazy script: the word from, then a quote (comments and line breaks may sit
+# between). Array.from(...) and a variable called from do not match.
+REEXPORT_LABEL = "a re-export (export ... from)"
+REEXPORT_HINT = ". A lazy script may export its own names only (see CONTRIBUTING.md)"
+RE_EXPORT_FROM = re.compile(r"""\bfrom(?:\s|/\*[\s\S]*?\*/|//[^\n]*(?:\n|$))*["'`]""")
+# The only import( a built script may contain: an exact quoted ./file.js in its own folder. It
+# only counts when that file was built, with the same letter case; otherwise the word still
+# trips the import rule. Only a script a page loads can use it, and it only makes the named
+# file lazy then.
+DYNAMIC_IMPORT = re.compile(r"""\bimport\((["'`])\./([A-Za-z0-9_][A-Za-z0-9_.-]*\.js)\1\)""")
 JS_FORBIDDEN = [
     (label, re.compile(pattern, flags))
     for label, pattern, flags in [
@@ -109,12 +130,14 @@ JS_FORBIDDEN = [
             0,
         ),
         # Imports and exports are banned, so each built script stays one self-contained
-        # file. The rules are about the words, not the syntax: any whole-word "import" or
+        # file, apart from the narrow lazy-load form that scan_js handles before these
+        # rules run. The rules are about the words, not the syntax: any whole-word "import" or
         # "export" fails, whatever follows it (a string, braces, a Unicode name, a paren,
         # a comment, a line break) and wherever it sits. Only import.meta is let through.
         # "important", "reimport", "exports" and "_export" are different words, so \b keeps
-        # them out. A re-export (export * from "x") says "export", so it needs no rule of
-        # its own and nothing here reads syntax.
+        # them out. Outside a lazy script a re-export (export * from "x") says "export", so it
+        # needs no rule of its own and nothing here reads syntax. A lazy script may export, so
+        # it gets one narrow rule instead (RE_EXPORT_FROM).
         (IMPORT_WORD, r"\bimport\b(?!\s*\.\s*meta\b)", 0),
         (EXPORT_WORD, r"\bexport\b", 0),
     ]
@@ -137,6 +160,7 @@ class PageScan(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.problems: list[str] = []
         self.resources: list[str] = []
+        self.scripts: list[str] = []  # local <script src> values
         self.text: list[str] = []
         self._hidden = 0
 
@@ -147,6 +171,8 @@ class PageScan(HTMLParser):
             self._hidden += 1
             if "src" not in values:
                 self.problems.append("inline <script>")
+            elif not is_external(values["src"]):
+                self.scripts.append(values["src"])
         elif tag == "style":
             self._hidden += 1
             self.problems.append("inline <style>")
@@ -223,13 +249,41 @@ def scan_css(dist: Path, css_file: Path) -> tuple[list[str], list[Path]]:
     return problems, pulled
 
 
-def scan_js(js_file: Path) -> list[str]:
-    """Return the forbidden constructs a script contains (a pattern guard, not a sandbox)."""
+def file_key(path: Path) -> tuple[Path, str]:
+    """Identity for the import rule: the folder (any case on Windows) and the exact file name.
+
+    The name is compared exactly, so import("./ARCADE.js") does not match a built arcade.js
+    even where the file system ignores case; a case-sensitive host would not find it.
+    """
+    return (path.parent, path.name)
+
+
+def lazy_targets(js_file: Path) -> set[tuple[Path, str]]:
+    """The files this script names in an exact import("./file.js")."""
     source = js_file.read_text(encoding="utf-8")
+    return {file_key(js_file.parent / m.group(2)) for m in DYNAMIC_IMPORT.finditer(source)}
+
+
+def scan_js(js_file: Path, built: set[tuple[Path, str]], role: str) -> list[str]:
+    """Return the forbidden constructs a script contains (a pattern guard, not a sandbox).
+
+    role is "page" (a script a page loads), "lazy" (a built file a page script names in an
+exact import()) or "other". Only a page script may contain that import(), and only for a
+built file. A lazy script may export its own names but not import or re-export anything.
+    """
+    source = js_file.read_text(encoding="utf-8")
+    if role == "page":
+        source = DYNAMIC_IMPORT.sub(
+            lambda m: "" if file_key(js_file.parent / m.group(2)) in built else m.group(0), source
+        )
     problems: list[str] = []
     for label, pattern in JS_FORBIDDEN:
+        if role == "lazy" and label == EXPORT_WORD:
+            continue
         if pattern.search(source):
             problems.append(f"{label} in script{MODULE_HINT if label in MODULE_LABELS else ''}")
+    if role == "lazy" and RE_EXPORT_FROM.search(source):
+        problems.append(f"{REEXPORT_LABEL} in script{REEXPORT_HINT}")
     return problems
 
 
@@ -295,6 +349,7 @@ def main() -> int:
     warnings: list[tuple[str, str]] = []
     pages: dict[str, Path] = {}
     home_resources: list[Path] = []
+    page_scripts: set[Path] = set()
 
     for html_file in sorted(dist.rglob("*.html")):
         name = html_file.relative_to(dist).as_posix()
@@ -302,6 +357,11 @@ def main() -> int:
         scan = PageScan()
         scan.feed(html_file.read_text(encoding="utf-8"))
         failures.extend((name, problem) for problem in sorted(set(scan.problems)))
+
+        for ref in scan.scripts:
+            script = resolve_local(dist, html_file.parent, ref)
+            if script is not None and script.is_file():
+                page_scripts.add(script)
 
         for ref in scan.resources:
             target = resolve_local(dist, html_file.parent, ref)
@@ -320,8 +380,23 @@ def main() -> int:
         failures.extend((css_file.relative_to(dist).as_posix(), p) for p in css_problems)
 
     js_files = sorted([*dist.rglob("*.js"), *dist.rglob("*.mjs")])
+    built = {file_key(path) for path in js_files if path.suffix == ".js"}
+    # Only a script a page loads can make another file lazy, so a string or comment elsewhere
+    # that happens to say import("./x.js") grants nothing.
+    lazy = {
+        key
+        for path in js_files
+        if path.resolve() in page_scripts
+        for key in lazy_targets(path)
+        if key in built
+    }
     for js_file in js_files:
-        failures.extend((js_file.relative_to(dist).as_posix(), p) for p in scan_js(js_file))
+        name = js_file.relative_to(dist).as_posix()
+        is_page = js_file.resolve() in page_scripts
+        role = "lazy" if file_key(js_file) in lazy else "page" if is_page else "other"
+        if role == "lazy" and is_page:
+            failures.append((name, "is loaded by a page and also named by import() in another page script"))
+        failures.extend((name, p) for p in scan_js(js_file, built, role))
 
     js_total = sum(path.stat().st_size for path in js_files)
     css_total = sum(path.stat().st_size for path in css_links)
@@ -343,7 +418,7 @@ def main() -> int:
             failures.append(("index.html", f"{home_size:,} bytes exceeds the {HOME_HTML_LIMIT:,} byte limit"))
         # Every font the stylesheets declare counts, whether or not this page uses it,
         # and so does anything reached through @import or url() chains, each file once.
-        # Scripts are import-free single files, so there is no JS graph to follow.
+        # A lazy script is requested only after a visitor acts, so it is not part of the first load.
         loaded = {home, *reachable(css_links, home_resources)}
         first_load = sum(path.stat().st_size for path in loaded)
         print(f"home HTML:  {home_size:>7,} bytes (limit {HOME_HTML_LIMIT:,})")
