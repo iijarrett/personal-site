@@ -39,6 +39,9 @@ test("with JavaScript off nothing hides or sticks the header: every such rule is
         .trim()
         .replace(/^@media[^{]*\{/, "")
         .trim();
+      // The Security page's pinned intro is sticky in plain CSS on purpose (no script, see
+      // tests/showcase.test.mjs); this test is about the header.
+      if (selector === "html:not(.no-fx) .showcase-pin") continue;
       assert.match(
         selector,
         /\.js\b|html\.js/,
