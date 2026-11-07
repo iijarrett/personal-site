@@ -904,3 +904,93 @@ html.js:not(.bar-on, .bar-off) .bar {
     animation-range: entry 0% entry 30%;
   }
 }
+
+/* ---------- Hardening showcase (the Security page) ---------- */
+/*
+ * The intro is pinned with position: sticky, so it needs no script: it stays put while the four
+ * rules scroll past beside it. The pin is a scroll effect, so it follows the same switches as
+ * the rest: under prefers-reduced-motion and with the Motion switch off (.no-fx) it is a plain
+ * two-column layout, and on a narrow screen it is a stacked list. Each rule's left border lights
+ * up while it is mid-screen, driven by scroll position. That changes only a border colour, never
+ * opacity, so the text keeps its full contrast at every scroll position. A browser without
+ * scroll-driven animations shows every rule the same. Longhand animation properties, as in the
+ * scroll reveal above.
+ */
+.showcase {
+  display: grid;
+  gap: var(--space-5);
+  margin-block: var(--space-5);
+}
+
+.showcase-pin {
+  align-self: start;
+}
+
+.showcase h2 {
+  margin-top: var(--space-2);
+}
+
+.layers {
+  display: grid;
+  gap: var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.layer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-left: 2px solid var(--border);
+}
+
+.layer h3,
+.layer p {
+  margin: 0;
+}
+
+.layer code {
+  color: var(--accent-text);
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 48.0625rem) {
+  .showcase {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  }
+
+  .layer {
+    min-height: 55vh;
+  }
+}
+
+@media (min-width: 48.0625rem) and (prefers-reduced-motion: no-preference) {
+  html:not(.no-fx) .showcase-pin {
+    position: sticky;
+    top: 6rem;
+  }
+}
+
+@keyframes layer-lit {
+  0%,
+  100% {
+    border-left-color: var(--border);
+  }
+
+  30%,
+  70% {
+    border-left-color: var(--ring);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html:not(.no-fx) .layer {
+    animation-name: layer-lit;
+    animation-timing-function: linear;
+    animation-timeline: view();
+    animation-range: cover;
+  }
+}

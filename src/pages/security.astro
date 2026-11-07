@@ -1,11 +1,77 @@
 ---
 import Page from "../layouts/Page.astro";
+
+// Every rule here is something scripts/check_dist.py (or the review workflow) really does.
+// tests/showcase.test.mjs ties each claim and each command back to the repository.
+const layers = [
+  {
+    name: "Static only",
+    title: "Nothing to attack but files.",
+    text: "No server code, database, login or admin panel. Forms, iframes, embeds and objects fail the check, so the site has no input for a visitor to abuse.",
+    command: "python scripts/check_dist.py",
+  },
+  {
+    name: "No inline code",
+    title: "A strict Content Security Policy, with no exceptions to make.",
+    text: "No inline scripts or styles, no style attributes, no eval. When hosting applies the policy it can stay at script-src 'self'. A script that mentions eval, fetch or innerHTML fails the check.",
+    command: "python scripts/check_dist.py",
+  },
+  {
+    name: "Nothing third-party",
+    title: "Nothing loaded from anywhere else.",
+    text: "Fonts are self-hosted, with their checksums in the repository. A resource that points off-site, or a data: URL as an image, script or stylesheet, fails the check. Links out are fine; embedded content is not.",
+    command: "python scripts/check_dist.py",
+  },
+  {
+    name: "Reviewed and gated",
+    title: "Nothing reaches main without a pull request.",
+    text: "The main branch is protected, so changes arrive by pull request. Before merging, the author runs the full check suite and a second, read-only review. Dependencies are pinned and installed with install scripts off.",
+    command: "npm ci --ignore-scripts && npm run verify",
+  },
+];
 ---
 
 <Page title="Security" description="How this site is built and secured.">
   <h1>Security</h1>
   <p>
-    Stub. This page will list the headers, DNS controls and checks that protect the site, each with
-    a command you can run to verify it.
+    This site is a set of static files with a few hard rules. A script in the repository checks the
+    first three against the built site, and the repository is public, so you can run it yourself.
+  </p>
+
+  <section class="showcase" aria-labelledby="layers-title">
+    <div class="showcase-pin">
+      <p class="label">Hardening</p>
+      <h2 id="layers-title">Four rules, and how to check them.</h2>
+      <p>
+        In a clone of <a href="https://github.com/iijarrett/personal-site">the repository</a>, build
+        the site, then run the command beside each rule.
+      </p>
+      <p>
+        <code>npm ci --ignore-scripts</code><br />
+        <code>npm run build</code>
+      </p>
+    </div>
+    <ol class="layers" role="list">
+      {
+        layers.map((layer, i) => (
+          <li class="layer">
+            <p class="label">
+              {String(i + 1).padStart(2, "0")} · {layer.name}
+            </p>
+            <h3>{layer.title}</h3>
+            <p>{layer.text}</p>
+            <p>
+              <code>{layer.command}</code>
+            </p>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <h2>Not here yet</h2>
+  <p>
+    The response headers, the DNS controls and the live scan results arrive with hosting. This page
+    will link each one when it exists.
   </p>
 </Page>

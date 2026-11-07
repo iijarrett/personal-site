@@ -19,7 +19,14 @@ const body = media?.[2] ?? "";
 
 test("the reveal rule lives only inside the no-preference reduced-motion query", () => {
   assert.ok(media, "no (prefers-reduced-motion: no-preference) block found");
-  assert.equal(css.split("animation-timeline").length - 1, 1, "animation-timeline used elsewhere");
+  // Every scroll-driven animation on the site sits inside a no-preference block: take those
+  // blocks out and no timeline is left.
+  const blocks = /@media \(prefers-reduced-motion: no-preference\)\s*\{[^{}]*\{[^}]*\}\s*\}/g;
+  assert.equal([...css.matchAll(blocks)].length, 2, "the reveal and the showcase rules");
+  assert.ok(
+    !css.replace(blocks, "").includes("animation-timeline"),
+    "a scroll-driven animation sits outside the no-preference query",
+  );
   assert.equal(
     css.split("animation-name: reveal").length - 1,
     1,
