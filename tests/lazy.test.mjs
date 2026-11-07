@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { test } from "node:test";
 import { createGate } from "../src/lib/lazy-gate.ts";
 import { initLazy } from "../src/scripts/lazy.ts";
@@ -270,11 +270,29 @@ test("the page script names the lazy file with an exact import(), and nothing el
   }
 });
 
-test("the lazy file imports only types, so the build cannot make a shared chunk or import from the page script", () => {
+test("the lazy file takes only types from the page scripts and its rules from brick.ts, which no page script imports, so the bundler cannot share a chunk", () => {
   const source = read("../src/scripts/arcade.ts");
-  const imports = source.match(/^import .*$/gm) ?? [];
+  const imports = source.match(/^import [\s\S]*?from "[^"]+";$/gm) ?? [];
   assert.ok(imports.length > 0);
-  for (const line of imports) assert.match(line, /^import type /, line);
+  for (const line of imports) {
+    const from = /from "([^"]+)";$/.exec(line)[1];
+    if (/^import type /.test(line)) assert.equal(from, "./lazy.ts", line);
+    else assert.equal(from, "../lib/brick.ts", line);
+  }
+  const files = readdirSync(new URL("../src/", import.meta.url), { recursive: true }).map((f) =>
+    String(f).replaceAll("\\", "/"),
+  );
+  const sources = files.filter(
+    (f) => /\.(ts|astro|mjs)$/.test(f) && !/(^|\/)(arcade|brick)\.ts$/.test(f),
+  );
+  assert.ok(sources.length > 5);
+  for (const f of sources) {
+    const text = read(`../src/${f}`);
+    assert.ok(!/brick(\.ts)?["']/.test(text), `${f} imports brick.ts`);
+    const arcade = text.match(/[./]arcade(\.ts)?["']/g)?.length ?? 0;
+    const lazy = text.match(/import\("\.\/arcade\.ts"\)/g)?.length ?? 0;
+    assert.equal(arcade, lazy, `${f} refers to arcade.ts other than through the one lazy import()`);
+  }
 });
 
 test("the loader is plain: no network, no timers, no storage, no script elements", () => {
