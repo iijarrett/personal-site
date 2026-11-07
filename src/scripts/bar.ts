@@ -9,14 +9,26 @@ import { type BarState, barShown, pointerAt, START, scrolled, wheel } from "../l
 export function initBar(): void {
   const header = document.querySelector<HTMLElement>(".site-header");
   if (!header) return;
+  // A browser that cannot evaluate :focus-visible cannot tell keyboard focus from a click. Leave
+  // the bar alone there: no handlers and no marker class, so it stays shown, as the CSS does.
+  try {
+    header.matches(":focus-visible");
+  } catch {
+    return;
+  }
   const root = document.documentElement;
   // The same query as the CSS: a screen over 640px whose primary pointer can hover.
   const wide = matchMedia("(min-width: 641px) and (hover: hover)");
   // The scroll position clamped to the page's real range, so an overscroll bounce at either end
-  // (iOS rubber-banding) is not read as scrolling.
-  const pos = (): number => Math.max(0, Math.min(scrollY, root.scrollHeight - innerHeight));
-  // The bundle can run late, with keyboard focus already in the header.
-  let state: BarState = { ...START, last: pos(), focus: header.matches(":has(:focus-visible)") };
+  // (iOS rubber-banding) is not read as scrolling. The range uses clientHeight, the layout
+  // viewport, because innerHeight changes as the iOS toolbars collapse, which would move the
+  // clamp while the page scrolls and read as a change of direction.
+  const pos = (): number => Math.max(0, Math.min(scrollY, root.scrollHeight - root.clientHeight));
+  // The bundle can run late, with keyboard focus already in the header. The has selector
+  // throws in older browsers, which would stop the rest of the page script.
+  const active = document.activeElement;
+  const focus = !!active && header.contains(active) && active.matches(":focus-visible");
+  let state: BarState = { ...START, last: pos(), focus };
   let shown = false;
   // Handlers do nothing until setup has finished, so a throw part-way through leaves no marker
   // class behind and the CSS failsafe stays in charge.

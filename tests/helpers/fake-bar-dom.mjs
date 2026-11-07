@@ -2,18 +2,27 @@
 // scroll, wheel and pointer events, the <html> classes, the header's focus events and a media
 // query. Nothing here is a spec-accurate DOM.
 
-// `focusVisible` puts keyboard focus inside the header before the script starts (a late bundle).
-// `scrollHeight` and `innerHeight` give the page its real scroll range, 0 to scrollHeight -
-// innerHeight. `failHeaderListener` makes header.addEventListener throw for that event type.
+// `focusVisible` puts keyboard focus inside the header before the script starts (a late bundle);
+// `focusClick` puts non-keyboard focus there (a click). `scrollHeight` and `clientHeight` (the
+// layout viewport) give the page its real scroll range, 0 to scrollHeight - clientHeight.
+// `innerHeight` is the window's visible height, which on iOS changes as the toolbars collapse
+// (see setInnerHeight). `failHeaderListener` makes header.addEventListener throw for that event
+// type. `noHas` makes header.matches throw for any selector with :has(, as old browsers do.
+// `noFocusVisible` makes matches() throw a SyntaxError for :focus-visible on every element
+// (Safari before 15.4, Chrome before 86, Firefox before 85).
 export function installBarDom({
   wide = true,
   scrollY = 0,
   focusVisible = false,
+  focusClick = false,
   scrollHeight = 5000,
+  clientHeight = 800,
   innerHeight = 800,
   failHeaderListener = null,
+  noHas = false,
+  noFocusVisible = false,
 } = {}) {
-  const state = { scrollY, wide };
+  const state = { scrollY, wide, innerHeight };
   const windowListeners = new Map();
   const rootListeners = new Map();
   const headerListeners = new Map();
@@ -25,7 +34,19 @@ export function installBarDom({
     for (const listener of map.get(type) ?? []) listener(event);
   };
 
-  const inside = { name: "a link inside the header" };
+  const unsupported = (selector) => {
+    if (noFocusVisible && selector === ":focus-visible") {
+      throw new SyntaxError(`${selector} is not a valid selector`);
+    }
+  };
+
+  const inside = {
+    name: "a link inside the header",
+    matches(selector) {
+      unsupported(selector);
+      return selector === ":focus-visible" && focusVisible;
+    },
+  };
   const addToHeader = add(headerListeners);
   const header = {
     addEventListener(type, listener) {
@@ -34,10 +55,15 @@ export function installBarDom({
     },
     contains: (node) => node === inside,
     getBoundingClientRect: () => ({ bottom: 61 }),
-    matches: (selector) => selector === ":has(:focus-visible)" && focusVisible,
+    matches(selector) {
+      unsupported(selector);
+      if (noHas && selector.includes(":has(")) throw new SyntaxError(`${selector} is not valid`);
+      return false;
+    },
   };
   const root = {
     scrollHeight,
+    clientHeight,
     addEventListener: add(rootListeners),
     classList: {
       toggle(name, force) {
@@ -49,6 +75,7 @@ export function installBarDom({
   };
   const document = {
     documentElement: root,
+    activeElement: focusVisible || focusClick ? inside : null,
     querySelector: (selector) => (selector === ".site-header" ? header : null),
   };
   const media = {
@@ -60,7 +87,6 @@ export function installBarDom({
 
   const installed = {
     document,
-    innerHeight,
     addEventListener: add(windowListeners),
     matchMedia: () => media,
   };
@@ -69,8 +95,11 @@ export function installBarDom({
     saved.set(name, Object.getOwnPropertyDescriptor(globalThis, name));
     Object.defineProperty(globalThis, name, { value, configurable: true, writable: true });
   }
-  saved.set("scrollY", Object.getOwnPropertyDescriptor(globalThis, "scrollY"));
-  Object.defineProperty(globalThis, "scrollY", { get: () => state.scrollY, configurable: true });
+  const live = { scrollY: () => state.scrollY, innerHeight: () => state.innerHeight };
+  for (const [name, get] of Object.entries(live)) {
+    saved.set(name, Object.getOwnPropertyDescriptor(globalThis, name));
+    Object.defineProperty(globalThis, name, { get, configurable: true });
+  }
 
   return {
     /** "bar-on", "bar-off" or "" when the script has not decided yet. */
@@ -78,10 +107,20 @@ export function installBarDom({
       return classes.has("bar-on") ? "bar-on" : classes.has("bar-off") ? "bar-off" : "";
     },
     classes: () => [...classes].sort(),
+    /** How many listeners are registered on the window, <html>, the header and the media query. */
+    listenerCount: () =>
+      [windowListeners, rootListeners, headerListeners].reduce(
+        (sum, map) => sum + [...map.values()].reduce((n, list) => n + list.length, 0),
+        mediaListeners.length,
+      ),
     inside,
     scrollTo(y) {
       state.scrollY = y;
       fire(windowListeners, "scroll");
+    },
+    /** The window's visible height changing with no layout change, as iOS toolbars do. */
+    setInnerHeight(value) {
+      state.innerHeight = value;
     },
     wheel: (deltaY) => fire(windowListeners, "wheel", { deltaY }),
     pointer: (clientY, pointerType = "mouse") =>
@@ -89,7 +128,14 @@ export function installBarDom({
     pointerLeaveWindow: () => fire(rootListeners, "pointerleave"),
     /** Focus arriving in the header. `visible` is true for keyboard focus. */
     focusIn: (visible = true) =>
-      fire(headerListeners, "focusin", { target: { matches: () => visible } }),
+      fire(headerListeners, "focusin", {
+        target: {
+          matches(selector) {
+            unsupported(selector);
+            return visible;
+          },
+        },
+      }),
     /** Focus leaving the header, for `to` (a node inside it, or elsewhere / nothing). */
     focusOut: (to = null) => fire(headerListeners, "focusout", { relatedTarget: to }),
     setWide(value) {
