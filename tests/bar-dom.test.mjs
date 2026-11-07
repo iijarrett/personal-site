@@ -194,6 +194,34 @@ test("without :has() support a late bundle with keyboard focus in the header sta
   assert.equal(start(t, { wide: true, noHas: true, focusVisible: true }).bar, "bar-on");
 });
 
+test("without :focus-visible support initBar returns at once: no throw, no marker class, no listeners", (t) => {
+  const dom = installBarDom({ wide: true, noFocusVisible: true });
+  t.after(() => dom.restore());
+  assert.doesNotThrow(() => initBar());
+  assert.deepEqual(dom.classes(), [], "neither bar-on nor bar-off");
+  assert.equal(dom.listenerCount(), 0);
+  // Nothing is live, so a click on the settings button or any scroll still changes nothing.
+  for (const step of [
+    () => dom.focusIn(false),
+    () => dom.focusIn(true),
+    () => dom.scrollTo(500),
+    () => dom.wheel(-50),
+    () => dom.pointer(3),
+    () => dom.setWide(false),
+  ]) {
+    step();
+    assert.deepEqual(dom.classes(), []);
+  }
+});
+
+test("without :focus-visible support a late bundle with focus in the header still adds no marker", (t) => {
+  const dom = installBarDom({ wide: false, noFocusVisible: true, focusClick: true });
+  t.after(() => dom.restore());
+  assert.doesNotThrow(() => initBar());
+  assert.deepEqual(dom.classes(), []);
+  assert.equal(dom.listenerCount(), 0);
+});
+
 test("the script does not use :has() at all", () => {
   assert.doesNotMatch(read("../src/scripts/bar.ts"), /:has\(/);
 });
