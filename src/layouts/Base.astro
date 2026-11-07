@@ -41,7 +41,6 @@ const fullTitle = Astro.url.pathname === "/" ? title : `${title} | JD`;
     />
   </head>
   <body>
-    <a class="skip-link" href="#main">Skip to content</a>
     <Header current={Astro.url.pathname} />
     <main id="main" tabindex="-1">
       <slot />

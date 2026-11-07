@@ -4,10 +4,12 @@
  * card glow is plain CSS and needs none of this.
  */
 
+import { initBar } from "./bar.ts";
 import { initHero } from "./hero.ts";
 import { initMotion, isMotionOn, setMotionOn, subscribe } from "./motion-state.ts";
 import { initSettings } from "./settings.ts";
 
 initMotion();
+initBar();
 initSettings({ isOn: isMotionOn, set: setMotionOn });
 initHero(subscribe);

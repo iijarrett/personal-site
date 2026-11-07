@@ -79,8 +79,8 @@ test("the static frame is masked at its left and right edges over exactly EDGE_C
   assert.equal(Number(horizontal[2]), EDGE_COLS);
   assert.match(
     rule[0],
-    /linear-gradient\(to bottom, transparent, #000 55%\)/,
-    "the bottom fade is still there",
+    /mask-image:\s*var\(--fade\),/,
+    "the vertical fade is still there (its values are checked in tests/hero-fade.test.mjs)",
   );
   assert.match(rule[0], /mask-composite:\s*intersect/, "the two masks must multiply, not add");
   assert.match(

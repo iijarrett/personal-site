@@ -92,11 +92,54 @@ test("the panel sits flush under the button and never outgrows a phone", () => {
   assert.match(panel, /font-family: var\(--font-ui\)/);
 });
 
-test("on a phone the brand has its own row and the button ends the last nav row", () => {
+test("on a phone the settings button is on the brand row, right-aligned and centred with it; the markup order is unchanged", () => {
   const phone = css.match(/@media \(max-width: 36rem\)\s*\{([\s\S]*?)\n\}\n/)?.[1] ?? "";
-  assert.match(phone, /\.brand\s*\{\s*flex-basis: 100%/);
-  assert.match(phone, /\.site-nav\s*\{\s*flex: 1 1 0/);
-  assert.match(phone, /\.settings\s*\{\s*align-self: flex-end/);
+  const rule = (selector) =>
+    phone.match(new RegExp(`${selector.replace(/[.]/g, "\\.")}\\s*\\{([^}]*)\\}`))?.[1] ?? "";
+  const length = (text, property) => text.match(new RegExp(`${property}: ([\\d.]+)rem`))?.[1] ?? "";
+  // The brand row is as tall as the button, so the brand text and the button share a centre.
+  const button = css.match(/\.settings-btn\s*\{[^}]*\}/)?.[0] ?? "";
+  assert.equal(length(button, "height"), "2.75");
+  assert.equal(length(rule(".brand"), "line-height"), "2.75");
+  assert.match(rule(".brand"), /flex-basis: 100%/);
+  // The button sits at the top of the header, at the top of that row (the wrap's top padding).
+  assert.match(rule(".site-header .wrap"), /padding-block: var\(--space-1\) /);
+  assert.match(rule(".settings"), /top: var\(--space-1\)/);
+  assert.match(rule(".settings"), /bottom: auto/);
+  // The nav gets the full row below, so the right padding that kept it clear of the button is gone.
+  assert.match(rule(".site-nav"), /flex: 1 1 100%/);
+  assert.match(rule(".site-header .wrap"), /padding-right: var\(--space-3\)/);
+  // The base rule, which a desktop still uses: bottom right, absolute, never in the flow.
+  const settings = css.match(/\.settings\s*\{[^}]*\}/)?.[0] ?? "";
+  assert.match(settings, /position: absolute/);
+  assert.match(settings, /bottom: 0\.5rem/);
+  assert.match(
+    settings,
+    /right: calc\(var\(--space-3\) \+ max\(0px, \(100% - var\(--page\)\) \/ 2\)\)/,
+  );
+  // Placement is CSS only: the markup is still brand, nav, then the button.
+  const order = ['class="brand"', 'class="site-nav"', 'class="settings-btn"'].map((needle) =>
+    header.indexOf(needle),
+  );
+  assert.ok(order[0] > 0 && order[0] < order[1] && order[1] < order[2], order.join());
+});
+
+test("on a phone the nav is tightened only by its gap: the type stays 15px or larger and the links keep a 24px tap area", () => {
+  const phone = css.match(/@media \(max-width: 36rem\)\s*\{([\s\S]*?)\n\}\n/)?.[1] ?? "";
+  assert.ok(!/font-size/.test(phone), "the phone rules change a font size");
+  const base = Number.parseFloat(css.match(/\nbody\s*\{[^}]*font-size: ([\d.]+)rem/)?.[1] ?? "NaN");
+  assert.ok(base * 16 >= 15, `body text is ${base * 16}px`);
+  // A link is its line plus 0.25rem above and below, so well over 24px at the default size.
+  const link = css.match(/\.site-nav a\s*\{[^}]*\}/)?.[0] ?? "";
+  assert.match(link, /padding-block: var\(--space-1\)/);
+  assert.ok(base * 16 * 1.6 + 2 * 4 >= 24);
+  const gap = Number.parseFloat(phone.match(/column-gap: ([\d.]+)rem/)?.[1] ?? "NaN");
+  assert.ok(gap >= 0.5 && gap <= 1, `the phone nav gap is ${gap}rem`);
+});
+
+test("the nav link to the notes site is labelled Notes, and nothing still calls it Knowledge Base", () => {
+  assert.match(header, /<a href="https:\/\/notes\.jarrettd\.com\/">Notes<\/a>/);
+  assert.ok(!/Knowledge Base/.test(header));
 });
 
 // ---------- Contrast, in both themes ----------
@@ -433,3 +476,60 @@ test("touch: a tap opens it, nothing else changes it, and a tap outside closes i
   assert.equal(dom.open, false);
   assert.equal(dom.expanded, "false");
 });
+
+// ---------- The controls' borders (WCAG 1.4.11: 3:1 against what they sit on) ----------
+//
+// Three borders identify a control: the segmented control's, the settings button's outline while
+// the bar is away (--float) and its border while the menu is open (which hover shares). The
+// settings button has a solid --bg fill, so it always sits on --bg inside; the segmented control
+// sits on the panel (--surface); and over page content behind either can be --bg or a tile's
+// --surface. Each is checked against all of those, in both themes, using the token the CSS uses.
+
+const tokenIn = (text, pattern, what) => {
+  const found = text.match(pattern);
+  assert.ok(found, `global.css has no ${what}`);
+  return found[1];
+};
+const controlBorders = {
+  "the segmented control": tokenIn(
+    css,
+    /\.seg\s*\{[^}]*border: 1px solid var\((--[\w-]+)\)/,
+    ".seg border",
+  ),
+  "the settings button's open-state border": tokenIn(
+    css,
+    /\.settings-btn\[aria-expanded="true"\]\s*\{[^}]*border-color: var\((--[\w-]+)\)/,
+    "open-state border",
+  ),
+};
+const floatTokens = [...css.matchAll(/--float: var\((--[\w-]+)\)/g)].map((match) => match[1]);
+
+test("the three control borders no longer use the old --border", () => {
+  assert.equal(floatTokens.length, 2, "expected --float in the wide and the narrow rule");
+  assert.equal(new Set(floatTokens).size, 1, "the two --float rules differ");
+  controlBorders["the settings button's outline while the bar is away"] = floatTokens[0];
+  for (const [what, token] of Object.entries(controlBorders)) {
+    assert.notEqual(token, "--border", `${what} still uses --border`);
+  }
+});
+
+test("the settings button keeps a solid --bg fill, so its border always sits against --bg inside", () => {
+  assert.match(css, /\.settings-btn\s*\{[^}]*background: var\(--bg\)/);
+  assert.match(css, /\.settings-btn\s*\{[^}]*border: 1px solid var\(--float, transparent\)/);
+});
+
+for (const [name, block] of Object.entries(themes)) {
+  test(`${name}: the segmented control, the floating outline and the open-state border are 3:1 on --bg and --surface`, () => {
+    const borders = {
+      ...controlBorders,
+      "the settings button's outline while the bar is away": floatTokens[0],
+    };
+    assert.equal(Object.keys(borders).length, 3);
+    for (const [what, token] of Object.entries(borders)) {
+      for (const base of ["--bg", "--surface"]) {
+        const ratio = contrast(colour(block, token), colour(block, base));
+        assert.ok(ratio >= 3, `${name}: ${what} (${token}) on ${base} is ${ratio.toFixed(2)}:1`);
+      }
+    }
+  });
+}

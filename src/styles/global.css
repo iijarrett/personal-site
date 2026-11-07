@@ -88,35 +88,117 @@ code,
   color: var(--muted);
 }
 
+/* The first thing in the header, so it is the first focusable element. Focused, it sits just
+   under the header bar, at the page's left edge, where it covers neither the brand, the nav
+   nor the settings button, at any width. */
 .skip-link {
   position: absolute;
-  left: var(--space-3);
-  top: var(--space-2);
+  z-index: 10;
+  top: calc(100% + var(--space-2));
+  left: calc(var(--space-3) + max(0px, (100% - var(--page)) / 2));
   padding: var(--space-2) var(--space-3);
   background: var(--surface);
   color: var(--accent-text);
   border: 2px solid var(--accent);
   border-radius: var(--radius);
-  transform: translateY(-200%);
 }
 
-.skip-link:focus {
-  transform: none;
-  z-index: 10;
+.skip-link:not(:focus) {
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .site-header {
   position: relative;
   z-index: 5;
+}
+
+.bar {
+  background: var(--bg);
   border-bottom: 1px solid var(--border);
 }
 
+/* The right padding keeps the nav clear of the settings button, which sits over it. */
 .site-header .wrap {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2) var(--space-4);
   padding-block: var(--space-3);
+  padding-right: calc(var(--space-3) + 2.75rem + var(--space-4));
+}
+
+/*
+ * With JavaScript the bar hides when the page is scrolled down and comes back on scroll up
+ * (src/scripts/bar.ts decides, through the bar-on and bar-off classes on <html>; the head
+ * script adds .js). Without JavaScript none of this applies and the header is always there.
+ * The header sticks to the top but is transparent and lets clicks through, so only the bar,
+ * the settings button and a focused skip link take the pointer. Wide screens start with the
+ * bar hidden, narrow ones with it showing, so there is no flicker before the script runs.
+ * The settings button never moves; with the bar away it gets its own outline.
+ */
+.js .site-header {
+  position: sticky;
+  top: 0;
+  pointer-events: none;
+}
+
+.js .bar {
+  transform: translateY(var(--bar-y, 0));
+  transition: transform 0.25s ease;
+}
+
+.no-fx .bar {
+  transition: none;
+}
+
+/*
+ * What hides the bar, and what can stop it hiding.
+ * Once src/scripts/bar.ts has run it has put exactly one of bar-on and bar-off on <html>, and
+ * that is the marker: bar-off hides the bar at any width, bar-on shows it. The script, not the
+ * CSS, decides which, using the one wide query (a screen over 640px whose primary pointer can
+ * hover), so the two cannot disagree.
+ * Before the script has run there is no marker. A wide screen starts with the bar hidden, so it
+ * never flashes into view and away, but if the script never runs (the bundle fails to load or
+ * throws) a CSS animation shows the bar again after 3s. A narrow screen starts with it shown.
+ * The animation is outside the media query, so crossing the breakpoint does not restart it. A
+ * header with keyboard focus in it is never hidden by the pre-script state (a bare `header`
+ * does the job: the site header is the only <header> element).
+ * The head script's .js is required for all of it, so without JavaScript nothing hides.
+ */
+html.js.bar-off {
+  --bar-y: -100%;
+  --float: var(--muted);
+}
+
+@media (min-width: 641px) and (hover: hover) {
+  html.js:not(.bar-on, .bar-off, :has(header :focus-visible)) {
+    --bar-y: -100%;
+    --float: var(--muted);
+  }
+}
+
+html.js:not(.bar-on, .bar-off) .bar {
+  animation: bar-failsafe 1ms 3s forwards;
+}
+
+@keyframes bar-failsafe {
+  to {
+    transform: none;
+  }
+}
+
+/* A focused element is never left under the header (WCAG 2.4.11). The values are the tallest the
+   header measures plus 0.5rem of margin, because the height depends on the system UI font and
+   only headless Chrome on Windows was measured (tests/fixtures/header-heights.json): 3.83rem
+   in the one-row layout, and 9.47rem on a phone at 200% text, where the nav takes three rows. */
+.js {
+  scroll-padding-top: 4.4rem;
 }
 
 .brand {
@@ -161,12 +243,21 @@ code,
 /* It reserves its space at once (no layout shift when it appears) but stays invisible, and
    out of the tab order, until the script marks it .is-ready. With JavaScript off it never is. */
 .settings {
-  position: relative;
-  margin-block: -0.375rem;
+  position: absolute;
+  bottom: 0.5rem;
+  right: calc(var(--space-3) + max(0px, (100% - var(--page)) / 2));
 }
 
 .settings:not(.is-ready) {
   visibility: hidden;
+}
+
+/* Under .js the header lets clicks through (see the header rules), so these take them. */
+/* biome-ignore lint/style/noDescendingSpecificity: the pre-script bar rules above are more specific, and none of them sets pointer-events */
+.js .bar,
+.js .settings,
+.js .skip-link {
+  pointer-events: auto;
 }
 
 .settings-btn {
@@ -175,8 +266,8 @@ code,
   width: 2.75rem;
   height: 2.75rem;
   padding: 0;
-  background: none;
-  border: 1px solid transparent;
+  background: var(--bg);
+  border: 1px solid var(--float, transparent);
   border-radius: var(--radius);
   color: var(--muted);
   cursor: pointer;
@@ -185,7 +276,7 @@ code,
 .settings-btn:hover,
 .settings-btn[aria-expanded="true"] {
   color: var(--text);
-  border-color: var(--border);
+  border-color: var(--muted);
 }
 
 /* Flush under the button, so the pointer can cross into it without leaving the menu. It opens
@@ -213,7 +304,7 @@ code,
 
 .seg {
   display: flex;
-  border: 1px solid var(--border);
+  border: 1px solid var(--muted);
   border-radius: var(--radius);
 }
 
@@ -303,7 +394,7 @@ code,
 .btn {
   display: inline-block;
   padding: 0.7rem 1.1rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--muted);
   border-radius: var(--radius);
   color: var(--text);
   font-family: var(--font-ui);
@@ -323,19 +414,25 @@ code,
   display: none !important;
 }
 
-.btn-primary {
-  background: var(--accent-text);
-  border-color: var(--accent-text);
-  color: var(--on-accent);
-}
-
-.btn-primary:hover {
-  background: var(--accent-text);
-  filter: brightness(1.1);
-}
-
 /* ---------- Hero ---------- */
+/*
+ * --fade is how visible the code field is, from its bottom edge up (20rem tall). It used to
+ * fade out over the top 55%, so almost no code reached the buttons. Now it follows the old
+ * curve (1 at 9rem, falling) until two rem short of the buttons' band, is fully on across
+ * the band (the buttons' bottom edge is the hero body's bottom padding, 15rem; they are 3.1rem
+ * tall) and is gone again 1.4rem above it, which is above the paragraph's bottom edge (1.5rem
+ * over the buttons), so no code shows behind the headline or the paragraph.
+ * tests/hero-fade.test.mjs checks the numbers against the layout.
+ */
 .hero {
+  --fade: linear-gradient(
+    to top,
+    #000 9rem,
+    rgb(0 0 0 / 0.64) 13rem,
+    #000 15rem,
+    #000 18.1rem,
+    transparent 19.5rem
+  );
   position: relative;
   overflow: hidden;
   border-bottom: 1px solid var(--border);
@@ -357,10 +454,10 @@ code,
   line-height: 1.25;
   user-select: none;
   pointer-events: none;
-  /* Fades in from the bottom, and softens the left and right edges over 12 columns
+  /* Fades by --fade, and softens the left and right edges over 12 columns
      (EDGE_COLS in src/lib/ascii-field.ts) so the frame does not hard-clip. */
   mask-image:
-    linear-gradient(to bottom, transparent, #000 55%),
+    var(--fade),
     linear-gradient(to right, transparent, #000 12ch, #000 calc(100% - 12ch), transparent);
   mask-composite: intersect;
 }
@@ -392,7 +489,7 @@ code,
   height: 20rem;
   opacity: 0.6;
   pointer-events: none;
-  mask-image: linear-gradient(to bottom, transparent, #000 55%);
+  mask-image: var(--fade);
 }
 
 .hero.is-live .ascii {
@@ -425,6 +522,41 @@ code,
   gap: var(--space-3);
   max-width: none;
   margin: 0;
+}
+
+/*
+ * The hero buttons sit over the code field, so they are see-through. Each keeps a fill (30%
+ * and 55% of the page colour, the second showing less code through it) that holds its text at
+ * 4.5:1 over the brightest glyph at full opacity, and a border at 3:1: tests/hero-buttons.test.mjs.
+ * The primary also carries the glow a hovered tile gets (the same gradient, ring and halo),
+ * always on and static, so it needs no hover and no motion.
+ * Each button has a 1px keyline in the page colour just outside its border. The code can reach
+ * the button's edge at its brightest (a hex digit under the cursor), and a border measured against
+ * that is only 2.2 to 2.9:1 in the two themes; against the keyline it is 5 to 8:1.
+ */
+.actions .btn {
+  background: color-mix(in srgb, var(--bg) 30%, transparent);
+  box-shadow: 0 0 0 1px var(--bg);
+}
+
+.actions .btn-primary {
+  background:
+    linear-gradient(
+      to top,
+      color-mix(in srgb, var(--glow) var(--glow-hover), transparent),
+      transparent 65%
+    ),
+    color-mix(in srgb, var(--bg) 55%, transparent);
+  border-color: var(--ring);
+  box-shadow:
+    0 0 0 1px var(--bg),
+    inset 0 0 0 1px var(--ring),
+    0 0 1rem color-mix(in srgb, var(--ring) var(--halo), transparent);
+}
+
+.actions .btn:hover {
+  background-color: var(--surface);
+  border-color: var(--accent);
 }
 
 /* ---------- Bento grid ---------- */
@@ -668,19 +800,36 @@ code,
   }
 }
 
-/* On a phone the brand gets its own row, and the settings button sits at the right end of the
-   last nav row, so the focus order (brand, nav, button) is also the reading order. */
+/* On a phone the brand gets its own row, as tall as the settings button, which sits at the right
+   end of that row (the markup order, and so the focus order, is still brand, nav, button). The
+   nav has the full width of the row below it. */
 @media (max-width: 36rem) {
+  .site-header .wrap {
+    padding-block: var(--space-1) var(--space-2);
+    padding-right: var(--space-3);
+    row-gap: var(--space-1);
+  }
+
   .brand {
     flex-basis: 100%;
+    line-height: 2.75rem;
   }
 
   .site-nav {
-    flex: 1 1 0;
+    flex: 1 1 100%;
+  }
+
+  .site-nav ul {
+    column-gap: 0.75rem;
   }
 
   .settings {
-    align-self: flex-end;
+    top: var(--space-1);
+    bottom: auto;
+  }
+
+  .js {
+    scroll-padding-top: 10rem;
   }
 }
 
@@ -696,6 +845,18 @@ code,
 
   .card {
     min-height: 0;
+  }
+
+  /* The band moves down with the hero body's bottom padding: 12rem here, so 3rem lower. */
+  .hero {
+    --fade: linear-gradient(
+      to top,
+      #000 9rem,
+      rgb(0 0 0 / 0.91) 10rem,
+      #000 12rem,
+      #000 15.1rem,
+      transparent 16.5rem
+    );
   }
 
   .hero-body {
