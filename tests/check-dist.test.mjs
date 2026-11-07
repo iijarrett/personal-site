@@ -319,7 +319,7 @@ test("the old import-following is gone: the first load counts only what the page
   const { output } = run({
     "index.html": entry,
     "_astro/entry.js": "const a=1;",
-    "_astro/big.js": `const a="${"x".repeat(100_000)}";`, // not referenced by anything
+    "_astro/big.js": `const a="${"x".repeat(106_000)}";`, // not referenced by anything
   });
   assert.doesNotMatch(output, /first load .* exceeds/);
   assert.match(output, / 3 files/); // index.html, the stylesheet, entry.js
