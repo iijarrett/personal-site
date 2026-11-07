@@ -356,6 +356,15 @@ html.js:not(.bar-on, .bar-off) .bar {
   font-family: var(--font-ui);
 }
 
+/* The closing wordmark: decorative, so the page's one h1 stays the only name read aloud. */
+.wordmark {
+  flex: 1 0 100%;
+  font: 400 clamp(4rem, 18vw, 8rem) / 1 var(--font-mono);
+  letter-spacing: -0.04em;
+  color: var(--muted);
+  user-select: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -865,5 +874,33 @@ html.js:not(.bar-on, .bar-off) .bar {
 
   .section {
     padding-block: var(--space-5);
+  }
+}
+
+/* ---------- Scroll reveal ---------- */
+/*
+ * Plain CSS, no script, so the page is identical with JS off. Each tile fades and rises as it
+ * enters the viewport, driven by scroll position. The keyframes have only a "from", so the end
+ * state is the element's own styles. A browser without scroll-driven animations ignores
+ * animation-timeline, the animation then lasts 0s, and everything is simply there. It uses
+ * "translate", not "transform", so the tile's hover state is never overridden. The motion
+ * switch (.no-fx) and the OS reduced-motion setting both turn it off. The longhands are
+ * deliberate: with the "animation" shorthand the minifier folds animation-timeline into it, and
+ * a browser that does not parse a timeline inside the shorthand then drops the whole line.
+ */
+@keyframes reveal {
+  from {
+    opacity: 0;
+    translate: 0 1.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html:not(.no-fx) :is(.bento > *, .wordmark) {
+    animation-name: reveal;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 30%;
   }
 }
