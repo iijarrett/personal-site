@@ -160,12 +160,47 @@ test("a bundle that runs late, with keyboard focus already in the header, starts
 });
 
 test("a late bundle with focus in the header that is not keyboard focus (a click) still starts hidden", (t) => {
-  assert.equal(start(t, { wide: true, focusVisible: false }).bar, "bar-off");
+  assert.equal(start(t, { wide: true, focusClick: true }).bar, "bar-off");
+});
+
+test("a late bundle with keyboard focus outside the header starts hidden", (t) => {
+  const dom = installBarDom({ wide: true });
+  t.after(() => dom.restore());
+  globalThis.document.activeElement = { matches: () => true }; // not a node inside the header
+  initBar();
+  assert.equal(dom.bar, "bar-off");
+});
+
+test("with no active element (null) a late bundle starts hidden and does not throw", (t) => {
+  assert.equal(start(t, { wide: true }).bar, "bar-off");
+});
+
+test("without :has() support initBar completes and registers its handlers", (t) => {
+  const dom = start(t, { wide: true, noHas: true });
+  assert.equal(dom.bar, "bar-off");
+  dom.scrollTo(400);
+  dom.scrollTo(300);
+  assert.equal(dom.bar, "bar-on", "the scroll handler is live");
+  dom.focusIn(true);
+  dom.scrollTo(900);
+  assert.equal(dom.bar, "bar-on", "the focusin handler is live and holds it");
+  dom.focusOut(null);
+  assert.equal(dom.bar, "bar-off", "the focusout handler is live");
+  dom.setWide(false);
+  assert.equal(dom.bar, "bar-off", "the media handler is live (scrolled, so hidden)");
+});
+
+test("without :has() support a late bundle with keyboard focus in the header starts shown", (t) => {
+  assert.equal(start(t, { wide: true, noHas: true, focusVisible: true }).bar, "bar-on");
+});
+
+test("the script does not use :has() at all", () => {
+  assert.doesNotMatch(read("../src/scripts/bar.ts"), /:has\(/);
 });
 
 test("a rubber-band rebound at the bottom of the page is not scrolling up", (t) => {
   // The page scrolls from 0 to 2000 - 800 = 1200.
-  const dom = start(t, { wide: true, scrollHeight: 2000, innerHeight: 800 });
+  const dom = start(t, { wide: true, scrollHeight: 2000, clientHeight: 800 });
   dom.wheel(-10);
   assert.equal(dom.bar, "bar-on");
   dom.scrollTo(1200);
@@ -177,8 +212,21 @@ test("a rubber-band rebound at the bottom of the page is not scrolling up", (t) 
   assert.equal(dom.bar, "bar-on");
 });
 
+test("the iOS toolbars collapsing (innerHeight grows) while scrolling down near the bottom does not reveal the bar", (t) => {
+  // The page scrolls from 0 to 2000 - 800 = 1200 by the layout viewport.
+  const dom = start(t, { wide: true, scrollHeight: 2000, clientHeight: 800, innerHeight: 800 });
+  dom.wheel(-10);
+  dom.scrollTo(1200);
+  assert.equal(dom.bar, "bar-off");
+  dom.setInnerHeight(850);
+  dom.scrollTo(1210);
+  assert.equal(dom.bar, "bar-off", "a taller window is not scrolling up");
+  dom.scrollTo(1190); // a real scroll up still shows it
+  assert.equal(dom.bar, "bar-on");
+});
+
 test("a page no taller than the window has a scroll range of 0, not a negative one", (t) => {
-  const dom = start(t, { wide: true, scrollHeight: 700, innerHeight: 800 });
+  const dom = start(t, { wide: true, scrollHeight: 700, clientHeight: 800 });
   dom.wheel(-10);
   assert.equal(dom.bar, "bar-on");
   dom.scrollTo(30); // a position outside the range counts as 0: not a move down

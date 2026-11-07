@@ -13,10 +13,23 @@ export function initBar(): void {
   // The same query as the CSS: a screen over 640px whose primary pointer can hover.
   const wide = matchMedia("(min-width: 641px) and (hover: hover)");
   // The scroll position clamped to the page's real range, so an overscroll bounce at either end
-  // (iOS rubber-banding) is not read as scrolling.
-  const pos = (): number => Math.max(0, Math.min(scrollY, root.scrollHeight - innerHeight));
-  // The bundle can run late, with keyboard focus already in the header.
-  let state: BarState = { ...START, last: pos(), focus: header.matches(":has(:focus-visible)") };
+  // (iOS rubber-banding) is not read as scrolling. The range uses clientHeight, the layout
+  // viewport, because innerHeight changes as the iOS toolbars collapse, which would move the
+  // clamp while the page scrolls and read as a change of direction.
+  const pos = (): number => Math.max(0, Math.min(scrollY, root.scrollHeight - root.clientHeight));
+  // Keyboard focus only. A browser without :focus-visible cannot say, so any focus counts there.
+  const keyboard = (el: Element): boolean => {
+    try {
+      return el.matches(":focus-visible");
+    } catch {
+      return true;
+    }
+  };
+  // The bundle can run late, with keyboard focus already in the header. The has selector
+  // throws in older browsers, which would stop the rest of the page script.
+  const active = document.activeElement;
+  const focus = !!active && header.contains(active) && keyboard(active);
+  let state: BarState = { ...START, last: pos(), focus };
   let shown = false;
   // Handlers do nothing until setup has finished, so a throw part-way through leaves no marker
   // class behind and the CSS failsafe stays in charge.
@@ -44,7 +57,7 @@ export function initBar(): void {
   root.addEventListener("pointerleave", () => update({ ...state, edge: false }));
   // Only keyboard focus counts: a mouse click on the settings button should not bring the nav.
   header.addEventListener("focusin", (event) => {
-    if ((event.target as Element).matches(":focus-visible")) update({ ...state, focus: true });
+    if (keyboard(event.target as Element)) update({ ...state, focus: true });
   });
   header.addEventListener("focusout", (event) => {
     if (!header.contains(event.relatedTarget as Node | null)) update({ ...state, focus: false });
