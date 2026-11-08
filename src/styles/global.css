@@ -387,14 +387,17 @@ html.js .site-footer:not([data-still]) .arcade:empty::before {
   max-width: 30rem;
   aspect-ratio: 8 / 5;
   margin: var(--space-2) auto;
-  /* No hard line: the edge is the page's grey, blurred in and out, and turns the accent while a
-     game is running. */
+  /* Idle there is no box at all: no line, and a fill that fades out towards its edges, so the
+     bricks and the words float on the page. Once a game starts (.live) the box appears: a solid
+     fill, an accent line and a soft glow. */
   border: 1px solid transparent;
   border-radius: var(--radius);
-  background: var(--surface);
+  background:
+    radial-gradient(ellipse at center, var(--surface) 35%, transparent 75%) no-repeat,
+    transparent;
   box-shadow:
-    0 0 14px 1px var(--border),
-    inset 0 0 14px 1px var(--border);
+    0 0 14px 1px transparent,
+    inset 0 0 14px 1px transparent;
   font-family: var(--font-mono);
   cursor: pointer;
   touch-action: pan-y;
@@ -402,13 +405,18 @@ html.js .site-footer:not([data-still]) .arcade:empty::before {
 
 .arcade.live canvas {
   touch-action: none;
+  border-color: var(--accent);
+  background-color: var(--surface);
   box-shadow:
     0 0 14px 1px var(--accent),
     inset 0 0 14px 1px var(--accent);
 }
 
 html:not(.no-fx) .arcade canvas {
-  transition: box-shadow 0.5s ease;
+  transition:
+    border-color 0.5s ease,
+    background-color 0.5s ease,
+    box-shadow 0.5s ease;
 }
 
 /* The falling-symbols strip along the very bottom, drawn by the same lazy script. Decoration only:
