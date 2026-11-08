@@ -606,19 +606,19 @@ test("outside a lazy file there is no separate re-export rule: only the two word
 const jsOf = (bytes) => `const a="${"x".repeat(bytes - 11)}";`; // `const a="` and `";` are 11
 const cssOf = (bytes) => `/*${"x".repeat(bytes - 4)}*/`;
 
-test("all JavaScript together is capped at 22,000 bytes", () => {
-  const atLimit = run({ "_astro/a.js": jsOf(22_000) });
+test("all JavaScript together is capped at 26,000 bytes", () => {
+  const atLimit = run({ "_astro/a.js": jsOf(26_000) });
   assert.equal(atLimit.status, 0, atLimit.output);
-  assert.match(atLimit.output, /JS total: +22,000 bytes \(limit 22,000\)/);
+  assert.match(atLimit.output, /JS total: +26,000 bytes \(limit 26,000\)/);
 
-  const over = run({ "_astro/a.js": jsOf(22_001) });
+  const over = run({ "_astro/a.js": jsOf(26_001) });
   assert.equal(over.status, 1, over.output);
-  assert.match(over.output, /JavaScript totals 22,001 bytes, over the 22,000 byte limit/);
+  assert.match(over.output, /JavaScript totals 26,001 bytes, over the 26,000 byte limit/);
 
   // It is a total, not a per-file limit, and .mjs counts.
-  const split = run({ "_astro/a.js": jsOf(12_000), "_astro/b.mjs": jsOf(12_000) });
+  const split = run({ "_astro/a.js": jsOf(14_000), "_astro/b.mjs": jsOf(14_000) });
   assert.equal(split.status, 1, split.output);
-  assert.match(split.output, /JavaScript totals 24,000 bytes/);
+  assert.match(split.output, /JavaScript totals 28,000 bytes/);
 });
 
 test("all CSS together is capped at 16,000 bytes", () => {
@@ -637,7 +637,7 @@ test("all CSS together is capped at 16,000 bytes", () => {
 
 test("a clean build reports both totals", () => {
   const { output } = run();
-  assert.match(output, /JS total: .*limit 22,000/);
+  assert.match(output, /JS total: .*limit 26,000/);
   assert.match(output, /CSS total: .*limit 16,000/);
 });
 

@@ -1,0 +1,98 @@
+---
+import { FACE, MARK } from "../lib/portrait-art.ts";
+
+// The page's text sits in the slot; the picture sits beside it on a wide screen and above it on
+// a narrow one. The picture is decoration: the script draws it, and nothing is lost without it.
+interface Props {
+  kind: "face" | "mark";
+}
+
+const { kind } = Astro.props;
+const art = kind === "face" ? FACE : MARK;
+---
+
+<div class="with-art">
+  <div class="with-art-text"><slot /></div>
+  <div
+    class="portrait"
+    data-portrait
+    data-kind={kind}
+    data-tone={art.tone}
+    data-cols={art.cols}
+    data-rows={art.rows}
+    data-cells={art.cells.join("")}
+    aria-hidden="true"
+  >
+  </div>
+</div>
+
+<style is:global>
+  /* The size the picture is made for: its cells are 9px symbols, 5.4px wide and 12px tall. The
+     box keeps that shape before the script runs, so nothing moves when the picture appears. */
+  .with-art {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: var(--space-5);
+    align-items: start;
+  }
+
+  .portrait {
+    position: relative;
+    margin-top: var(--space-5);
+    /* The edges fade out, so the field of symbols around the picture has no hard border. */
+    mask-image:
+      linear-gradient(to right, transparent, #000 6%, #000 94%, transparent),
+      linear-gradient(to bottom, transparent, #000 6%, #000 94%, transparent);
+    mask-composite: intersect;
+  }
+
+  .portrait[data-kind="face"] {
+    width: 24.3rem;
+    aspect-ratio: 388.8 / 552;
+  }
+
+  .portrait[data-kind="mark"] {
+    width: 24.3rem;
+    aspect-ratio: 388.8 / 264;
+  }
+
+  .portrait canvas {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    font-family: var(--font-mono);
+  }
+
+  html:not(.no-fx) .portrait canvas {
+    animation: arrive 0.5s ease-out;
+  }
+
+  @media (max-width: 48rem) {
+    .with-art {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .portrait {
+      order: -1;
+      justify-self: center;
+      margin-top: var(--space-4);
+      max-width: 100%;
+    }
+
+    /* Smaller above the text, so the heading stays on the first screen. The grid is the same, so
+       every detail is kept; the symbols shrink with the box. */
+    .portrait[data-kind="face"] {
+      width: min(100%, 15rem);
+    }
+
+    .portrait[data-kind="mark"] {
+      width: min(100%, 18rem);
+    }
+  }
+</style>
+
+<script>
+  import "../scripts/portrait.ts";
+</script>

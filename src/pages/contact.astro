@@ -1,4 +1,5 @@
 ---
+import Portrait from "../components/Portrait.astro";
 import Page from "../layouts/Page.astro";
 
 interface Channel {
@@ -26,31 +27,33 @@ const channels: Channel[] = [
 ---
 
 <Page title="Contact" description="Ways to get in touch.">
-  <h1>Contact</h1>
-  <p>Open to internships and entry-level security roles. Details below are placeholders.</p>
-  <ul class="channels">
-    {
-      channels.map((channel) => (
-        <li>
-          <svg
-            viewBox="0 0 24 24"
-            width="22"
-            height="22"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <path d={channel.icon} />
-          </svg>
-          <span>
-            <strong>{channel.href ? <a href={channel.href}>{channel.name}</a> : channel.name}</strong>
-            <span class="label">{channel.detail}</span>
-          </span>
-        </li>
-      ))
-    }
-  </ul>
+  <Portrait kind="mark">
+    <h1>Contact</h1>
+    <p>Open to internships and entry-level security roles. Details below are placeholders.</p>
+    <ul class="channels">
+      {
+        channels.map((channel) => (
+          <li>
+            <svg
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d={channel.icon} />
+            </svg>
+            <span>
+              <strong>{channel.href ? <a href={channel.href}>{channel.name}</a> : channel.name}</strong>
+              <span class="label">{channel.detail}</span>
+            </span>
+          </li>
+        ))
+      }
+    </ul>
+  </Portrait>
 </Page>

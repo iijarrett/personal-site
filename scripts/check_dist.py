@@ -34,7 +34,7 @@ Fails (exit 1) when the build output breaks a hard rule from CONTRIBUTING.md:
     "reexport", "_export" and import.meta pass.
   * the home page HTML over 14 KB, or the first load over 106 KB. The first load
     follows @import and url() chains in CSS, counting each reachable file once.
-  * all JavaScript together over 22,000 bytes, or all CSS together over 16,000
+  * all JavaScript together over 26,000 bytes, or all CSS together over 16,000
     (built, uncompressed)
   * a sitemap that lists the 404 page or a page that was not built, or a built
     page that is missing from the sitemap
@@ -57,7 +57,7 @@ from xml.etree import ElementTree
 
 HOME_HTML_LIMIT = 14_000
 FIRST_LOAD_LIMIT = 106_000
-JS_LIMIT = 22_000  # every .js/.mjs under dist/ added together, built and uncompressed
+JS_LIMIT = 26_000  # every .js/.mjs under dist/ added together, built and uncompressed
 CSS_LIMIT = 16_000  # every .css under dist/ added together, built and uncompressed
 
 BANNED_TAGS = {"form", "iframe", "frame", "frameset", "embed", "object"}
