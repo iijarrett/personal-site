@@ -115,7 +115,13 @@ class El {
 
 function install(
   t,
-  { storage = new Map(), throwingStorage = false, noContext = false, mountFull = false } = {},
+  {
+    storage = new Map(),
+    throwingStorage = false,
+    noContext = false,
+    mountFull = false,
+    touch = false,
+  } = {},
 ) {
   const saved = new Map();
   const set = (name, value) => {
@@ -162,6 +168,7 @@ function install(
   set("addEventListener", (name, fn) => win.add(name, fn));
   set("removeEventListener", (name) => win.delete(name));
   set("devicePixelRatio", 1);
+  set("matchMedia", (query) => ({ matches: touch && query === "(pointer: coarse)" }));
   set("performance", { now: () => state.clock });
   set("requestAnimationFrame", (fn) => {
     frames.set(nextFrame, fn);
@@ -301,7 +308,7 @@ test("the status line is read aloud only: the controls are drawn inside the box,
   assert.equal(hint(idle).length, 2, "idle: the controls are in the box, one short line each");
   assert.match(hint(idle).join(" "), /A D.*esc to stop/);
   // Where they are really drawn: centred, in their own font (mono glyphs are 0.6em wide), well
-  // inside the 240 x 150 box, under the "tap or press space" line with room to breathe, above
+  // inside the 240 x 150 box, under the play line with room to breathe, above
   // the paddle, and not on top of one another.
   const calls = idle.canvas.ctx.last().filter((c) => c[0] === "text");
   const specs = calls.filter((c) => /A D|esc to stop/.test(c[1]));
@@ -322,6 +329,31 @@ test("the status line is read aloud only: the controls are drawn inside the box,
   assert.equal(hint(a).length, 2, "back to idle they are shown again");
 });
 
+test("on a touch device the box says tap and drag and lists no keys", (t) => {
+  const a = install(t, { touch: true });
+  a.see(true);
+  const texts = a.texts();
+  assert.ok(texts.includes("tap to play"), texts.join(" | "));
+  assert.ok(texts.includes("drag to move"), texts.join(" | "));
+  assert.ok(!texts.some((s) => /esc|space|A D|click|mouse/.test(s)), texts.join(" | "));
+  const calls = a.canvas.ctx.last().filter((c) => c[0] === "text");
+  const note = calls.find((c) => /to play/.test(c[1]));
+  const line = calls.find((c) => /drag to move/.test(c[1]));
+  assert.ok(line[3] - note[3] >= 10, "clear of the play line");
+  assert.ok(138 - line[3] >= 14, "well above the paddle");
+  const b = started(t, { touch: true });
+  assert.ok(!b.texts().some((s) => /drag to move/.test(s)), "gone once it has started");
+});
+
+test("with a keyboard and mouse the box says click or space and lists the keys, never tap or drag", (t) => {
+  const a = install(t);
+  a.see(true);
+  const texts = a.texts();
+  assert.ok(texts.includes("click or press space to play"), texts.join(" | "));
+  assert.ok(texts.some((s) => /A D, or mouse, to move/.test(s)));
+  assert.ok(!texts.some((s) => /\btap\b|drag/.test(s)), texts.join(" | "));
+});
+
 test("it does nothing when there is no arcade box, the box is not empty, or there is no canvas context", (t) => {
   for (const options of [{ mountFull: true }, { noContext: true }]) {
     const a = install(t, options);
@@ -335,7 +367,7 @@ test("idle, it draws once and runs nothing: no frame loop, and the page keeps it
   const a = install(t);
   a.see(true);
   assert.equal(a.pending(), 0);
-  assert.ok(a.texts().some((s) => /tap or press space to play/.test(s)));
+  assert.ok(a.texts().some((s) => /click or press space to play/.test(s)));
   for (const k of [" ", "Enter", "ArrowUp", "ArrowLeft", "a", "d", "w"]) {
     assert.equal(a.key(k).prevented, false, `${k} on the page, not the canvas`);
   }
@@ -509,7 +541,7 @@ test("Escape and Tab put it back to idle, Tab without being taken, and the page 
     a.tick();
     assert.equal(a.pending(), 0, `${k}: nothing runs`);
     assert.equal(a.key("ArrowRight").prevented, false, `${k}: arrows scroll again`);
-    assert.ok(a.texts().some((s) => /tap or press space to play/.test(s)));
+    assert.ok(a.texts().some((s) => /click or press space to play/.test(s)));
     assert.equal(a.shapes().lives, 3);
   }
 });

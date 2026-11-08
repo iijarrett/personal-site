@@ -39,8 +39,10 @@ const LEFT = ["ArrowLeft", "a", "A"];
 const RIGHT = ["ArrowRight", "d", "D"];
 const GO = [" ", "Enter", "ArrowUp", "w", "W"];
 const OTHER = "a,button,input,select,summary,textarea,[contenteditable]";
-const CONTROLS = ["← → or A D, or drag, to move", "esc to stop"];
-const HELP = CONTROLS.join(" · ");
+// What the box lists depends on the device: a keyboard and mouse, or a finger.
+const KEYS = ["← → or A D, or mouse, to move", "esc to stop"];
+const TOUCH = ["drag to move"];
+const HELP = "← → or A D, or drag, to move · esc to stop"; // read aloud only
 
 /** What the lazy loader calls: the footer game, then the falling-symbols strip below it. */
 export function initArcade(env: ArcadeEnv): void {
@@ -82,6 +84,8 @@ function initGame(env: ArcadeEnv): void {
   let last = 0;
   let acc = 0;
   const font = getComputedStyle(canvas).fontFamily || "monospace";
+  // A finger as the main pointer: the box then says tap and drag, and lists no keys.
+  const touch = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
   let ink = "";
   let tint = "";
   let dim = "";
@@ -112,19 +116,21 @@ function initGame(env: ArcadeEnv): void {
     gfx.fillRect(g.bx - R, g.by - R, 2 * R, 2 * R);
     gfx.fillStyle = dim;
     gfx.font = `9px ${font}`;
+    const go = touch ? "tap" : "click or press space";
     const note = !active
-      ? "tap or press space to play"
+      ? `${go} to play`
       : g.mode === "over"
         ? "game over"
         : g.mode === "ready"
-          ? "tap or press space"
+          ? go
           : "";
     gfx.fillText(note, W / 2, 94);
     if (!active) {
       // The controls, in the box and only until the first start, so they never sit in the way:
       // one short line each, with room around them.
       gfx.font = `8px ${font}`;
-      for (const [k, line] of CONTROLS.entries()) gfx.fillText(line, W / 2, 108 + k * 11);
+      for (const [k, line] of (touch ? TOUCH : KEYS).entries())
+        gfx.fillText(line, W / 2, 108 + k * 11);
       gfx.font = `9px ${font}`;
     }
     for (let k = 0; k < g.lives; k++) gfx.fillRect(4 + k * 7, 4, 4, 4);
