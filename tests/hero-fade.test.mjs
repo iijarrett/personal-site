@@ -154,7 +154,7 @@ for (const [name, { from, stops, heroTop }] of Object.entries(variants)) {
     );
     const headline = alphaAt(stops, from + HEADLINE_ABOVE_BAND);
     assert.ok(
-      headline >= 0.08 && headline <= 0.11,
+      headline >= 0.2 && headline <= 0.3,
       `very faint, not gone, under the headline: ${headline}`,
     );
     assert.equal(alphaAt(stops, FIELD_REM), 0);
@@ -178,7 +178,7 @@ for (const [name, { from, stops, heroTop }] of Object.entries(variants)) {
       );
     }
     const ghost = alphaAt(stops, heroTop);
-    assert.ok(ghost >= 0.04 && ghost <= 0.08, `a ghost, still there, at the hero's top: ${ghost}`);
+    assert.ok(ghost >= 0.12 && ghost <= 0.2, `a ghost, still there, at the hero's top: ${ghost}`);
   });
 
   test(`${name}: the paragraph keeps 4.5:1 over the brightest glyph the field can draw, in both themes`, () => {

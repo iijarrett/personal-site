@@ -334,15 +334,15 @@ test("on a touch device the box says tap and drag and lists no keys", (t) => {
   a.see(true);
   const texts = a.texts();
   assert.ok(texts.includes("tap to play"), texts.join(" | "));
-  assert.ok(texts.includes("drag to move"), texts.join(" | "));
+  assert.ok(texts.includes("slide to move"), texts.join(" | "));
   assert.ok(!texts.some((s) => /esc|space|A D|click|mouse/.test(s)), texts.join(" | "));
   const calls = a.canvas.ctx.last().filter((c) => c[0] === "text");
   const note = calls.find((c) => /to play/.test(c[1]));
-  const line = calls.find((c) => /drag to move/.test(c[1]));
+  const line = calls.find((c) => /slide to move/.test(c[1]));
   assert.ok(line[3] - note[3] >= 10, "clear of the play line");
   assert.ok(138 - line[3] >= 14, "well above the paddle");
   const b = started(t, { touch: true });
-  assert.ok(!b.texts().some((s) => /drag to move/.test(s)), "gone once it has started");
+  assert.ok(!b.texts().some((s) => /slide to move/.test(s)), "gone once it has started");
 });
 
 test("with a keyboard and mouse the box says click or space and lists the keys, never tap or drag", (t) => {
@@ -351,7 +351,7 @@ test("with a keyboard and mouse the box says click or space and lists the keys, 
   const texts = a.texts();
   assert.ok(texts.includes("click or press space to play"), texts.join(" | "));
   assert.ok(texts.some((s) => /A D, or mouse, to move/.test(s)));
-  assert.ok(!texts.some((s) => /\btap\b|drag/.test(s)), texts.join(" | "));
+  assert.ok(!texts.some((s) => /\btap\b|drag|slide/.test(s)), texts.join(" | "));
 });
 
 test("it does nothing when there is no arcade box, the box is not empty, or there is no canvas context", (t) => {

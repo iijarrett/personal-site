@@ -41,8 +41,8 @@ const GO = [" ", "Enter", "ArrowUp", "w", "W"];
 const OTHER = "a,button,input,select,summary,textarea,[contenteditable]";
 // What the box lists depends on the device: a keyboard and mouse, or a finger.
 const KEYS = ["← → or A D, or mouse, to move", "esc to stop"];
-const TOUCH = ["drag to move"];
-const HELP = "← → or A D, or drag, to move · esc to stop"; // read aloud only
+const TOUCH = ["slide to move"];
+const HELP = "← → or A D, or slide, to move · esc to stop"; // read aloud only
 
 /** What the lazy loader calls: the footer game, then the falling-symbols strip below it. */
 export function initArcade(env: ArcadeEnv): void {

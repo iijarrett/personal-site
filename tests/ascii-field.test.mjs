@@ -87,7 +87,7 @@ test("the field is brightest near the origin and fades far away", () => {
   const far = [];
   for (const [col, row] of cells(FRAME.cols, FRAME.rows)) {
     const level = levelOf(ambient(col, row, 0));
-    if (Math.abs(col - FRAME.cols / 2) <= 10 && row >= 12) near.push(level);
+    if (Math.abs(col - FRAME.cols / 2) <= 10 && row >= FRAME.rows - 8) near.push(level);
     if (Math.abs(col - FRAME.cols / 2) >= 45 && row <= 6) far.push(level);
   }
   assert.ok(mean(near) > mean(far) + 1, `near ${mean(near)} vs far ${mean(far)}`);
@@ -228,4 +228,33 @@ test("rows added above the original 20 leave those 20 exactly as they were", () 
       }
     }
   }
+});
+
+test("above the original 20 rows the rings carry on: the top of the field is not left bare", () => {
+  const tall = { cols: 100, rows: 40 };
+  const mean = (from, to) => {
+    let total = 0;
+    let count = 0;
+    for (let row = from; row < to; row++) {
+      for (let col = 0; col < 100; col++) {
+        for (const t of [0, 1, 2, 3]) {
+          total += levelOf(ambient(col, row, t, tall));
+          count++;
+        }
+      }
+    }
+    return total / count;
+  };
+  const top = mean(0, 10);
+  const middle = mean(10, 20);
+  const bottom = mean(20, 40);
+  assert.ok(top >= 0.7, `the top ten rows average level ${top.toFixed(2)}`);
+  assert.ok(
+    top <= bottom * 0.85,
+    `and still fade from the bottom: ${top.toFixed(2)} against ${bottom.toFixed(2)}`,
+  );
+  assert.ok(
+    middle <= bottom && top <= middle * 1.25,
+    `${top.toFixed(2)}, ${middle.toFixed(2)}, ${bottom.toFixed(2)}`,
+  );
 });

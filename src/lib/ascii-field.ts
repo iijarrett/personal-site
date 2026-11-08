@@ -44,13 +44,20 @@ export const CELL_H = 16;
 
 const V_STRETCH = 1.7; // vertical distance counts 1.7x, which makes the rings elliptical
 const RING_K = (Math.PI * 2) / 60; // one ring every 60 px
-const RING_SPEED = 1.15; // radians per second, so rings drift outward
+// Radians per second: the rings travel outward at about 40 px a second (the 60 px ring spacing
+// over 1.5 s), like ripples from a pebble dropped in still water, fading as they go.
+const RING_SPEED = 4;
 const SHIMMER_SPEED = 1.7;
 const FALL = 512; // px: how far the rings reach before fading out
 const ORIGIN_RISE = 62; // px: the ring origin sits this far above the bottom edge
-// The shimmer's seeds count rows from the frame's 20th row up from the bottom, so rows added
-// above the original 20 leave those 20 exactly as they were.
+// The frame grew from 20 rows to 40. The shimmer's seeds count rows from the 20th row up from
+// the bottom, and nothing else changes for those 20, so the rows added above leave them
+// exactly as they were.
 const SEED_ROWS = 20;
+// Above the original 20 rows the rings lose a little less brightness with each row (this much,
+// in the exponent), so they carry on up the page as arcs from the same source instead of
+// dying out into specks. At the top of 40 rows that is about 2.7 times as much.
+const REACH = 0.05;
 
 export const POINTER_RADIUS = 150; // px
 export const HEX_TICKS_PER_SECOND = 8;
@@ -107,7 +114,8 @@ export function ambient(
   const ring = (0.5 + 0.5 * Math.cos(distance * RING_K - t * RING_SPEED)) ** 3;
   const shimmer =
     0.82 + 0.18 * Math.sin(t * SHIMMER_SPEED + grain(col, row - rows + SEED_ROWS) * Math.PI * 2);
-  return (ring * 1.15 + 0.07) * Math.exp(-distance / FALL) * shimmer;
+  const extra = Math.max(0, rows - SEED_ROWS - row);
+  return (ring * 1.15 + 0.07) * Math.exp(extra * REACH - distance / FALL) * shimmer;
 }
 
 /** Brightness to a ramp level, 0 (space) to 10 (@). */
