@@ -395,6 +395,26 @@ html.js:not(.bar-on, .bar-off) .bar {
   touch-action: none;
 }
 
+/* The falling-symbols strip along the very bottom, drawn by the same lazy script. Decoration only:
+   it takes no pointer events, fades in from the footer above, and like the game it is empty and
+   takes no room until the script builds it. */
+.waterfall {
+  height: 7.5rem;
+}
+
+.waterfall:empty {
+  display: none;
+}
+
+.waterfall canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  font-family: var(--font-mono);
+  pointer-events: none;
+  mask-image: linear-gradient(to bottom, transparent, #000 70%);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

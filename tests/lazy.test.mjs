@@ -272,23 +272,40 @@ test("the page script names the lazy file with an exact import(), and nothing el
 
 test("the lazy file takes only types from the page scripts and its rules from brick.ts, which no page script imports, so the bundler cannot share a chunk", () => {
   const source = read("../src/scripts/arcade.ts");
-  const imports = source.match(/^import [\s\S]*?from "[^"]+";$/gm) ?? [];
+  // Side-effect imports (import "x";) count too, and every line that starts with import is one.
+  const imports = source.match(/^import [\s\S]*?"[^"]+";$/gm) ?? [];
   assert.ok(imports.length > 0);
+  assert.equal(
+    source.match(/^import\b/gm)?.length,
+    imports.length,
+    "an import written some other way",
+  );
   for (const line of imports) {
-    const from = /from "([^"]+)";$/.exec(line)[1];
+    const from = /"([^"]+)";$/.exec(line)[1];
     if (/^import type /.test(line)) assert.equal(from, "./lazy.ts", line);
-    else assert.equal(from, "../lib/brick.ts", line);
+    else assert.ok(["../lib/brick.ts", "./waterfall.ts"].includes(from), line);
+  }
+  // The strip's script takes types from the loader and its rules from lib/waterfall.ts, nothing else.
+  const stripSource = read("../src/scripts/waterfall.ts");
+  const strip = stripSource.match(/^import [\s\S]*?"[^"]+";$/gm) ?? [];
+  assert.equal(strip.length, 2);
+  assert.equal(stripSource.match(/^import\b/gm)?.length, 2, "an import written some other way");
+  for (const line of strip) {
+    const from = /"([^"]+)";$/.exec(line)[1];
+    if (/^import type /.test(line)) assert.equal(from, "./lazy.ts", line);
+    else assert.equal(from, "../lib/waterfall.ts", line);
   }
   const files = readdirSync(new URL("../src/", import.meta.url), { recursive: true }).map((f) =>
     String(f).replaceAll("\\", "/"),
   );
   const sources = files.filter(
-    (f) => /\.(ts|astro|mjs)$/.test(f) && !/(^|\/)(arcade|brick)\.ts$/.test(f),
+    (f) => /\.(ts|astro|mjs)$/.test(f) && !/(^|\/)(arcade|brick|waterfall)\.ts$/.test(f),
   );
   assert.ok(sources.length > 5);
   for (const f of sources) {
     const text = read(`../src/${f}`);
-    assert.ok(!/brick(\.ts)?["']/.test(text), `${f} imports brick.ts`);
+    assert.ok(!/[./]brick(\.ts)?["']/.test(text), `${f} imports brick.ts`);
+    assert.ok(!/[./]waterfall(\.ts)?["']/.test(text), `${f} imports waterfall.ts`);
     const arcade = text.match(/[./]arcade(\.ts)?["']/g)?.length ?? 0;
     const lazy = text.match(/import\("\.\/arcade\.ts"\)/g)?.length ?? 0;
     assert.equal(arcade, lazy, `${f} refers to arcade.ts other than through the one lazy import()`);

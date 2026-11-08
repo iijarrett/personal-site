@@ -32,6 +32,7 @@ import {
   W,
 } from "../lib/brick.ts";
 import type { ArcadeEnv } from "./lazy.ts";
+import { initWaterfall } from "./waterfall.ts";
 
 const BEST = "jd-brick-best";
 const LEFT = ["ArrowLeft", "a", "A"];
@@ -40,7 +41,13 @@ const GO = [" ", "Enter", "ArrowUp", "w", "W"];
 const OTHER = "a,button,input,select,summary,textarea,[contenteditable]";
 const HELP = "← → or A D, or drag, to move · esc to stop";
 
+/** What the lazy loader calls: the footer game, then the falling-symbols strip below it. */
 export function initArcade(env: ArcadeEnv): void {
+  initGame(env);
+  initWaterfall(env);
+}
+
+function initGame(env: ArcadeEnv): void {
   const mount = env.footer.querySelector<HTMLElement>(".arcade");
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
