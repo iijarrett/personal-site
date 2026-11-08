@@ -35,7 +35,12 @@ export interface Shape {
   phase: Float32Array;
   /** The symbol each lit cell settles on. */
   lock: string[];
+  /** 1 on the picture, falling to 0 a few cells out and at the edges: the field only fills a halo. */
+  halo: Float32Array;
 }
+
+const HALO = 5; // how far the field reaches out from the picture, in cells (rows count double)
+const EDGE = 3; // the field also fades to nothing over this many cells at the art's edge
 
 /** One drawn cell: the symbol, its opacity (0 to 1) and its colour step (0 to TONES - 1). */
 export interface Glyph {
@@ -72,7 +77,33 @@ export function makeShape(cols: number, rows: number, tone: Tone, cells: string)
     phase[i] = hash(i, 5) * 10;
     lock.push(tone === "photo" ? (hash(i, 7) < 0.5 ? "0" : "1") : pick(hash(i, 9)));
   }
-  return { cols, rows, tone, levels, delay, phase, lock };
+  return { cols, rows, tone, levels, delay, phase, lock, halo: makeHalo(cols, rows, levels) };
+}
+
+/**
+ * How near each cell is to the picture, as a weight from 1 (on it) to 0 (HALO or more away).
+ * A cell is about twice as tall as it is wide, so a step up or down counts double.
+ */
+function makeHalo(cols: number, rows: number, levels: Uint8Array): Float32Array {
+  const halo = new Float32Array(cols * rows);
+  const reach = Math.ceil(HALO / 2);
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      let near = HALO;
+      for (let dy = -reach; dy <= reach; dy++) {
+        const yy = y + dy;
+        if (yy < 0 || yy >= rows) continue;
+        for (let dx = -HALO; dx <= HALO; dx++) {
+          const xx = x + dx;
+          if (xx < 0 || xx >= cols || !levels[yy * cols + xx]) continue;
+          near = Math.min(near, Math.hypot(dx, dy * 2));
+        }
+      }
+      const edge = Math.min(1, Math.min(x, cols - 1 - x, 2 * y, 2 * (rows - 1 - y)) / EDGE);
+      halo[y * cols + x] = (1 - near / HALO) ** 1.5 * edge;
+    }
+  }
+  return halo;
 }
 
 /** How bright a settled cell is. A photo keeps a deep range; a mark stays bold throughout. */
@@ -90,7 +121,8 @@ export function glyphAt(s: Shape, i: number, t: number, still: boolean, out: Gly
   const cx = i % s.cols;
   const cy = (i - cx) / s.cols;
   const drift = still ? 0 : t * 0.8;
-  const ambient = 0.05 + 0.15 * (0.5 + 0.5 * Math.sin(cx * 0.19 + cy * 0.33 + drift));
+  const ambient =
+    (0.08 + 0.2 * (0.5 + 0.5 * Math.sin(cx * 0.19 + cy * 0.33 + drift))) * (s.halo[i] ?? 0);
   const tick = Math.floor(t * 14);
   const level = s.levels[i] ?? 0;
   let ch: string;

@@ -1,10 +1,10 @@
 /**
  * Draws the face on the Me page and the JD mark on the Contact page. Each is a canvas of code
  * symbols that resolves into the picture once, then holds it with a quiet shimmer. It follows the
- * hero's rule for ambient motion, with one difference: the loop runs only while the Motion switch
- * is on and the device's reduced-motion setting is not, because resolving a whole picture is more
- * movement than the hero's drifting symbols. Otherwise it shows the finished picture once, still.
- * It also stops while off screen or in a hidden tab. Decoration only: hidden from assistive
+ * hero's rule for ambient motion, which is the footer strip's rule too: the Motion switch alone
+ * decides, so the picture moves wherever the hero does, whatever the device's reduced-motion
+ * setting says. With the switch off it shows the finished picture once, still. It also stops while
+ * off screen or in a hidden tab. Decoration only: hidden from assistive
  * technology, and it listens for no input.
  *
  * This is its own script, loaded by the pages that carry a picture. It shares nothing with the
@@ -34,9 +34,8 @@ const HIGHLIGHT = { dark: "#efe6ff", light: "#2b1166" };
 
 const root = document.documentElement;
 
-/** The Motion switch and the reduced-motion setting, as the main script combines them. */
+/** The Motion switch alone: what the hero and the footer strip follow. */
 function motionAllowed(): boolean {
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
   try {
     // "motion" is the key the settings menu stores its choice under.
     return localStorage.getItem("motion") !== "off";
@@ -153,14 +152,19 @@ function mount(host: HTMLElement): void {
 
   addEventListener("resize", fit);
   document.addEventListener("visibilitychange", sync);
-  matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", () =>
-    setMotion(motionAllowed()),
-  );
   new MutationObserver(() => {
     paint();
-    setMotion(!root.classList.contains("no-fx"));
     draw();
-  }).observe(root, { attributes: true, attributeFilter: ["data-theme", "class"] });
+  }).observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+  // The settings menu marks the chosen Motion button when the visitor picks one, so watching it
+  // follows the switch itself (the page's no-fx class also folds in reduced motion and the pointer).
+  const pick = (): void => {
+    const pressed = document.querySelector('button[data-key="motion"][aria-pressed="true"]');
+    if (pressed instanceof HTMLElement) setMotion(pressed.dataset.value !== "off");
+  };
+  const watch = new MutationObserver(pick);
+  for (const button of document.querySelectorAll('button[data-key="motion"]'))
+    watch.observe(button, { attributes: true, attributeFilter: ["aria-pressed"] });
   if (typeof IntersectionObserver === "undefined") {
     seen = true;
   } else {

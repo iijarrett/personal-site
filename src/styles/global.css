@@ -376,17 +376,17 @@ html.js .site-footer:not([data-still]) .arcade:empty {
 html.js .site-footer:not([data-still]) .arcade:empty::before {
   content: "";
   display: block;
-  max-width: 36rem;
+  max-width: 30rem;
   aspect-ratio: 8 / 5;
-  margin-block: var(--space-2);
+  margin: var(--space-2) auto;
 }
 
 .arcade canvas {
   display: block;
   width: 100%;
-  max-width: 36rem;
+  max-width: 30rem;
   aspect-ratio: 8 / 5;
-  margin-block: var(--space-2);
+  margin: var(--space-2) auto;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);

@@ -8,8 +8,9 @@
  *
  * Idle, it draws once and does nothing else: the page scrolls as normal, and only the focused
  * canvas answers keys. A tap, a click, or space, Enter, up or W on the focused canvas starts it.
- * From then on arrows or A and D move, a finger or mouse over the canvas moves the paddle, and keys
- * are taken while the canvas is on screen. Escape, Tab, or scrolling away puts it back to idle.
+ * From then on arrows or A and D move, and so does a finger sliding on the canvas or a mouse
+ * dragging with its button down (a mouse merely passing over does not), and keys are taken while
+ * the canvas is on screen. Escape, Tab, or scrolling away puts it back to idle.
  * It never runs while the canvas is off screen or the tab is hidden.
  */
 
@@ -40,9 +41,9 @@ const RIGHT = ["ArrowRight", "d", "D"];
 const GO = [" ", "Enter", "ArrowUp", "w", "W"];
 const OTHER = "a,button,input,select,summary,textarea,[contenteditable]";
 // What the box lists depends on the device: a keyboard and mouse, or a finger.
-const KEYS = ["← → or A D, or mouse, to move", "esc to stop"];
+const KEYS = ["← → or A D, or click and drag, to move", "esc to stop"];
 const TOUCH = ["slide to move"];
-const HELP = "← → or A D, or slide, to move · esc to stop"; // read aloud only
+const HELP = "← → or A D, or drag, to move · esc to stop"; // read aloud only
 
 /** What the lazy loader calls: the footer game, then the falling-symbols strip below it. */
 export function initArcade(env: ArcadeEnv): void {
@@ -271,7 +272,8 @@ function initGame(env: ArcadeEnv): void {
     else reset();
   }).observe(canvas);
   // A click (a tap or a mouse click, never the start of a scroll) starts it; after that a press
-  // launches at once and moving over the canvas steers.
+  // launches at once and dragging steers. A mouse only steers with its button down, so a cursor
+  // wandering across the box while the keys are in use never grabs the paddle.
   canvas.addEventListener("click", (e) => {
     const skip = active || quiet; // quiet: Escape came in the middle of this press
     quiet = false;
@@ -280,7 +282,10 @@ function initGame(env: ArcadeEnv): void {
     at(e);
     go();
   });
-  canvas.addEventListener("pointermove", at);
+  canvas.addEventListener("pointermove", (e) => {
+    if (e.pointerType === "mouse" && !pressed) return;
+    at(e);
+  });
   const lift = (): void => {
     pressed = false;
   };

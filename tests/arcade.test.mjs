@@ -350,8 +350,8 @@ test("with a keyboard and mouse the box says click or space and lists the keys, 
   a.see(true);
   const texts = a.texts();
   assert.ok(texts.includes("click or press space to play"), texts.join(" | "));
-  assert.ok(texts.some((s) => /A D, or mouse, to move/.test(s)));
-  assert.ok(!texts.some((s) => /\btap\b|drag|slide/.test(s)), texts.join(" | "));
+  assert.ok(texts.some((s) => /A D, or click and drag, to move/.test(s)));
+  assert.ok(!texts.some((s) => /\btap\b|slide/.test(s)), texts.join(" | "));
 });
 
 test("it does nothing when there is no arcade box, the box is not empty, or there is no canvas context", (t) => {
@@ -466,13 +466,33 @@ test("a held launch key does not relaunch or scroll, and a finger or mouse steer
   const a = started(t);
   const e = a.key(" ", { repeat: true });
   assert.equal(e.prevented, true);
-  a.pointer("pointermove", { clientX: 220 });
+  a.pointer("pointermove", { clientX: 220, pointerType: "touch" });
   a.run(0.05);
   assert.ok(Math.abs(a.shapes().paddle[1] + 18 - 60) < 1e-9, "steered to x=60");
   const down = a.pointer("pointerdown", { clientX: 220 });
   assert.deepEqual(a.canvas.captured, [down.pointerId]);
   a.pointer("pointerdown", { button: 2 });
   assert.deepEqual(a.canvas.captured, [7], "a right button is ignored");
+});
+
+test("a mouse only steers while its button is down, so passing over the box never grabs the paddle", (t) => {
+  const a = started(t);
+  a.run(0.05);
+  const before = a.shapes().paddle[1];
+  a.pointer("pointermove", { clientX: 220, pointerType: "mouse" }); // hovering
+  a.run(0.05);
+  assert.equal(a.shapes().paddle[1], before, "a hovering mouse did not move the paddle");
+  a.pointer("pointerdown", { clientX: 220, pointerType: "mouse" });
+  a.pointer("pointermove", { clientX: 220, pointerType: "mouse" });
+  a.run(0.05);
+  assert.ok(Math.abs(a.shapes().paddle[1] + 18 - 60) < 1e-9, "a dragging mouse steers to x=60");
+  a.pointer("pointerup", { pointerType: "mouse" });
+  a.pointer("pointermove", { clientX: 340, pointerType: "mouse" });
+  a.run(0.05);
+  assert.ok(
+    Math.abs(a.shapes().paddle[1] + 18 - 60) < 1e-9,
+    "released: hovering leaves it where it was",
+  );
 });
 
 test("the lives are drawn, and the best score only when there is one", (t) => {

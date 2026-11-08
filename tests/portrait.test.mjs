@@ -81,16 +81,40 @@ test("before it starts every cell is faint field; once resolved every lit cell h
   for (let i = 0; i < s.levels.length; i++) {
     if (glyphAt(s, i, 0, false, g)) {
       drawnAtStart++;
-      assert.ok(g.alpha <= 0.2 + 1e-9, "the field alone is faint");
+      assert.ok(g.alpha <= 0.28 + 1e-9, "the field alone is faint");
       assert.ok(SYMBOLS.includes(g.ch));
     }
     if (s.levels[i]) {
       assert.ok(glyphAt(s, i, RESOLVED + 0.01, false, g) || s.levels[i] === 1);
-      if (g.ch === "0" || g.ch === "1" || g.alpha > 0.2) locked++;
+      if (g.ch === "0" || g.ch === "1" || g.alpha > 0.28) locked++;
     }
   }
   assert.ok(drawnAtStart > 0);
   assert.ok(locked > lit(FACE) * 0.95, `locked ${locked} of ${lit(FACE)}`);
+});
+
+test("the field is a halo round the picture, not a box: far cells and the art's edge stay empty", () => {
+  for (const art of [FACE, MARK]) {
+    const s = makeShape(art.cols, art.rows, art.tone, art.cells.join(""));
+    const g = glyph();
+    let near = 0;
+    let far = 0;
+    for (let y = 0; y < art.rows; y++) {
+      for (let x = 0; x < art.cols; x++) {
+        const i = y * art.cols + x;
+        const w = s.halo[i] ?? 0;
+        assert.ok(w >= 0 && w <= 1, "a weight");
+        if (s.levels[i]) assert.equal(w > 0.99, true, "on the picture it is full");
+        const edge = x === 0 || y === 0 || x === art.cols - 1 || y === art.rows - 1;
+        if (edge) assert.equal(glyphAt(s, i, 0, false, g), false, "nothing drawn on the very edge");
+        if (!s.levels[i] && w === 0) {
+          far++;
+          assert.equal(glyphAt(s, i, 0, false, g), false, "far from the picture, nothing");
+        } else if (!s.levels[i] && w > 0.3) near++;
+      }
+    }
+    assert.ok(far > 0 && near > 0, `${art.tone}: some cells far, some near`);
+  }
 });
 
 test("a photo cell settles on 0 or 1 and a mark cell on any symbol", () => {
@@ -226,11 +250,16 @@ function run({ stored, reduced = false, tag }) {
     },
   };
   const root = { dataset: {}, classList: { contains: () => false } };
+  // The settings menu's two Motion buttons: the pressed one is the visitor's choice.
+  const buttons = ["on", "off"].map((value) => ({ dataset: { value }, pressed: value === "on" }));
+  const watchers = [];
+  set("HTMLElement", Object);
   set("document", {
     documentElement: root,
     hidden: false,
     createElement: () => canvas,
-    querySelectorAll: () => [host],
+    querySelectorAll: (selector) => (selector.includes("data-portrait") ? [host] : buttons),
+    querySelector: () => buttons.find((b) => b.pressed),
     addEventListener() {},
   });
   set("matchMedia", () => ({ matches: reduced, addEventListener() {} }));
@@ -239,7 +268,12 @@ function run({ stored, reduced = false, tag }) {
   set(
     "MutationObserver",
     class {
-      observe() {}
+      constructor(fn) {
+        this.fn = fn;
+      }
+      observe(node) {
+        if (buttons.includes(node)) watchers.push(this.fn);
+      }
     },
   );
   set("IntersectionObserver", undefined);
@@ -252,6 +286,11 @@ function run({ stored, reduced = false, tag }) {
     frames,
     host,
     canvas,
+    /** The visitor picks a Motion button in the settings menu. */
+    choose(value) {
+      for (const b of buttons) b.pressed = b.dataset.value === value;
+      for (const fn of watchers) fn();
+    },
     start: () => import(new URL(`../src/scripts/portrait.ts?run=${tag}`, import.meta.url).href),
     restore() {
       for (const [name, d] of Object.entries(globals)) {
@@ -273,12 +312,28 @@ test("with the Motion switch off it draws the finished picture once and never ru
   assert.ok(a.ctx.texts.filter((c) => c === "0" || c === "1").length > lit(FACE) * 0.9);
 });
 
-test("with reduced motion on it is still too, whatever the stored choice", async (t) => {
+test("reduced motion does not stop it: only the Motion switch decides, as for the hero", async (t) => {
   const a = run({ stored: "on", reduced: true, tag: "reduced" });
   t.after(() => a.restore());
   await a.start();
-  assert.equal(a.frames.length, 0);
-  assert.ok(a.ctx.texts.length > lit(FACE) * 0.9);
+  assert.equal(a.frames.length, 1, "it runs");
+  const b = run({ stored: "off", reduced: true, tag: "reduced-off" });
+  t.after(() => b.restore());
+  await b.start();
+  assert.equal(b.frames.length, 0, "and the switch off still stops it");
+});
+
+test("picking a Motion button in the menu starts and stops it at once", async (t) => {
+  const a = run({ stored: "on", tag: "menu" });
+  t.after(() => a.restore());
+  await a.start();
+  assert.equal(a.frames.length, 1);
+  a.choose("off");
+  assert.ok(a.ctx.texts.length > lit(FACE) * 0.9, "the finished picture is drawn at once");
+  a.frames.shift()(34); // the waiting frame finds the switch off and stops
+  assert.equal(a.frames.length, 0, "no more frames");
+  a.choose("on");
+  assert.equal(a.frames.length, 1, "running again");
 });
 
 test("with motion on it starts from field alone, resolves, then holds and keeps going", async (t) => {
