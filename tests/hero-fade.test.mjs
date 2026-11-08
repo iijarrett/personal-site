@@ -2,18 +2,21 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
-// The code field (the static frame and the live canvas) is 20rem tall and bottom-anchored, and
-// --fade says how visible it is at each height above its bottom edge. The buttons sit a fixed
-// distance above the hero's bottom (the hero body's bottom padding), and the paragraph sits a
-// fixed gap above the buttons, so the band the buttons occupy and the line the paragraph ends
-// on can both be worked out from the CSS. These tests check that --fade is fully on across the
-// band, gone before the paragraph, and the old curve everywhere else.
+// The code field (the static frame and the live canvas) is 30rem tall (30 rows of 1rem) and
+// bottom-anchored, and --fade says how visible it is at each height above its bottom edge. The
+// buttons sit a fixed distance above the hero's bottom (the hero body's bottom padding), and the
+// paragraph sits a fixed gap above the buttons, so the band the buttons occupy and the line the
+// paragraph ends on can both be worked out from the CSS. These tests check that --fade is fully
+// on across the band, thins out steadily above it (a little less visible behind the paragraph,
+// very faint where the headline ends, nothing at the top), and is the old curve below it.
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const css = read("../src/styles/global.css").replace(/\/\*[\s\S]*?\*\//g, "");
 const tokens = read("../src/styles/tokens.css");
 
-const FIELD_REM = 20;
+const FIELD_REM = 30;
+// The headline's lower edge is this far above the band's bottom edge (the paragraph is two lines).
+const HEADLINE_ABOVE_BAND = 9.8;
 
 /** The stops of a `linear-gradient(to top, ...)` as [rem, alpha], from "#000 9rem" style stops. */
 function stopsOf(text) {
@@ -48,7 +51,7 @@ function alphaAt(stops, d) {
 }
 
 /** The curve it replaced: opaque to 9rem, then a straight fade to nothing at the top (55% from the top). */
-const oldAlpha = (d) => Math.max(0, Math.min(1, 1 - (d - 9) / (FIELD_REM - 9)));
+const oldAlpha = (d) => Math.max(0, Math.min(1, 1 - (d - 9) / (20 - 9)));
 
 // ---------- The layout the band comes from ----------
 
@@ -89,7 +92,10 @@ test("the layout numbers are what the fade is built for", () => {
   assert.equal(variants.phone.from, 12);
   assert.ok(BUTTON > 3 && BUTTON < 3.2, `a button is ${BUTTON.toFixed(2)}rem tall`);
   assert.equal(GAP, 1.5);
-  assert.match(css, /\.field\s*\{[^}]*height: 20rem/);
+  assert.match(css, /\.field\s*\{[^}]*height: 30rem/);
+  // One row is 1rem (0.8rem at a line height of 1.25 = 1rem), so the frame's rows are the field's rem.
+  const rows = Number(read("../src/lib/ascii-field.ts").match(/rows: (\d+) \}/)?.[1]);
+  assert.equal(rows, FIELD_REM);
 });
 
 for (const [name, { from, stops }] of Object.entries(variants)) {
@@ -117,12 +123,30 @@ for (const [name, { from, stops }] of Object.entries(variants)) {
     assert.ok(total / count >= 0.35, `the mean gain is ${(total / count).toFixed(2)}`);
   });
 
-  test(`${name}: nothing shows behind the paragraph or the headline (from ${(top + GAP).toFixed(2)}rem up)`, () => {
-    for (let d = top + GAP; d <= FIELD_REM; d += 0.05) {
-      assert.ok(
-        alphaAt(stops, d) < 0.001,
-        `at ${d.toFixed(2)}rem it is ${alphaAt(stops, d).toFixed(3)}`,
-      );
+  test(`${name}: above the band it thins out steadily: less behind the paragraph, very faint where the headline ends, nothing at the top`, () => {
+    let last = 1;
+    for (let d = top; d <= FIELD_REM; d += 0.05) {
+      const a = alphaAt(stops, d);
+      assert.ok(a <= last + 1e-9, `at ${d.toFixed(2)}rem it rises to ${a.toFixed(3)}`);
+      last = a;
+    }
+    const paragraph = alphaAt(stops, top + GAP);
+    assert.ok(
+      paragraph > 0.5 && paragraph < 0.9,
+      `a little less visible at the paragraph: ${paragraph}`,
+    );
+    const headline = alphaAt(stops, from + HEADLINE_ABOVE_BAND);
+    assert.ok(
+      headline >= 0.05 && headline <= 0.12,
+      `very faint, not gone, under the headline: ${headline}`,
+    );
+    assert.equal(alphaAt(stops, FIELD_REM), 0);
+  });
+
+  test(`${name}: no step is abrupt: it never drops more than 0.15 in half a rem`, () => {
+    for (let d = top; d + 0.5 <= FIELD_REM; d += 0.05) {
+      const drop = alphaAt(stops, d) - alphaAt(stops, d + 0.5);
+      assert.ok(drop <= 0.15, `at ${d.toFixed(2)}rem it falls ${drop.toFixed(2)}`);
     }
   });
 

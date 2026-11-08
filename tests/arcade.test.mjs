@@ -293,6 +293,21 @@ test("it builds a focusable canvas and a status line inside the footer's arcade 
   assert.deepEqual([...a.created].sort(), ["canvas", "p"]);
 });
 
+test("the status line is read aloud only: the controls are drawn inside the box, and only until it starts", (t) => {
+  const idle = install(t);
+  idle.see(true);
+  assert.equal(idle.help.className, "sr-only", "no visible line under the box");
+  const hint = (a) => a.texts().filter((s) => /esc to stop/.test(s));
+  assert.equal(hint(idle).length, 1, "idle: the controls are in the box");
+  assert.match(hint(idle)[0], /A D/);
+  // 8px mono glyphs are 0.6em wide: the line must fit the 240-unit box with a margin.
+  assert.ok(hint(idle)[0].length * 8 * 0.6 <= 240 - 8, "the controls fit inside the box");
+  const a = started(t);
+  assert.equal(hint(a).length, 0, "once it has started they are gone");
+  a.key("Escape");
+  assert.equal(hint(a).length, 1, "back to idle they are shown again");
+});
+
 test("it does nothing when there is no arcade box, the box is not empty, or there is no canvas context", (t) => {
   for (const options of [{ mountFull: true }, { noContext: true }]) {
     const a = install(t, options);

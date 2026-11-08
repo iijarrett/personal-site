@@ -91,9 +91,9 @@ test("the static frame is masked at its left and right edges over exactly EDGE_C
   assert.equal(FRAME.cols, 100);
 });
 
-test("the default frame is 20 rows of at most 100 columns", () => {
+test("the default frame is 30 rows of at most 100 columns", () => {
   const frame = asciiFrame();
-  assert.equal(frame.length, 20);
+  assert.equal(frame.length, 30);
   assert.ok(frame.every((line) => line.length <= 100));
 });
 

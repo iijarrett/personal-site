@@ -6,6 +6,8 @@
 // context records what is drawn, and animation frames and the clock are driven by the
 // test. Nothing here is a spec-accurate DOM.
 
+import { FRAME } from "../../src/lib/ascii-field.ts";
+
 class FakeContext {
   constructor() {
     this.font = "";
@@ -130,10 +132,10 @@ export function installFakeDom({ viewportWidth = 1000, heroHeight = 600, fontPx 
       if (this.role === "hero") return rect(0, 0, state.viewportWidth, state.heroHeight);
       if (this.role === "pre") {
         const width = 100 * charWidth();
-        const height = 20 * lineHeight();
+        const height = FRAME.rows * lineHeight();
         return rect((state.viewportWidth - width) / 2, state.heroHeight - height, width, height);
       }
-      const height = Number.parseFloat(this.style.height) || 20 * 16; // the CSS fallback is 20rem
+      const height = Number.parseFloat(this.style.height) || FRAME.rows * 16; // the CSS fallback is the frame's rows in rem
       return rect(0, state.heroHeight - height, state.viewportWidth, height);
     }
   }

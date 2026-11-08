@@ -55,7 +55,8 @@ function initGame(env: ArcadeEnv): void {
   const gfx = ctx;
 
   const help = document.createElement("p");
-  help.className = "label";
+  // Read aloud only: what the keys are, and the score. The controls are drawn inside the box.
+  help.className = "sr-only";
   help.setAttribute("role", "status");
   canvas.tabIndex = 0;
   canvas.setAttribute("role", "img");
@@ -118,6 +119,12 @@ function initGame(env: ArcadeEnv): void {
           ? "tap or press space"
           : "";
     gfx.fillText(note, W / 2, 100);
+    if (!active) {
+      // The controls, in the box and only until the first start, so they never sit in the way.
+      gfx.font = `8px ${font}`;
+      gfx.fillText(HELP.trim(), W / 2, 112);
+      gfx.font = `9px ${font}`;
+    }
     for (let k = 0; k < g.lives; k++) gfx.fillRect(4 + k * 7, 4, 4, 4);
     gfx.textAlign = "right";
     gfx.fillText(`${best ? `HI ${best}  ` : ""}${g.score}`, W - 4, 7);

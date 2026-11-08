@@ -28,9 +28,9 @@ test("--font-ui is the system UI stack, with no font file behind it", () => {
 
 // The interface font is for controls only. Headings and body stay IBM Plex Sans, and
 // labels stay JetBrains Mono, so every rule that uses --font-ui is named here.
-const UI_FONT_USERS = [".site-nav a", ".site-footer a", ".btn", ".settings-panel"];
+const UI_FONT_USERS = [".site-nav a", ".btn", ".settings-panel"];
 
-test("--font-ui is used for the nav, footer links and buttons and nothing else", () => {
+test("--font-ui is used for the nav and buttons and nothing else", () => {
   const selectors = [
     ...css
       .replace(/\/\*[\s\S]*?\*\//g, "")

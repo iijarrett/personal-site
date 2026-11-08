@@ -352,19 +352,6 @@ html.js:not(.bar-on, .bar-off) .bar {
   margin: 0;
 }
 
-.site-footer a {
-  font-family: var(--font-ui);
-}
-
-/* The closing wordmark: decorative, so the page's one h1 stays the only name read aloud. */
-.wordmark {
-  flex: 1 0 100%;
-  font: 400 clamp(4rem, 18vw, 8rem) / 1 var(--font-mono);
-  letter-spacing: -0.04em;
-  color: var(--muted);
-  user-select: none;
-}
-
 /* The footer game: a small canvas on its own row, built by the lazy arcade script, so without
    JavaScript (or before it loads) the box is empty and takes no room. Idle, a drag on the canvas
    still scrolls the page; once a visitor starts it (.live) the canvas keeps touches for itself. */
@@ -475,12 +462,13 @@ html.js:not(.bar-on, .bar-off) .bar {
 
 /* ---------- Hero ---------- */
 /*
- * --fade is how visible the code field is, from its bottom edge up (20rem tall). It used to
- * fade out over the top 55%, so almost no code reached the buttons. Now it follows the old
- * curve (1 at 9rem, falling) until two rem short of the buttons' band, is fully on across
- * the band (the buttons' bottom edge is the hero body's bottom padding, 15rem; they are 3.1rem
- * tall) and is gone again 1.4rem above it, which is above the paragraph's bottom edge (1.5rem
- * over the buttons), so no code shows behind the headline or the paragraph.
+ * --fade is how visible the code field is, from its bottom edge up (30rem tall: 30 rows of
+ * 1.25 x 0.8rem). It follows the old curve (1 at 9rem, falling) until two rem short of the
+ * buttons' band, is fully on across the band (the buttons' bottom edge is the hero body's
+ * bottom padding, 15rem; they are 3.1rem tall), then thins out steadily: a little less
+ * visible behind the paragraph, down to 0.1 where the headline ends (9.8rem above the band's
+ * bottom edge), and to nothing at the field's top. The phone's stops sit 3rem lower, as its
+ * padding does.
  * tests/hero-fade.test.mjs checks the numbers against the layout.
  */
 .hero {
@@ -490,7 +478,12 @@ html.js:not(.bar-on, .bar-off) .bar {
     rgb(0 0 0 / 0.64) 13rem,
     #000 15rem,
     #000 18.1rem,
-    transparent 19.5rem
+    rgb(0 0 0 / 0.72) 19.6rem,
+    rgb(0 0 0 / 0.38) 21.6rem,
+    rgb(0 0 0 / 0.18) 23.6rem,
+    rgb(0 0 0 / 0.1) 24.8rem,
+    rgb(0 0 0 / 0.04) 27.5rem,
+    transparent 30rem
   );
   position: relative;
   overflow: hidden;
@@ -539,13 +532,13 @@ html.js:not(.bar-on, .bar-off) .bar {
   opacity: 0.8;
 }
 
-/* The live canvas sits exactly over the static frame (20 rows of 1.25 x 0.8rem). */
+/* The live canvas sits exactly over the static frame (30 rows of 1.25 x 0.8rem). */
 .field {
   position: absolute;
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 20rem;
+  height: 30rem;
   opacity: 0.6;
   pointer-events: none;
   mask-image: var(--fade);
@@ -914,7 +907,12 @@ html.js:not(.bar-on, .bar-off) .bar {
       rgb(0 0 0 / 0.91) 10rem,
       #000 12rem,
       #000 15.1rem,
-      transparent 16.5rem
+      rgb(0 0 0 / 0.72) 16.6rem,
+      rgb(0 0 0 / 0.38) 18.6rem,
+      rgb(0 0 0 / 0.18) 20.6rem,
+      rgb(0 0 0 / 0.1) 21.8rem,
+      rgb(0 0 0 / 0.04) 24.5rem,
+      transparent 27rem
     );
   }
 
@@ -946,7 +944,7 @@ html.js:not(.bar-on, .bar-off) .bar {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  html:not(.no-fx) :is(.bento > *, .wordmark) {
+  html:not(.no-fx) .bento > * {
     animation-name: reveal;
     animation-timing-function: linear;
     animation-fill-mode: both;

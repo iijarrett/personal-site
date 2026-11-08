@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
-// The scroll reveal and the closing wordmark are decoration. The page must read the same with JS
+// The scroll reveal is decoration. The page must read the same with JS
 // off, in a browser without scroll-driven animations, with reduced motion, and with the Motion
 // switch off. These tests read the CSS and the footer markup and hold it to that.
 
@@ -47,8 +47,8 @@ test("the Motion switch turns it off: the selector excludes .no-fx", () => {
   assert.match(selector, /^html:not\(\.no-fx\) /);
 });
 
-test("it reveals the bento tiles and the wordmark, nothing else", () => {
-  assert.match(selector, /:is\(\.bento > \*, \.wordmark\)$/);
+test("it reveals the bento tiles, nothing else", () => {
+  assert.match(selector, / \.bento > \*$/);
 });
 
 test("it is scroll-driven (view timeline) and runs over the tile's entry", () => {
@@ -66,10 +66,10 @@ test("it moves with translate, never transform, so a tile's hover state is not o
   assert.ok(!/transform:/.test(keyframes));
 });
 
-test("no rule hides a tile or the wordmark outside the reveal animation (JS-off safe)", () => {
+test("no rule hides a tile outside the reveal animation (JS-off safe)", () => {
   const hiding = [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)].filter(
     ([, sel, rules]) =>
-      /\.bento|\.wordmark|\.card/.test(sel) &&
+      /\.bento|\.card/.test(sel) &&
       /opacity:\s*0\b|visibility:\s*hidden|display:\s*none/.test(rules),
   );
   // The tile glow layer (.card::before) is the only thing that starts at opacity 0.
@@ -78,13 +78,14 @@ test("no rule hides a tile or the wordmark outside the reveal animation (JS-off 
 
 test("the reveal is pure CSS: no script touches it", () => {
   for (const file of ["bar", "hero", "settings", "motion-state", "interactive"]) {
-    assert.ok(!/reveal|wordmark/.test(read(`../src/scripts/${file}.ts`)), `${file}.ts mentions it`);
+    assert.ok(!/reveal/.test(read(`../src/scripts/${file}.ts`)), `${file}.ts mentions it`);
   }
 });
 
-test("the wordmark is decorative text in the footer: hidden from screen readers, mono, muted", () => {
-  assert.match(footer, /<p class="wordmark" aria-hidden="true">JD<\/p>/);
-  const rule = css.match(/\.wordmark\s*\{([^}]*)\}/)?.[1] ?? "";
-  assert.match(rule, /font: 400 clamp\(4rem, 18vw, 8rem\) \/ 1 var\(--font-mono\)/);
-  assert.match(rule, /color: var\(--muted\)/);
+test("the footer is just the copyright line, the game and the strip: no wordmark, no link", () => {
+  assert.ok(!/wordmark/.test(footer) && !/wordmark/.test(css), "the wordmark is still there");
+  assert.ok(!/<a\b/.test(footer), "the footer has a link");
+  assert.match(footer, /&copy; \{year\} JD/);
+  assert.match(footer, /<div class="arcade"><\/div>/);
+  assert.match(footer, /<div class="waterfall" aria-hidden="true"><\/div>/);
 });
