@@ -44,9 +44,9 @@ export const CELL_H = 16;
 
 const V_STRETCH = 1.7; // vertical distance counts 1.7x, which makes the rings elliptical
 const RING_K = (Math.PI * 2) / 60; // one ring every 60 px
-// Radians per second: the rings travel outward at about 40 px a second (the 60 px ring spacing
-// over 1.5 s), like ripples from a pebble dropped in still water, fading as they go.
-const RING_SPEED = 4;
+// Radians per second: the rings drift outward slowly, like ripples from a pebble dropped in still
+// water, fading as they go.
+const RING_SPEED = 1.15;
 const SHIMMER_SPEED = 1.7;
 const FALL = 512; // px: how far the rings reach before fading out
 const ORIGIN_RISE = 62; // px: the ring origin sits this far above the bottom edge
