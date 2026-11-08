@@ -178,7 +178,7 @@ class El {
 
 function install(
   t,
-  { mountFull = false, noContext = false, fades = true, dpr = 1, hidden = false } = {},
+  { mountFull = false, noContext = false, ambient = true, dpr = 1, hidden = false } = {},
 ) {
   const saved = new Map();
   const set = (name, value) => {
@@ -273,10 +273,10 @@ function install(
   let motion = null;
   initWaterfall({
     footer,
-    isOn: () => fades,
+    isOn: () => ambient,
     subscribe(listener) {
       motion = listener;
-      listener({ fades });
+      listener({ ambient, fades: ambient });
     },
   });
   const canvas = mount.children.find((c) => c.tag === "canvas") ?? null;
@@ -291,7 +291,8 @@ function install(
     observers,
     pending: () => frames.size,
     see: (on) => observers.io.cb([{ isIntersecting: on }]),
-    setMotion: (on) => motion({ fades: on }),
+    setMotion: (on) => motion({ ambient: on, fades: on }),
+    mode: (m) => motion(m),
     tick(ms = 1000 / 60) {
       state.clock += ms;
       const due = [...frames.values()];
@@ -417,8 +418,8 @@ test("the loop is never doubled, however often the conditions are re-evaluated",
   assert.equal(a.pending(), 1);
 });
 
-test("reduced motion, or Motion off from the start: one still frame, and it never runs", (t) => {
-  const a = install(t, { fades: false });
+test("Motion off from the start: one still frame, and it never runs", (t) => {
+  const a = install(t, { ambient: false });
   assert.equal(a.draws() >= 1, true, "the still frame is drawn");
   a.see(true);
   assert.equal(a.pending(), 0);
@@ -428,8 +429,20 @@ test("reduced motion, or Motion off from the start: one still frame, and it neve
   assert.ok(a.text().length > 0, "and it is not blank");
 });
 
+test("the device's reduced-motion setting does not stop it, like the hero: only the Motion switch does", (t) => {
+  const a = install(t);
+  a.see(true);
+  a.mode({ ambient: true, fades: false });
+  assert.equal(a.pending(), 1);
+  const drawn = a.draws();
+  a.run(1);
+  assert.ok(a.draws() - drawn > 20, "still running under reduced motion");
+  a.mode({ ambient: false, fades: false });
+  assert.equal(a.pending(), 0);
+});
+
 test("the still frame is always the same one, whenever motion is switched off", (t) => {
-  const quiet = install(t, { fades: false });
+  const quiet = install(t, { ambient: false });
   const still = JSON.stringify(quiet.text());
   const a = install(t);
   a.see(true);

@@ -1,9 +1,10 @@
 /**
  * The falling-symbols strip along the bottom of the footer, built by the lazy chunk (arcade.ts
  * calls this) so it is never part of the first load. One canvas, about 30 frames a second, and
- * only while it is on screen, the tab is visible and motion is allowed. With reduced motion, or
- * the Motion switch off, it shows one still frame and never runs. It is decoration: hidden from
- * assistive technology, and it listens for no input at all.
+ * only while it is on screen, the tab is visible and the Motion switch is on. It follows the
+ * hero's rule for ambient motion: the switch decides, the device's reduced-motion setting does
+ * not. With the switch off it shows one still frame and never runs. It is decoration: hidden
+ * from assistive technology, and it listens for no input at all.
  *
  * ../lib/waterfall.ts holds the rules and may be imported by this file alone, so the bundler folds
  * it into the chunk (check:dist refuses a chunk that imports anything).
@@ -116,9 +117,9 @@ export function initWaterfall(env: ArcadeEnv): void {
 
   colours();
   fit();
-  // Calls back at once, then whenever the Motion switch or reduced motion changes.
+  // Calls back at once, then whenever the Motion switch changes.
   env.subscribe((mode) => {
-    on = mode.fades;
+    on = mode.ambient;
     if (!on) {
       t = STILL;
       draw();
