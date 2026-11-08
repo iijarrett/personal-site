@@ -283,7 +283,7 @@ test("the lazy file takes only types from the page scripts and its rules from br
   for (const line of imports) {
     const from = /"([^"]+)";$/.exec(line)[1];
     if (/^import type /.test(line)) assert.equal(from, "./lazy.ts", line);
-    else assert.ok(["../lib/brick.ts", "./waterfall.ts"].includes(from), line);
+    else assert.ok(["../lib/brick.ts", "../lib/accents.ts", "./waterfall.ts"].includes(from), line);
   }
   // The strip's script takes types from the loader and its rules from lib/waterfall.ts, nothing else.
   const stripSource = read("../src/scripts/waterfall.ts");

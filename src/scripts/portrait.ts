@@ -155,7 +155,7 @@ function mount(host: HTMLElement): void {
   new MutationObserver(() => {
     paint();
     draw();
-  }).observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+  }).observe(root, { attributes: true, attributeFilter: ["data-theme", "data-accent"] });
   // The settings menu marks the chosen Motion button when the visitor picks one, so watching it
   // follows the switch itself (the page's no-fx class also folds in reduced motion and the pointer).
   const pick = (): void => {

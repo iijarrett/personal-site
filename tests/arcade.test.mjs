@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
+import { ACCENTS } from "../src/lib/accents.ts";
 import { initArcade } from "../src/scripts/arcade.ts";
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
@@ -146,6 +147,13 @@ function install(
   let nextFrame = 1;
   const observers = { io: null, mo: null };
   const root = new El("html");
+  // The page's accent: inline values the game puts on <html>, which win over the stylesheet's.
+  const inline = new Map();
+  root.dataset = {};
+  root.style = {
+    setProperty: (name, value) => inline.set(name, value),
+    removeProperty: (name) => inline.delete(name),
+  };
   const created = [];
 
   set("document", {
@@ -163,7 +171,7 @@ function install(
   });
   set("getComputedStyle", () => ({
     fontFamily: "JetBrains Mono, monospace",
-    getPropertyValue: (name) => ` ${state.vars[name] ?? ""} `,
+    getPropertyValue: (name) => ` ${inline.get(name) ?? state.vars[name] ?? ""} `,
   }));
   set("addEventListener", (name, fn) => win.add(name, fn));
   set("removeEventListener", (name) => win.delete(name));
@@ -226,6 +234,7 @@ function install(
     created,
     observers,
     root,
+    inline,
     other,
     pending: () => frames.size,
     see: (on) => observers.io.cb([{ isIntersecting: on }]),
@@ -528,6 +537,53 @@ test("a game runs to its end: game over is announced, the best is kept, and a re
     a.texts().some((s) => s === `HI ${score}  0`),
     "the best stays on screen",
   );
+});
+
+/** Plays like someone who never misses, varying where the paddle meets the ball, until `done`. */
+function autoplay(a, done, seconds = 1500) {
+  for (let i = 0; i < seconds * 60 && !done(); i++) {
+    const { ball } = a.shapes();
+    if (ball) {
+      const aim = ball[1] + 2.5 + Math.sin(i / 9) * 12; // the ball's centre, nudged off the middle
+      a.pointer("pointermove", { clientX: 100 + aim * 2, pointerType: "touch" });
+    }
+    if (!a.pending()) a.key(" "); // the next serve
+    a.tick();
+  }
+}
+
+test("clearing the bricks moves the whole page to the next colour and says so in the box", (t) => {
+  const a = started(t);
+  assert.equal(a.inline.size, 0, "purple is the stylesheet's own, nothing inline");
+  assert.equal(a.root.dataset.accent, undefined);
+  a.key(" ");
+  autoplay(a, () => a.root.dataset.accent !== undefined);
+  assert.equal(a.root.dataset.accent, "cyan-d", "the first colour is the first in the list");
+  assert.equal(a.inline.get("--accent"), ACCENTS[0].dark);
+  assert.equal(a.inline.get("--accent-text"), ACCENTS[0].dark);
+  assert.equal(a.inline.get("--ring"), ACCENTS[0].dark);
+  assert.match(a.help.textContent, /color unlocked: Cyan/);
+  assert.ok(a.texts().includes("color unlocked: Cyan"), "the line is in the box");
+  // The bricks come back in the new colour.
+  const bricks = a.canvas.ctx.last().filter((c) => c[0] === "text" && /^[@#X+]{4}$/.test(c[1]));
+  assert.equal(bricks.length, 32);
+  assert.ok(bricks.every((c) => c[4] === ACCENTS[0].dark));
+  // The line goes at the next launch.
+  a.key(" ");
+  assert.ok(!a.texts().some((s) => /color unlocked/.test(s)));
+  // The other theme wants the other values of the same colour, and the hero and strip are told.
+  a.root.dataset.theme = "light";
+  a.observers.mo.cb();
+  assert.equal(a.inline.get("--accent-text"), ACCENTS[0].light.text);
+  assert.equal(a.root.dataset.accent, "cyan-l");
+});
+
+test("going to a fresh game keeps the colour, and Escape does not give it back", (t) => {
+  const a = started(t);
+  a.key(" ");
+  autoplay(a, () => a.root.dataset.accent !== undefined);
+  a.key("Escape");
+  assert.equal(a.inline.get("--accent"), ACCENTS[0].dark);
 });
 
 test("storage that throws is tolerated: the game still plays and ends", (t) => {

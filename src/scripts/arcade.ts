@@ -14,6 +14,7 @@
  * It never runs while the canvas is off screen or the tab is hidden.
  */
 
+import { ACCENT_VARS, ACCENTS, accentValues, HOME_NAME, nextAccent } from "../lib/accents.ts";
 import {
   aim,
   BH,
@@ -90,6 +91,9 @@ function initGame(env: ArcadeEnv): void {
   let ink = "";
   let tint = "";
   let dim = "";
+  let shade = -1; // the accent the whole page wears: -1 is the home purple, else an ACCENTS index
+  let wave = 1; // the wave the game was last seen on, to spot a cleared one
+  let unlocked = ""; // the colour just won, shown until the next launch
 
   const colours = (): void => {
     const style = getComputedStyle(root);
@@ -98,6 +102,23 @@ function initGame(env: ArcadeEnv): void {
       style.getPropertyValue("--accent-text").trim() || style.getPropertyValue("--accent").trim();
     ink = style.getPropertyValue("--text").trim();
     dim = style.getPropertyValue("--muted").trim();
+  };
+
+  /**
+   * Dress the page in the current accent: the tokens go on <html> as inline values (home purple
+   * takes them off again), for the theme that is showing. data-accent changes with every repaint,
+   * which is what tells the hero, the strip and the pictures to read their colour again.
+   */
+  const paintAccent = (): void => {
+    const a = ACCENTS[shade];
+    const light = root.dataset.theme === "light";
+    ACCENT_VARS.forEach((name, k) => {
+      const v = a ? accentValues(a, light)[k] : undefined;
+      if (v) root.style.setProperty(name, v);
+      else root.style.removeProperty(name);
+    });
+    if (a) root.dataset.accent = `${a.name.toLowerCase()}-${light ? "l" : "d"}`;
+    else delete root.dataset.accent;
   };
 
   function draw(): void {
@@ -126,6 +147,11 @@ function initGame(env: ArcadeEnv): void {
           ? go
           : "";
     gfx.fillText(note, W / 2, 80);
+    if (unlocked && g.mode === "ready") {
+      gfx.fillStyle = tint;
+      gfx.fillText(`color unlocked: ${unlocked}`, W / 2, 68);
+      gfx.fillStyle = dim;
+    }
     if (!active) {
       // The controls, in the box and only until the first start, so they never sit in the way:
       // one short line each, with room around them.
@@ -156,6 +182,8 @@ function initGame(env: ArcadeEnv): void {
   const reset = (): void => {
     stop();
     g = newGame();
+    wave = 1;
+    unlocked = "";
     over = 0;
     active = false;
     held[0] = held[1] = false;
@@ -173,6 +201,15 @@ function initGame(env: ArcadeEnv): void {
     while (acc >= DT) {
       step(g, DT, dir);
       acc -= DT;
+    }
+    if (g.wave !== wave) {
+      // The last brick went: the whole page moves on to the next colour.
+      wave = g.wave;
+      shade = nextAccent(shade);
+      unlocked = ACCENTS[shade]?.name ?? HOME_NAME;
+      paintAccent();
+      colours();
+      say(`wave cleared · color unlocked: ${unlocked}`);
     }
     if (g.mode === "over" && !over) {
       over = performance.now();
@@ -200,10 +237,12 @@ function initGame(env: ArcadeEnv): void {
   /** One press: start, launch the ball, or play again. */
   const go = (): void => {
     begin();
+    unlocked = "";
     if (g.mode !== "over") launch(g);
     else if (performance.now() - over >= 600) {
       // the pause stops a mashed key from skipping the score
       g = newGame();
+      wave = 1;
       over = 0;
       say(HELP);
     }
@@ -262,6 +301,7 @@ function initGame(env: ArcadeEnv): void {
     } else kick();
   });
   new MutationObserver(() => {
+    paintAccent(); // the other theme wants the other values of the same colour
     colours();
     draw();
   }).observe(root, { attributes: true, attributeFilter: ["data-theme"] });
