@@ -703,17 +703,80 @@ test("Escape and Tab put it back to idle, Tab without being taken, and the page 
   }
 });
 
-test("scrolling the canvas out of view resets it, and coming back does not resume", (t) => {
+test("scrolling the canvas out of view pauses it as it is, and a press carries on", (t) => {
   const a = started(t);
   a.key("ArrowLeft");
   a.run(0.3);
+  const frozen = a.shapes();
+  a.see(false);
+  assert.equal(a.mount.classes.has("live"), true, "still the same game, not a fresh one");
+  assert.equal(a.pending(), 0, "nothing runs while it is out of view");
+  a.see(true);
+  assert.equal(a.pending(), 0, "back in view it waits for a press");
+  assert.ok(
+    a.texts().some((s) => /paused/.test(s)),
+    "and says so in the box",
+  );
+  assert.deepEqual(a.shapes().ball, frozen.ball);
+  assert.deepEqual(a.shapes().paddle, frozen.paddle);
+  a.key(" ");
+  assert.equal(a.pending(), 1, "the press carries on");
+  assert.ok(!a.texts().some((s) => /paused/.test(s)));
+  assert.equal(a.shapes().lives, frozen.lives, "and does not also launch a new ball");
+  a.run(0.2);
+  assert.notDeepEqual(a.shapes().ball, frozen.ball, "the ball is moving again");
+});
+
+test("a paused game ignores the pointer and the arrows until the press that carries on", (t) => {
+  const a = started(t, { touch: true });
+  a.run(0.2);
+  a.see(false);
+  a.see(true);
+  const frozen = a.shapes();
+  a.pointer("pointermove", { clientX: 300, pointerType: "touch" });
+  a.key("ArrowRight");
+  assert.equal(a.pending(), 0, "nothing restarts by itself");
+  assert.deepEqual(a.shapes().paddle, frozen.paddle, "the paddle stays where it was");
+  a.key("Escape");
+  assert.equal(a.mount.classes.has("live"), false, "Escape still ends it");
+  assert.ok(!a.texts().some((s) => /paused/.test(s)));
+});
+
+test("a game that is over goes back to idle when scrolled away, its score kept", (t) => {
+  const a = started(t);
+  a.key(" ");
+  for (let miss = 0; miss < 4 && !/game over/.test(a.help.textContent); miss++) {
+    a.run(30);
+    a.key(" ");
+  }
+  assert.match(a.help.textContent, /game over/);
+  const score = Number(/score (\d+)/.exec(a.help.textContent)[1]);
   a.see(false);
   assert.equal(a.mount.classes.has("live"), false);
-  assert.equal(a.pending(), 0);
+  assert.equal(a.storage.get("jd-brick-best"), String(score));
   a.see(true);
-  assert.equal(a.pending(), 0, "idle again, so nothing runs");
-  assert.equal(a.key("ArrowLeft").prevented, false);
-  assert.equal(a.shapes().paddle[1] + 18, 120, "a fresh game");
+  assert.equal(a.pending(), 0);
+  assert.ok(a.texts().some((s) => /click or press space to play/.test(s)));
+});
+
+test("the best is banked the moment it is passed, so a run left half way still counts", (t) => {
+  const a = started(t, { storage: new Map([["jd-brick-best", "10"]]) });
+  autoplay(a, () => a.storage.get("jd-brick-best") !== "10", 60);
+  const banked = Number(a.storage.get("jd-brick-best"));
+  assert.ok(banked > 10, "the stored best moved up while the game was still going");
+  assert.ok(!/game over/.test(a.help.textContent));
+  assert.ok(
+    a.texts().some((s) => s === `HI ${banked}  ${banked}`),
+    "and the box shows it",
+  );
+  a.see(false);
+  assert.equal(a.storage.get("jd-brick-best"), String(banked), "leaving loses nothing");
+});
+
+test("a score that does not beat the best leaves the stored best alone", (t) => {
+  const a = started(t, { storage: new Map([["jd-brick-best", "99999"]]) });
+  a.run(5);
+  assert.equal(a.storage.get("jd-brick-best"), "99999");
 });
 
 test("off screen it takes no keys, and a hidden tab pauses it until the tab is back", (t) => {

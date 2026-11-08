@@ -66,6 +66,6 @@ export function accentRecord(a: Accent): string {
 
 /** The ACCENTS index a stored record names, or -1 (home purple) for none, or for anything else. */
 export function accentIndex(raw: string | null | undefined): number {
-  const name = typeof raw === "string" ? raw.split(",")[0] : "";
+  const name = raw?.split(",")[0];
   return ACCENTS.findIndex((a) => a.name.toLowerCase() === name);
 }

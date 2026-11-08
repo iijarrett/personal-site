@@ -11,7 +11,8 @@
  * canvas answers keys. A tap, a click, or space, Enter, up or W on the focused canvas starts it.
  * From then on arrows or A and D move, and so does a finger sliding on the canvas or a mouse
  * dragging with its button down (a mouse merely passing over does not), and keys are taken while
- * the canvas is on screen. Escape, Tab, or scrolling away puts it back to idle.
+ * the canvas is on screen. Escape or Tab puts it back to idle. Scrolling away pauses it as it
+ * is, and a press carries on; a game that is over just goes back to idle.
  * It never runs while the canvas is off screen or the tab is hidden.
  */
 
@@ -109,6 +110,7 @@ function initGame(env: ArcadeEnv): void {
   } catch {}
   let wave = 1; // the wave the game was last seen on, to spot a cleared one
   let unlocked = ""; // the colour just won, shown until the next launch
+  let paused = false; // scrolled out of view mid-game: frozen until a press carries on
 
   const colours = (): void => {
     const style = getComputedStyle(root);
@@ -127,8 +129,9 @@ function initGame(env: ArcadeEnv): void {
    */
   const paintAccent = (): void => {
     const a = ACCENTS[shade];
+    const values = a ? accentValues(a) : [];
     ACCENT_VARS.forEach((name, k) => {
-      const v = a ? accentValues(a)[k] : undefined;
+      const v = values[k];
       if (v) root.style.setProperty(name, v);
       else root.style.removeProperty(name);
     });
@@ -160,11 +163,13 @@ function initGame(env: ArcadeEnv): void {
     const go = touch ? "tap" : "click or press space";
     const note = !active
       ? `${go} to play`
-      : g.mode === "over"
-        ? "game over"
-        : g.mode === "ready"
-          ? go
-          : "";
+      : paused
+        ? `paused, ${go} to continue`
+        : g.mode === "over"
+          ? "game over"
+          : g.mode === "ready"
+            ? go
+            : "";
     gfx.fillText(note, W / 2, 80);
     if (unlocked && g.mode === "ready") {
       gfx.fillStyle = tint;
@@ -205,6 +210,7 @@ function initGame(env: ArcadeEnv): void {
     unlocked = "";
     over = 0;
     active = false;
+    paused = false;
     held[0] = held[1] = false;
     if (pressed) quiet = true;
     mount.classList.remove("live");
@@ -230,21 +236,22 @@ function initGame(env: ArcadeEnv): void {
       colours();
       say(`wave cleared · color unlocked: ${unlocked}`);
     }
+    if (g.score > best) {
+      // Banked the moment it is passed, so a run left half way still counts.
+      best = g.score;
+      try {
+        localStorage.setItem(BEST, String(best));
+      } catch {}
+    }
     if (g.mode === "over" && !over) {
       over = performance.now();
-      if (g.score > best) {
-        best = g.score;
-        try {
-          localStorage.setItem(BEST, String(best));
-        } catch {}
-      }
       say(`game over · score ${g.score} · best ${best}`);
     }
     draw();
     if (g.mode === "play" || dir) raf = requestAnimationFrame(frame);
   };
   const kick = (): void => {
-    if (raf || !active || !seen || document.hidden) return;
+    if (raf || !active || paused || !seen || document.hidden) return;
     last = performance.now();
     acc = 0;
     raf = requestAnimationFrame(frame);
@@ -255,15 +262,20 @@ function initGame(env: ArcadeEnv): void {
   };
   /** One press: start, launch the ball, or play again. */
   const go = (): void => {
-    begin();
-    unlocked = "";
-    if (g.mode !== "over") launch(g);
-    else if (performance.now() - over >= 600) {
-      // the pause stops a mashed key from skipping the score
-      g = newGame();
-      wave = 1;
-      over = 0;
-      say(HELP);
+    if (paused) {
+      // Back in view after a scroll away: this press only carries on, it does not also launch.
+      paused = false;
+    } else {
+      begin();
+      unlocked = "";
+      if (g.mode !== "over") launch(g);
+      else if (performance.now() - over >= 600) {
+        // the pause stops a mashed key from skipping the score
+        g = newGame();
+        wave = 1;
+        over = 0;
+        say(HELP);
+      }
     }
     draw();
     kick();
@@ -299,7 +311,7 @@ function initGame(env: ArcadeEnv): void {
     if (RIGHT.includes(e.key)) held[1] = false;
   };
   const at = (e: MouseEvent): void => {
-    if (!active) return;
+    if (!active || paused) return;
     const box = canvas.getBoundingClientRect();
     aim(g, ((e.clientX - box.left) / box.width) * W);
     kick();
@@ -323,11 +335,17 @@ function initGame(env: ArcadeEnv): void {
     colours(); // the stylesheet already swapped the accent for the new theme
     draw();
   }).observe(root, { attributes: true, attributeFilter: ["data-theme"] });
-  // Scrolling the canvas fully out of view puts the game back to idle.
+  // Scrolling the canvas fully out of view pauses a game that is on; one that is over, or not
+  // started, goes back to idle (an ended game's score is already kept).
   new IntersectionObserver((entries) => {
     seen = !!entries.at(-1)?.isIntersecting;
     if (seen) kick();
-    else reset();
+    else if (active && g.mode !== "over") {
+      // Freeze it as it is until a press carries on. A key still held is let go by its keyup.
+      stop();
+      paused = true;
+      draw();
+    } else reset();
   }).observe(canvas);
   // A click (a tap or a mouse click, never the start of a scroll) starts it; after that a press
   // launches at once and dragging steers. A mouse only steers with its button down, so a cursor
