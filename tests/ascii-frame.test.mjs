@@ -115,8 +115,9 @@ test("only ramp characters are used, with no trailing spaces", () => {
 
 test("the bottom half is denser than the top half, so the rings radiate upward", () => {
   const frame = asciiFrame();
-  const top = sum(frame.slice(0, 10).map(ink));
-  const bottom = sum(frame.slice(10).map(ink));
+  const half = frame.length / 2;
+  const top = sum(frame.slice(0, half).map(ink));
+  const bottom = sum(frame.slice(half).map(ink));
   assert.ok(bottom > top, `bottom ${bottom} should exceed top ${top}`);
 });
 

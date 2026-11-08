@@ -48,6 +48,9 @@ const RING_SPEED = 1.15; // radians per second, so rings drift outward
 const SHIMMER_SPEED = 1.7;
 const FALL = 512; // px: how far the rings reach before fading out
 const ORIGIN_RISE = 62; // px: the ring origin sits this far above the bottom edge
+// The shimmer's seeds count rows from the frame's 20th row up from the bottom, so rows added
+// above the original 20 leave those 20 exactly as they were.
+const SEED_ROWS = 20;
 
 export const POINTER_RADIUS = 150; // px
 export const HEX_TICKS_PER_SECOND = 8;
@@ -102,7 +105,8 @@ export function ambient(
   const dy = ((row + 0.5) * CELL_H - (rows * CELL_H - ORIGIN_RISE)) * V_STRETCH;
   const distance = Math.hypot(dx, dy);
   const ring = (0.5 + 0.5 * Math.cos(distance * RING_K - t * RING_SPEED)) ** 3;
-  const shimmer = 0.82 + 0.18 * Math.sin(t * SHIMMER_SPEED + grain(col, row) * Math.PI * 2);
+  const shimmer =
+    0.82 + 0.18 * Math.sin(t * SHIMMER_SPEED + grain(col, row - rows + SEED_ROWS) * Math.PI * 2);
   return (ring * 1.15 + 0.07) * Math.exp(-distance / FALL) * shimmer;
 }
 

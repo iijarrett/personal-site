@@ -465,9 +465,10 @@ html.js:not(.bar-on, .bar-off) .bar {
  * --fade is how visible the code field is, from its bottom edge up (30rem tall: 30 rows of
  * 1.25 x 0.8rem). It follows the old curve (1 at 9rem, falling) until two rem short of the
  * buttons' band, is fully on across the band (the buttons' bottom edge is the hero body's
- * bottom padding, 15rem; they are 3.1rem tall), then thins out steadily: a little less
- * visible behind the paragraph, down to 0.1 where the headline ends (9.8rem above the band's
- * bottom edge), and to nothing at the field's top. The phone's stops sit 3rem lower, as its
+ * bottom padding, 15rem; they are 3.1rem tall), then thins out steadily: well under half
+ * behind the paragraph, where the brightest glyph must still leave its text 4.5:1 in both
+ * themes, down to 0.1 where the headline ends (9.8rem above the band's bottom edge), and to
+ * nothing at the field's top. The phone's stops sit 3rem lower, as its
  * padding does.
  * tests/hero-fade.test.mjs checks the numbers against the layout.
  */
@@ -478,9 +479,9 @@ html.js:not(.bar-on, .bar-off) .bar {
     rgb(0 0 0 / 0.64) 13rem,
     #000 15rem,
     #000 18.1rem,
-    rgb(0 0 0 / 0.72) 19.6rem,
-    rgb(0 0 0 / 0.38) 21.6rem,
-    rgb(0 0 0 / 0.18) 23.6rem,
+    rgb(0 0 0 / 0.36) 19.5rem,
+    rgb(0 0 0 / 0.22) 21.6rem,
+    rgb(0 0 0 / 0.13) 23.6rem,
     rgb(0 0 0 / 0.1) 24.8rem,
     rgb(0 0 0 / 0.04) 27.5rem,
     transparent 30rem
@@ -907,9 +908,9 @@ html.js:not(.bar-on, .bar-off) .bar {
       rgb(0 0 0 / 0.91) 10rem,
       #000 12rem,
       #000 15.1rem,
-      rgb(0 0 0 / 0.72) 16.6rem,
-      rgb(0 0 0 / 0.38) 18.6rem,
-      rgb(0 0 0 / 0.18) 20.6rem,
+      rgb(0 0 0 / 0.36) 16.5rem,
+      rgb(0 0 0 / 0.22) 18.6rem,
+      rgb(0 0 0 / 0.13) 20.6rem,
       rgb(0 0 0 / 0.1) 21.8rem,
       rgb(0 0 0 / 0.04) 24.5rem,
       transparent 27rem

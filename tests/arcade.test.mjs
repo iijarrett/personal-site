@@ -20,7 +20,7 @@ class Ctx {
     this.calls.push(["rect", x, y, w, h, this.fillStyle]);
   }
   fillText(text, x, y) {
-    this.calls.push(["text", text, x, y, this.fillStyle]);
+    this.calls.push(["text", text, x, y, this.fillStyle, this.font, this.textAlign]);
   }
   setTransform(...m) {
     this.calls.push(["transform", ...m]);
@@ -300,8 +300,16 @@ test("the status line is read aloud only: the controls are drawn inside the box,
   const hint = (a) => a.texts().filter((s) => /esc to stop/.test(s));
   assert.equal(hint(idle).length, 1, "idle: the controls are in the box");
   assert.match(hint(idle)[0], /A D/);
-  // 8px mono glyphs are 0.6em wide: the line must fit the 240-unit box with a margin.
-  assert.ok(hint(idle)[0].length * 8 * 0.6 <= 240 - 8, "the controls fit inside the box");
+  // Where it is really drawn: centred, in its own font (mono glyphs are 0.6em wide), inside the
+  // 240 x 150 box with a margin, under the "tap or press space" line and above the paddle.
+  const spec = idle.canvas.ctx.last().find((c) => c[0] === "text" && /esc to stop/.test(c[1]));
+  const px = Number(/(\d+(?:\.\d+)?)px/.exec(spec[5])?.[1]);
+  const half = (spec[1].length * px * 0.6) / 2;
+  assert.equal(spec[6], "center");
+  assert.ok(spec[2] - half >= 4 && spec[2] + half <= 240 - 4, "the controls fit across the box");
+  const note = idle.canvas.ctx.last().find((c) => c[0] === "text" && /to play/.test(c[1]));
+  assert.ok(spec[3] - px / 2 > note[3], "below the play line");
+  assert.ok(spec[3] + px / 2 < 150 - 12, "above the paddle");
   const a = started(t);
   assert.equal(hint(a).length, 0, "once it has started they are gone");
   a.key("Escape");

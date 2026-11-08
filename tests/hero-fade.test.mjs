@@ -1,13 +1,15 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
+import { ALPHA, HEX_ALPHA } from "../src/lib/ascii-field.ts";
+import { colour, contrast, mix, themes } from "./helpers/contrast.mjs";
 
 // The code field (the static frame and the live canvas) is 30rem tall (30 rows of 1rem) and
 // bottom-anchored, and --fade says how visible it is at each height above its bottom edge. The
 // buttons sit a fixed distance above the hero's bottom (the hero body's bottom padding), and the
 // paragraph sits a fixed gap above the buttons, so the band the buttons occupy and the line the
 // paragraph ends on can both be worked out from the CSS. These tests check that --fade is fully
-// on across the band, thins out steadily above it (a little less visible behind the paragraph,
+// on across the band, thins out steadily above it (much fainter behind the paragraph,
 // very faint where the headline ends, nothing at the top), and is the old curve below it.
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
@@ -15,8 +17,6 @@ const css = read("../src/styles/global.css").replace(/\/\*[\s\S]*?\*\//g, "");
 const tokens = read("../src/styles/tokens.css");
 
 const FIELD_REM = 30;
-// The headline's lower edge is this far above the band's bottom edge (the paragraph is two lines).
-const HEADLINE_ABOVE_BAND = 9.8;
 
 /** The stops of a `linear-gradient(to top, ...)` as [rem, alpha], from "#000 9rem" style stops. */
 function stopsOf(text) {
@@ -71,6 +71,21 @@ const BUTTON =
 const pitch = css.match(/\n\.pitch\s*\{[^}]*\}/)?.[0] ?? "";
 assert.match(pitch, /margin-block: 0 var\(--space-4\)/);
 const GAP = space("--space-4");
+// The headline's lower edge: the paragraph (two lines at its largest size) and the headline's
+// bottom margin sit above the band, so this much above the band's bottom edge.
+const pitchSize = rem(pitch, /clamp\([\d.]+rem, [\d.]+vw, ([\d.]+)rem\)/);
+const pitchLine = pitchSize * rem(pitch, /line-height: ([\d.]+)/);
+const h1 = css.match(/\n\.hero h1\s*\{[^}]*\}/)?.[0] ?? "";
+assert.match(h1, /margin-block: var\(--space-3\) var\(--space-3\)/);
+const HEADLINE_ABOVE_BAND = BUTTON + GAP + 2 * pitchLine + space("--space-3");
+// The brightest a glyph ever gets where the mask is fully open: the canvas's hex digit under its
+// opacity, or the static frame's top layer under its two.
+const opacityOf = (selector) =>
+  Number(css.match(new RegExp(`${selector}\\s*\\{[^}]*?opacity: ([\\d.]+)`))?.[1]);
+const WORST = Math.max(
+  opacityOf("\\.field") * Math.max(HEX_ALPHA, ...ALPHA),
+  opacityOf("\\.ascii") * opacityOf("\\.ascii \\.t2"),
+);
 
 const phoneBlock = css.match(/@media \(max-width: 40rem\)\s*\{[\s\S]*?\n\}\n/)?.[0] ?? "";
 const heroBody = (text) =>
@@ -132,21 +147,35 @@ for (const [name, { from, stops }] of Object.entries(variants)) {
     }
     const paragraph = alphaAt(stops, top + GAP);
     assert.ok(
-      paragraph > 0.5 && paragraph < 0.9,
-      `a little less visible at the paragraph: ${paragraph}`,
+      paragraph > 0.3 && paragraph < 0.45,
+      `well under half at the paragraph: ${paragraph}`,
     );
     const headline = alphaAt(stops, from + HEADLINE_ABOVE_BAND);
     assert.ok(
-      headline >= 0.05 && headline <= 0.12,
+      headline >= 0.08 && headline <= 0.11,
       `very faint, not gone, under the headline: ${headline}`,
     );
     assert.equal(alphaAt(stops, FIELD_REM), 0);
   });
 
-  test(`${name}: no step is abrupt: it never drops more than 0.15 in half a rem`, () => {
+  test(`${name}: no step is abrupt: it never drops more than 0.25 in half a rem`, () => {
+    // The paragraph's text sets the pace: from full to under 0.4 in the gap above the buttons.
     for (let d = top; d + 0.5 <= FIELD_REM; d += 0.05) {
       const drop = alphaAt(stops, d) - alphaAt(stops, d + 0.5);
-      assert.ok(drop <= 0.15, `at ${d.toFixed(2)}rem it falls ${drop.toFixed(2)}`);
+      assert.ok(drop <= 0.25, `at ${d.toFixed(2)}rem it falls ${drop.toFixed(2)}`);
+    }
+  });
+
+  test(`${name}: the paragraph keeps 4.5:1 over the brightest glyph the field can draw, in both themes`, () => {
+    for (const [theme, block] of Object.entries(themes)) {
+      const [bg, text, accent] = ["--bg", "--muted", "--accent"].map((n) => colour(block, n));
+      for (let d = top + GAP; d <= from + HEADLINE_ABOVE_BAND; d += 0.05) {
+        const ratio = contrast(text, mix(bg, accent, WORST * alphaAt(stops, d)));
+        assert.ok(
+          ratio >= 4.5,
+          `${theme}: at ${d.toFixed(2)}rem the paragraph is ${ratio.toFixed(2)}:1`,
+        );
+      }
     }
   });
 

@@ -213,3 +213,19 @@ test("hex digits are hex, stable within a tick, and cycle between ticks", () => 
     if (hexChar(col, row, 0) !== hexChar(col, row, 0.5)) differs++;
   assert.ok(differs > 100, `${differs} of 160 changed`);
 });
+
+test("rows added above the original 20 leave those 20 exactly as they were", () => {
+  const same = { cols: 100, rows: 20 };
+  const tall = { cols: 100, rows: 30 };
+  for (const t of [0, 1.3, 9]) {
+    for (let row = 0; row < 20; row++) {
+      for (let col = -5; col < 105; col += 3) {
+        assert.equal(
+          ambient(col, row, t, same),
+          ambient(col, row + 10, t, tall),
+          `${col},${row} at ${t}`,
+        );
+      }
+    }
+  }
+});
