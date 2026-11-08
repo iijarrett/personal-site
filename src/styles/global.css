@@ -1,6 +1,24 @@
 @import "./fonts.css";
 @import "./tokens.css";
 
+/* A colour won in the footer game. theme-init.js and arcade.ts put it on <html> as --x0 to --x3
+   (dark colour, light accent, light text, light glow); these two rules turn it into the accent
+   tokens for the showing theme, so a theme switch needs no script. Without data-accent the
+   tokens stay purple. */
+html[data-accent] {
+  --accent: var(--x0);
+  --accent-text: var(--x0);
+  --glow: var(--x0);
+  --ring: var(--x0);
+}
+
+html[data-accent][data-theme="light"] {
+  --accent: var(--x1);
+  --accent-text: var(--x2);
+  --glow: var(--x3);
+  --ring: var(--x2);
+}
+
 *,
 *::before,
 *::after {

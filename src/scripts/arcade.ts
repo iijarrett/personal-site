@@ -1,10 +1,11 @@
 /**
  * The footer brick breaker, in the spirit of the browser's offline dinosaur: it sits idle in the
- * footer, one press starts it, and the only saved thing is the best score, kept on this device in
- * localStorage. It is a separate file that lazy.ts requests only after a real visitor has the
- * footer in reach, so it is never part of the first load. The build check lets this file export
- * but never import, so ../lib/brick.ts must be used by this file alone (the bundler then folds it
- * in) and nothing else may be shared with the page script.
+ * footer, one press starts it, and two things are saved: the best score, kept on this device in
+ * localStorage, and the colour won by clearing a wave, kept for this tab in sessionStorage so
+ * every page wears it until the tab closes. It is a separate file that lazy.ts requests only
+ * after a real visitor has the footer in reach, so it is never part of the first load. The build
+ * check lets this file export but never import, so ../lib/brick.ts must be used by this file alone
+ * (the bundler then folds it in) and nothing else may be shared with the page script.
  *
  * Idle, it draws once and does nothing else: the page scrolls as normal, and only the focused
  * canvas answers keys. A tap, a click, or space, Enter, up or W on the focused canvas starts it.
@@ -14,7 +15,16 @@
  * It never runs while the canvas is off screen or the tab is hidden.
  */
 
-import { ACCENT_VARS, ACCENTS, accentValues, HOME_NAME, nextAccent } from "../lib/accents.ts";
+import {
+  ACCENT_KEY,
+  ACCENT_VARS,
+  ACCENTS,
+  accentIndex,
+  accentRecord,
+  accentValues,
+  HOME_NAME,
+  nextAccent,
+} from "../lib/accents.ts";
 import {
   aim,
   BH,
@@ -91,7 +101,12 @@ function initGame(env: ArcadeEnv): void {
   let ink = "";
   let tint = "";
   let dim = "";
-  let shade = -1; // the accent the whole page wears: -1 is the home purple, else an ACCENTS index
+  // The accent the whole page wears: -1 is the home purple, else an ACCENTS index. A colour won
+  // on an earlier page of this tab is already on the page (theme-init.js), so carry on from it.
+  let shade = -1;
+  try {
+    shade = accentIndex(sessionStorage.getItem(ACCENT_KEY));
+  } catch {}
   let wave = 1; // the wave the game was last seen on, to spot a cleared one
   let unlocked = ""; // the colour just won, shown until the next launch
 
@@ -105,20 +120,24 @@ function initGame(env: ArcadeEnv): void {
   };
 
   /**
-   * Dress the page in the current accent: the tokens go on <html> as inline values (home purple
-   * takes them off again), for the theme that is showing. data-accent changes with every repaint,
-   * which is what tells the hero, the strip and the pictures to read their colour again.
+   * Dress the page in the current accent: four values go on <html> as custom properties, and
+   * global.css turns them into the tokens for the theme that is showing (home purple takes them
+   * off again). data-accent changing tells the hero, the strip and the pictures to read their
+   * colour again. The colour is also kept for the tab, so every page of the site wears it.
    */
   const paintAccent = (): void => {
     const a = ACCENTS[shade];
-    const light = root.dataset.theme === "light";
     ACCENT_VARS.forEach((name, k) => {
-      const v = a ? accentValues(a, light)[k] : undefined;
+      const v = a ? accentValues(a)[k] : undefined;
       if (v) root.style.setProperty(name, v);
       else root.style.removeProperty(name);
     });
-    if (a) root.dataset.accent = `${a.name.toLowerCase()}-${light ? "l" : "d"}`;
+    if (a) root.dataset.accent = a.name.toLowerCase();
     else delete root.dataset.accent;
+    try {
+      if (a) sessionStorage.setItem(ACCENT_KEY, accentRecord(a));
+      else sessionStorage.removeItem(ACCENT_KEY);
+    } catch {}
   };
 
   function draw(): void {
@@ -301,8 +320,7 @@ function initGame(env: ArcadeEnv): void {
     } else kick();
   });
   new MutationObserver(() => {
-    paintAccent(); // the other theme wants the other values of the same colour
-    colours();
+    colours(); // the stylesheet already swapped the accent for the new theme
     draw();
   }).observe(root, { attributes: true, attributeFilter: ["data-theme"] });
   // Scrolling the canvas fully out of view puts the game back to idle.

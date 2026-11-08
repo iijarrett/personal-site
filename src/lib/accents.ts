@@ -5,6 +5,11 @@
  * darker where they carry text or edges, so every colour keeps its contrast on both themes;
  * tests/accents.test.mjs holds each one to the same limits as the purple.
  *
+ * A colour won is kept for the tab (sessionStorage) and put back before first paint on every
+ * page by public/theme-init.js, so it follows the visitor from page to page and goes when the tab
+ * closes. The page wears it through four custom properties, --x0 to --x3, that global.css turns
+ * into the accent tokens for whichever theme is showing; switching theme needs no script.
+ *
  * No DOM here. ../scripts/arcade.ts is the only file that imports this one.
  */
 
@@ -37,16 +42,30 @@ export const ACCENTS: readonly Accent[] = [
   { name: "Pink", dark: "#f7768e", light: { accent: "#f52a65", text: "#b02040", glow: "#fbdde4" } },
 ];
 
-/** The custom properties an accent sets on the page, and the home colour's name. */
-export const ACCENT_VARS = ["--accent", "--accent-text", "--glow", "--ring"] as const;
+/** The custom properties an accent sets on <html>, the storage key, and the home colour's name. */
+export const ACCENT_VARS = ["--x0", "--x1", "--x2", "--x3"] as const;
+export const ACCENT_KEY = "accent";
 export const HOME_NAME = "Purple";
 
 /** The next colour after `index` (-1 is the home purple): round the list and back home. */
 export const nextAccent = (index: number): number => (index + 1 >= ACCENTS.length ? -1 : index + 1);
 
-/** What each token is for an accent on a theme, in the order of ACCENT_VARS. */
-export function accentValues(a: Accent, light: boolean): string[] {
-  return light
-    ? [a.light.accent, a.light.text, a.light.glow, a.light.text]
-    : [a.dark, a.dark, a.dark, a.dark];
+/**
+ * The four values an accent puts on the page, in the order of ACCENT_VARS: the dark theme's
+ * colour (it serves the accent, its text, the glow and the ring), then the light theme's accent,
+ * text and glow. global.css says which token takes which.
+ */
+export function accentValues(a: Accent): string[] {
+  return [a.dark, a.light.accent, a.light.text, a.light.glow];
+}
+
+/** What is kept in storage: the lower-case name, then the four values, comma separated. */
+export function accentRecord(a: Accent): string {
+  return [a.name.toLowerCase(), ...accentValues(a)].join(",");
+}
+
+/** The ACCENTS index a stored record names, or -1 (home purple) for none, or for anything else. */
+export function accentIndex(raw: string | null | undefined): number {
+  const name = typeof raw === "string" ? raw.split(",")[0] : "";
+  return ACCENTS.findIndex((a) => a.name.toLowerCase() === name);
 }

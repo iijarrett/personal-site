@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { ACCENT_VARS, ACCENTS, accentValues, HOME_NAME, nextAccent } from "../src/lib/accents.ts";
+import {
+  ACCENT_KEY,
+  ACCENT_VARS,
+  ACCENTS,
+  accentIndex,
+  accentRecord,
+  accentValues,
+  HOME_NAME,
+  nextAccent,
+} from "../src/lib/accents.ts";
 
 // Every colour the footer game hands out must hold the same limits as the purple it replaces:
 // the tokens it sets are the ones the stylesheet's own contrast tests are written against.
@@ -50,6 +59,49 @@ const blend = (fg, bg, alpha) =>
     )
     .join("")}`;
 
+const globalCss = readFileSync(new URL("../src/styles/global.css", import.meta.url), "utf8");
+const ruleOf = (selector) =>
+  globalCss.match(new RegExp(`${selector.replace(/[[\]"]/g, "\\$&")}\\s*\\{([^}]*)\\}`))?.[1] ?? "";
+const mapOf = (selector) =>
+  Object.fromEntries(
+    [...ruleOf(selector).matchAll(/(--[a-z-]+):\s*var\((--x\d)\)/g)].map((m) => [m[1], m[2]]),
+  );
+
+/** The accent, text, glow and ring of a colour on a theme, as global.css maps them. */
+function tokensFor(values, light) {
+  const map = mapOf(light ? 'html[data-accent][data-theme="light"]' : "html[data-accent]");
+  return ["--accent", "--accent-text", "--glow", "--ring"].map(
+    (t) => values[Number(map[t].at(-1))],
+  );
+}
+
+test("global.css maps the four values to the four tokens, once for each theme", () => {
+  for (const selector of ['html[data-accent][data-theme="light"]', "html[data-accent]"]) {
+    const map = mapOf(selector);
+    assert.deepEqual(Object.keys(map).sort(), ["--accent", "--accent-text", "--glow", "--ring"]);
+    for (const x of Object.values(map)) assert.ok(ACCENT_VARS.includes(x), x);
+  }
+  // Dark uses one colour for everything, light spends each of its three where the contrast needs it.
+  assert.deepEqual(new Set(Object.values(mapOf("html[data-accent]"))), new Set(["--x0"]));
+  assert.deepEqual(mapOf('html[data-accent][data-theme="light"]'), {
+    "--accent": "--x1",
+    "--accent-text": "--x2",
+    "--glow": "--x3",
+    "--ring": "--x2",
+  });
+});
+
+test("a stored record names its colour, and anything else is the home purple", () => {
+  assert.equal(ACCENT_KEY, "accent");
+  ACCENTS.forEach((a, i) => {
+    assert.equal(accentIndex(accentRecord(a)), i, a.name);
+    assert.match(accentRecord(a), /^[a-z]+(,#[0-9a-f]{6}){4}$/);
+  });
+  for (const raw of [null, undefined, "", "purple", "orange,#000000", ",", "7"]) {
+    assert.equal(accentIndex(raw), -1, String(raw));
+  }
+});
+
 test("the page's own tokens were read", () => {
   for (const t of Object.values(THEMES)) {
     for (const k of ["bg", "surface", "text", "onAccent"]) assert.match(t[k], /^#[0-9a-f]{6}$/i, k);
@@ -61,17 +113,16 @@ test("there are three or four colours, each with a name and a value for every to
   assert.equal(new Set(ACCENTS.map((a) => a.name)).size, ACCENTS.length, "names are distinct");
   assert.ok(!ACCENTS.some((a) => a.name === HOME_NAME), "purple is the home colour, not listed");
   for (const a of ACCENTS) {
-    for (const light of [false, true]) {
-      const values = accentValues(a, light);
-      assert.equal(values.length, ACCENT_VARS.length);
-      for (const v of values) assert.match(v, /^#[0-9a-f]{6}$/i, `${a.name} ${v}`);
-    }
+    const values = accentValues(a);
+    assert.equal(values.length, ACCENT_VARS.length);
+    for (const v of values) assert.match(v, /^#[0-9a-f]{6}$/i, `${a.name} ${v}`);
   }
 });
 
 for (const a of ACCENTS) {
   for (const [name, theme] of Object.entries(THEMES)) {
-    const [accent, text, glow, ring] = accentValues(a, theme.light);
+    // What global.css makes of the four values: the same mapping the tests below read from it.
+    const [accent, text, glow, ring] = tokensFor(accentValues(a), theme.light);
     test(`${a.name}, ${name}: text and links are 4.5:1 on the page and on a surface`, () => {
       assert.ok(contrast(text, theme.bg) >= 4.5, `${text} on bg ${contrast(text, theme.bg)}`);
       assert.ok(contrast(text, theme.surface) >= 4.5, `${text} on surface`);

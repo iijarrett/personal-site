@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { ACCENTS } from "../src/lib/accents.ts";
+import { ACCENT_VARS, ACCENTS, accentRecord, accentValues } from "../src/lib/accents.ts";
 import { initArcade } from "../src/scripts/arcade.ts";
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
@@ -119,6 +119,8 @@ function install(
   {
     storage = new Map(),
     throwingStorage = false,
+    session = new Map(),
+    throwingSession = false,
     noContext = false,
     mountFull = false,
     touch = false,
@@ -156,6 +158,19 @@ function install(
   };
   const created = [];
 
+  // What global.css makes of the colour on <html>: four values feed the tokens, by theme.
+  const cssValue = (name) => {
+    if (root.dataset.accent === undefined) return undefined;
+    const light = root.dataset.theme === "light";
+    const from = {
+      "--accent": light ? "--x1" : "--x0",
+      "--accent-text": light ? "--x2" : "--x0",
+      "--glow": light ? "--x3" : "--x0",
+      "--ring": light ? "--x2" : "--x0",
+    }[name];
+    return from && inline.get(from);
+  };
+
   set("document", {
     documentElement: root,
     get hidden() {
@@ -171,7 +186,7 @@ function install(
   });
   set("getComputedStyle", () => ({
     fontFamily: "JetBrains Mono, monospace",
-    getPropertyValue: (name) => ` ${inline.get(name) ?? state.vars[name] ?? ""} `,
+    getPropertyValue: (name) => ` ${cssValue(name) ?? state.vars[name] ?? ""} `,
   }));
   set("addEventListener", (name, fn) => win.add(name, fn));
   set("removeEventListener", (name) => win.delete(name));
@@ -191,6 +206,20 @@ function install(
     setItem(key, value) {
       if (throwingStorage) throw new Error("blocked");
       storage.set(key, String(value));
+    },
+  });
+  set("sessionStorage", {
+    getItem(key) {
+      if (throwingSession) throw new Error("blocked");
+      return session.get(key) ?? null;
+    },
+    setItem(key, value) {
+      if (throwingSession) throw new Error("blocked");
+      session.set(key, String(value));
+    },
+    removeItem(key) {
+      if (throwingSession) throw new Error("blocked");
+      session.delete(key);
     },
   });
   set(
@@ -226,6 +255,7 @@ function install(
   const api = {
     state,
     storage,
+    session,
     win,
     doc,
     mount,
@@ -558,10 +588,10 @@ test("clearing the bricks moves the whole page to the next colour and says so in
   assert.equal(a.root.dataset.accent, undefined);
   a.key(" ");
   autoplay(a, () => a.root.dataset.accent !== undefined);
-  assert.equal(a.root.dataset.accent, "cyan-d", "the first colour is the first in the list");
-  assert.equal(a.inline.get("--accent"), ACCENTS[0].dark);
-  assert.equal(a.inline.get("--accent-text"), ACCENTS[0].dark);
-  assert.equal(a.inline.get("--ring"), ACCENTS[0].dark);
+  assert.equal(a.root.dataset.accent, "cyan", "the first colour is the first in the list");
+  for (const [k, name] of ACCENT_VARS.entries()) {
+    assert.equal(a.inline.get(name), accentValues(ACCENTS[0])[k], name);
+  }
   assert.match(a.help.textContent, /color unlocked: Cyan/);
   assert.ok(a.texts().includes("color unlocked: Cyan"), "the line is in the box");
   // The bricks come back in the new colour.
@@ -571,11 +601,13 @@ test("clearing the bricks moves the whole page to the next colour and says so in
   // The line goes at the next launch.
   a.key(" ");
   assert.ok(!a.texts().some((s) => /color unlocked/.test(s)));
-  // The other theme wants the other values of the same colour, and the hero and strip are told.
+  // The other theme needs nothing from the game: the stylesheet picks the other values of the
+  // same colour, and the box redraws in them.
+  const before = a.inline.size;
   a.root.dataset.theme = "light";
   a.observers.mo.cb();
-  assert.equal(a.inline.get("--accent-text"), ACCENTS[0].light.text);
-  assert.equal(a.root.dataset.accent, "cyan-l");
+  assert.equal(a.inline.size, before, "the game puts nothing more on the page");
+  assert.ok(a.canvas.ctx.last().some((c) => c[0] === "text" && c[4] === ACCENTS[0].light.text));
 });
 
 test("going to a fresh game keeps the colour, and Escape does not give it back", (t) => {
@@ -583,7 +615,56 @@ test("going to a fresh game keeps the colour, and Escape does not give it back",
   a.key(" ");
   autoplay(a, () => a.root.dataset.accent !== undefined);
   a.key("Escape");
-  assert.equal(a.inline.get("--accent"), ACCENTS[0].dark);
+  assert.equal(a.inline.get("--x0"), ACCENTS[0].dark);
+});
+
+test("a colour won is kept for the tab, in the form the head script reads", (t) => {
+  const a = started(t);
+  assert.equal(a.session.has("accent"), false);
+  a.key(" ");
+  autoplay(a, () => a.root.dataset.accent !== undefined);
+  assert.equal(a.session.get("accent"), accentRecord(ACCENTS[0]));
+  assert.equal(a.storage.has("accent"), false, "the high score's storage is left alone");
+});
+
+test("a colour kept from another page carries on: the next wave is the next colour", (t) => {
+  const a = started(t, { session: new Map([["accent", accentRecord(ACCENTS[1])]]) });
+  a.key(" ");
+  autoplay(a, () => /color unlocked/.test(a.help.textContent));
+  assert.equal(a.root.dataset.accent, ACCENTS[2].name.toLowerCase());
+  assert.equal(a.session.get("accent"), accentRecord(ACCENTS[2]));
+  assert.match(a.help.textContent, new RegExp(`color unlocked: ${ACCENTS[2].name}`));
+});
+
+test("after the last colour the page goes home to purple and forgets the colour", (t) => {
+  const last = ACCENTS.length - 1;
+  const a = started(t, { session: new Map([["accent", accentRecord(ACCENTS[last])]]) });
+  // What the head script put on the page before the game loaded.
+  a.root.dataset.accent = ACCENTS[last].name.toLowerCase();
+  for (const [k, v] of accentValues(ACCENTS[last]).entries()) a.inline.set(ACCENT_VARS[k], v);
+  a.key(" ");
+  autoplay(a, () => /color unlocked/.test(a.help.textContent));
+  assert.match(a.help.textContent, /color unlocked: Purple/);
+  assert.equal(a.root.dataset.accent, undefined);
+  assert.equal(a.inline.size, 0);
+  assert.equal(a.session.has("accent"), false);
+});
+
+test("a stored colour that is not one of ours is ignored", (t) => {
+  for (const bad of ["", "orange,#ff8800,#ff8800,#ff8800,#ff8800", "garbage", "7"]) {
+    const a = started(t, { session: new Map([["accent", bad]]) });
+    a.key(" ");
+    autoplay(a, () => /color unlocked/.test(a.help.textContent));
+    assert.equal(a.root.dataset.accent, ACCENTS[0].name.toLowerCase(), JSON.stringify(bad));
+  }
+});
+
+test("blocked tab storage is tolerated: the colour still changes for this page", (t) => {
+  const a = started(t, { throwingSession: true });
+  a.key(" ");
+  autoplay(a, () => a.root.dataset.accent !== undefined);
+  assert.equal(a.root.dataset.accent, ACCENTS[0].name.toLowerCase());
+  assert.equal(a.inline.get("--x0"), ACCENTS[0].dark);
 });
 
 test("storage that throws is tolerated: the game still plays and ends", (t) => {
@@ -667,7 +748,6 @@ test("the lazy file stays small, local and plain: no network, timers, eval, mark
     "insertAdjacentHTML",
     "document.write",
     "document.cookie",
-    "sessionStorage",
     "indexedDB",
     "Math.random",
     "http://",
@@ -684,6 +764,13 @@ test("the lazy file stays small, local and plain: no network, timers, eval, mark
     "setItem",
   ]);
   assert.equal(source.match(/"jd-brick-best"/g)?.length, 1, "one key, one place");
+  // The tab's colour is the only other thing kept, and only through the shared key.
+  assert.deepEqual([...source.matchAll(/sessionStorage\.(\w+)\(/g)].map((m) => m[1]).sort(), [
+    "getItem",
+    "removeItem",
+    "setItem",
+  ]);
+  assert.ok(!/"accent"/.test(source), "the key comes from accents.ts, not a second copy");
 });
 
 test("the rules file has no DOM, clock or randomness, so the game can be replayed", () => {
