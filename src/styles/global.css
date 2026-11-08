@@ -387,9 +387,14 @@ html.js .site-footer:not([data-still]) .arcade:empty::before {
   max-width: 30rem;
   aspect-ratio: 8 / 5;
   margin: var(--space-2) auto;
-  border: 1px solid var(--border);
+  /* No hard line: the edge is the page's grey, blurred in and out, and turns the accent while a
+     game is running. */
+  border: 1px solid transparent;
   border-radius: var(--radius);
   background: var(--surface);
+  box-shadow:
+    0 0 14px 1px var(--border),
+    inset 0 0 14px 1px var(--border);
   font-family: var(--font-mono);
   cursor: pointer;
   touch-action: pan-y;
@@ -397,6 +402,13 @@ html.js .site-footer:not([data-still]) .arcade:empty::before {
 
 .arcade.live canvas {
   touch-action: none;
+  box-shadow:
+    0 0 14px 1px var(--accent),
+    inset 0 0 14px 1px var(--accent);
+}
+
+html:not(.no-fx) .arcade canvas {
+  transition: box-shadow 0.5s ease;
 }
 
 /* The falling-symbols strip along the very bottom, drawn by the same lazy script. Decoration only:
