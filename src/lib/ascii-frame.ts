@@ -43,3 +43,34 @@ export function asciiTiers({ cols = FRAME.cols, rows = FRAME.rows }: FrameOption
   }
   return blocks.map((block) => block.join("\n"));
 }
+
+/**
+ * Packs runs of spaces into tabs, to keep the page small. A <pre> has a tab stop every 8
+ * columns, so one tab stands for up to eight spaces and the text lays out exactly as before.
+ * A tab is only used where it replaces at least two spaces.
+ */
+export function packTabs(text: string): string {
+  return text.split("\n").map(packLine).join("\n");
+}
+
+function packLine(line: string): string {
+  let out = "";
+  let col = 0;
+  while (col < line.length) {
+    if (line.charAt(col) !== " ") {
+      out += line.charAt(col);
+      col++;
+      continue;
+    }
+    let end = col;
+    while (line.charAt(end) === " ") end++;
+    let at = col;
+    for (let stop = (Math.floor(at / 8) + 1) * 8; stop <= end && stop - at >= 2; stop += 8) {
+      out += "\t";
+      at = stop;
+    }
+    out += " ".repeat(end - at);
+    col = end;
+  }
+  return out;
+}

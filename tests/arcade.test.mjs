@@ -297,23 +297,29 @@ test("the status line is read aloud only: the controls are drawn inside the box,
   const idle = install(t);
   idle.see(true);
   assert.equal(idle.help.className, "sr-only", "no visible line under the box");
-  const hint = (a) => a.texts().filter((s) => /esc to stop/.test(s));
-  assert.equal(hint(idle).length, 1, "idle: the controls are in the box");
-  assert.match(hint(idle)[0], /A D/);
-  // Where it is really drawn: centred, in its own font (mono glyphs are 0.6em wide), inside the
-  // 240 x 150 box with a margin, under the "tap or press space" line and above the paddle.
-  const spec = idle.canvas.ctx.last().find((c) => c[0] === "text" && /esc to stop/.test(c[1]));
-  const px = Number(/(\d+(?:\.\d+)?)px/.exec(spec[5])?.[1]);
-  const half = (spec[1].length * px * 0.6) / 2;
-  assert.equal(spec[6], "center");
-  assert.ok(spec[2] - half >= 4 && spec[2] + half <= 240 - 4, "the controls fit across the box");
-  const note = idle.canvas.ctx.last().find((c) => c[0] === "text" && /to play/.test(c[1]));
-  assert.ok(spec[3] - px / 2 > note[3], "below the play line");
-  assert.ok(spec[3] + px / 2 < 150 - 12, "above the paddle");
+  const hint = (a) => a.texts().filter((s) => /A D|esc to stop/.test(s));
+  assert.equal(hint(idle).length, 2, "idle: the controls are in the box, one short line each");
+  assert.match(hint(idle).join(" "), /A D.*esc to stop/);
+  // Where they are really drawn: centred, in their own font (mono glyphs are 0.6em wide), well
+  // inside the 240 x 150 box, under the "tap or press space" line with room to breathe, above
+  // the paddle, and not on top of one another.
+  const calls = idle.canvas.ctx.last().filter((c) => c[0] === "text");
+  const specs = calls.filter((c) => /A D|esc to stop/.test(c[1]));
+  const note = calls.find((c) => /to play/.test(c[1]));
+  let above = note;
+  for (const spec of specs) {
+    const px = Number(/(\d+(?:\.\d+)?)px/.exec(spec[5])?.[1]);
+    const half = (spec[1].length * px * 0.6) / 2;
+    assert.equal(spec[6], "center");
+    assert.ok(spec[2] - half >= 30 && spec[2] + half <= 240 - 30, "a wide margin either side");
+    assert.ok(spec[3] - above[3] >= 10, "clear of the line above it");
+    above = spec;
+  }
+  assert.ok(138 - above[3] >= 14, "well above the paddle");
   const a = started(t);
   assert.equal(hint(a).length, 0, "once it has started they are gone");
   a.key("Escape");
-  assert.equal(hint(a).length, 1, "back to idle they are shown again");
+  assert.equal(hint(a).length, 2, "back to idle they are shown again");
 });
 
 test("it does nothing when there is no arcade box, the box is not empty, or there is no canvas context", (t) => {

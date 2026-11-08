@@ -124,7 +124,7 @@ async function start(
     height = preRect.height;
     rowH = height / FRAME.rows;
     frameLeft = preRect.left - heroRect.left;
-    // Same height as the <pre> (the CSS 20rem is 0.3px taller), and the bitmap's own
+    // Same height as the <pre> (the CSS 40rem is 0.3px taller), and the bitmap's own
     // rounding folded into the scale, so every glyph lands where the <pre>'s does.
     canvas.style.height = `${height}px`;
     canvas.width = Math.round(width * dpr);

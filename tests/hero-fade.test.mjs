@@ -4,7 +4,7 @@ import { test } from "node:test";
 import { ALPHA, HEX_ALPHA } from "../src/lib/ascii-field.ts";
 import { colour, contrast, mix, themes } from "./helpers/contrast.mjs";
 
-// The code field (the static frame and the live canvas) is 30rem tall (30 rows of 1rem) and
+// The code field (the static frame and the live canvas) is 40rem tall (40 rows of 1rem) and
 // bottom-anchored, and --fade says how visible it is at each height above its bottom edge. The
 // buttons sit a fixed distance above the hero's bottom (the hero body's bottom padding), and the
 // paragraph sits a fixed gap above the buttons, so the band the buttons occupy and the line the
@@ -16,7 +16,7 @@ const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const css = read("../src/styles/global.css").replace(/\/\*[\s\S]*?\*\//g, "");
 const tokens = read("../src/styles/tokens.css");
 
-const FIELD_REM = 30;
+const FIELD_REM = 40;
 
 /** The stops of a `linear-gradient(to top, ...)` as [rem, alpha], from "#000 9rem" style stops. */
 function stopsOf(text) {
@@ -94,10 +94,12 @@ const heroBody = (text) =>
 const variants = {
   desktop: {
     from: heroBody(css.replace(phoneBlock, "")),
+    heroTop: 38.5, // the tallest the hero gets at any width, measured in rem
     stops: stopsOf(css.match(/\n\.hero\s*\{[^}]*--fade:([\s\S]*?;)/)?.[1] ?? ""),
   },
   phone: {
     from: heroBody(phoneBlock),
+    heroTop: 35.5, // the tallest it gets on a phone (320px wide)
     stops: stopsOf(phoneBlock.match(/\.hero\s*\{[^}]*--fade:([\s\S]*?;)/)?.[1] ?? ""),
   },
 };
@@ -107,13 +109,13 @@ test("the layout numbers are what the fade is built for", () => {
   assert.equal(variants.phone.from, 12);
   assert.ok(BUTTON > 3 && BUTTON < 3.2, `a button is ${BUTTON.toFixed(2)}rem tall`);
   assert.equal(GAP, 1.5);
-  assert.match(css, /\.field\s*\{[^}]*height: 30rem/);
+  assert.match(css, /\.field\s*\{[^}]*height: 40rem/);
   // One row is 1rem (0.8rem at a line height of 1.25 = 1rem), so the frame's rows are the field's rem.
   const rows = Number(read("../src/lib/ascii-field.ts").match(/rows: (\d+) \}/)?.[1]);
   assert.equal(rows, FIELD_REM);
 });
 
-for (const [name, { from, stops }] of Object.entries(variants)) {
+for (const [name, { from, stops, heroTop }] of Object.entries(variants)) {
   const top = from + BUTTON;
 
   test(`${name}: the code is fully visible across the buttons' band (${from}rem to ${top.toFixed(2)}rem)`, () => {
@@ -164,6 +166,19 @@ for (const [name, { from, stops }] of Object.entries(variants)) {
       const drop = alphaAt(stops, d) - alphaAt(stops, d + 0.5);
       assert.ok(drop <= 0.25, `at ${d.toFixed(2)}rem it falls ${drop.toFixed(2)}`);
     }
+  });
+
+  test(`${name}: from the headline it keeps going to the hero's top, fainter and fainter, never a cliff`, () => {
+    const headline = from + HEADLINE_ABOVE_BAND;
+    for (let d = headline; d + 1 <= heroTop; d += 0.05) {
+      const drop = alphaAt(stops, d) - alphaAt(stops, d + 1);
+      assert.ok(
+        drop > 0 && drop <= 0.02,
+        `at ${d.toFixed(2)}rem it falls ${drop.toFixed(3)} in a rem`,
+      );
+    }
+    const ghost = alphaAt(stops, heroTop);
+    assert.ok(ghost >= 0.04 && ghost <= 0.08, `a ghost, still there, at the hero's top: ${ghost}`);
   });
 
   test(`${name}: the paragraph keeps 4.5:1 over the brightest glyph the field can draw, in both themes`, () => {

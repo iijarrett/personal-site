@@ -61,7 +61,7 @@ export interface Geometry {
 }
 
 /** The band shipped in the HTML. The canvas uses the same numbers. */
-export const FRAME: Geometry = { cols: 100, rows: 30 };
+export const FRAME: Geometry = { cols: 100, rows: 40 };
 
 /** How many columns the static frame's soft left and right edge takes (12ch in global.css). */
 export const EDGE_COLS = 12;

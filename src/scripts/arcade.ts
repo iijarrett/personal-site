@@ -39,7 +39,8 @@ const LEFT = ["ArrowLeft", "a", "A"];
 const RIGHT = ["ArrowRight", "d", "D"];
 const GO = [" ", "Enter", "ArrowUp", "w", "W"];
 const OTHER = "a,button,input,select,summary,textarea,[contenteditable]";
-const HELP = "← → or A D, or drag, to move · esc to stop";
+const CONTROLS = ["← → or A D, or drag, to move", "esc to stop"];
+const HELP = CONTROLS.join(" · ");
 
 /** What the lazy loader calls: the footer game, then the falling-symbols strip below it. */
 export function initArcade(env: ArcadeEnv): void {
@@ -118,11 +119,12 @@ function initGame(env: ArcadeEnv): void {
         : g.mode === "ready"
           ? "tap or press space"
           : "";
-    gfx.fillText(note, W / 2, 100);
+    gfx.fillText(note, W / 2, 94);
     if (!active) {
-      // The controls, in the box and only until the first start, so they never sit in the way.
+      // The controls, in the box and only until the first start, so they never sit in the way:
+      // one short line each, with room around them.
       gfx.font = `8px ${font}`;
-      gfx.fillText(HELP.trim(), W / 2, 112);
+      for (const [k, line] of CONTROLS.entries()) gfx.fillText(line, W / 2, 108 + k * 11);
       gfx.font = `9px ${font}`;
     }
     for (let k = 0; k < g.lives; k++) gfx.fillRect(4 + k * 7, 4, 4, 4);

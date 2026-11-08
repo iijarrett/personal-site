@@ -329,3 +329,27 @@ test("the loader is plain: no network, no timers, no storage, no script elements
     }
   }
 });
+
+test("when nothing will build the game and the strip, the footer is marked still so CSS gives back their room", async (t) => {
+  for (const options of [{ saveData: true }, { observer: false }]) {
+    const dom = install(t, options);
+    initLazy(loader().load, env);
+    assert.ok("still" in dom.footer.dataset, JSON.stringify(options));
+  }
+  const dom = install(t);
+  initLazy(loader().load, env);
+  assert.ok(!("still" in dom.footer.dataset), "a normal visit keeps the room");
+  dom.see(true);
+  dom.act("keydown");
+  await settle();
+  assert.ok(!("still" in dom.footer.dataset), "and so does a successful load");
+});
+
+test("a failed load marks the footer still too", async (t) => {
+  const dom = install(t);
+  initLazy(() => Promise.reject(new Error("offline")), env);
+  dom.see(true);
+  dom.act("keydown");
+  await settle();
+  assert.ok("still" in dom.footer.dataset);
+});

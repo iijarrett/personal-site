@@ -353,8 +353,11 @@ html.js:not(.bar-on, .bar-off) .bar {
 }
 
 /* The footer game: a small canvas on its own row, built by the lazy arcade script, so without
-   JavaScript (or before it loads) the box is empty and takes no room. Idle, a drag on the canvas
-   still scrolls the page; once a visitor starts it (.live) the canvas keeps touches for itself. */
+   JavaScript the box is empty and takes no room. With JavaScript it holds its room from the
+   first paint (the same size the canvas will be), so nothing below it jumps when the script
+   arrives; the loader marks the footer data-still when it will never build it. Idle, a drag on
+   the canvas still scrolls the page; once a visitor starts it (.live) the canvas keeps touches
+   for itself. */
 .arcade {
   flex: 1 0 100%;
   order: 1;
@@ -362,6 +365,20 @@ html.js:not(.bar-on, .bar-off) .bar {
 
 .arcade:empty {
   display: none;
+}
+
+html.js .site-footer:not([data-still]) .arcade:empty {
+  display: block;
+}
+
+/* The room itself is a pseudo-element the size of the canvas (its width, ratio and margins), so
+   the box keeps its own full-width row, just as it does once the canvas is in it. */
+html.js .site-footer:not([data-still]) .arcade:empty::before {
+  content: "";
+  display: block;
+  max-width: 36rem;
+  aspect-ratio: 8 / 5;
+  margin-block: var(--space-2);
 }
 
 .arcade canvas {
@@ -383,14 +400,19 @@ html.js:not(.bar-on, .bar-off) .bar {
 }
 
 /* The falling-symbols strip along the very bottom, drawn by the same lazy script. Decoration only:
-   it takes no pointer events, fades in from the footer above, and like the game it is empty and
-   takes no room until the script builds it. */
+   it takes no pointer events and fades in from the footer above. Like the game it is empty until
+   the script builds it, and takes no room without JavaScript or once the footer is data-still;
+   otherwise it holds its room from the first paint. */
 .waterfall {
   height: 7.5rem;
 }
 
 .waterfall:empty {
   display: none;
+}
+
+html.js .site-footer:not([data-still]) .waterfall:empty {
+  display: block;
 }
 
 .waterfall canvas {
@@ -400,6 +422,17 @@ html.js:not(.bar-on, .bar-off) .bar {
   font-family: var(--font-mono);
   pointer-events: none;
   mask-image: linear-gradient(to bottom, transparent, #000 70%);
+}
+
+/* They arrive with a short fade, not a pop (and not at all with Motion off). */
+html:not(.no-fx) :is(.arcade, .waterfall) canvas {
+  animation: arrive 0.5s ease-out;
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -462,14 +495,15 @@ html.js:not(.bar-on, .bar-off) .bar {
 
 /* ---------- Hero ---------- */
 /*
- * --fade is how visible the code field is, from its bottom edge up (30rem tall: 30 rows of
+ * --fade is how visible the code field is, from its bottom edge up (40rem tall: 40 rows of
  * 1.25 x 0.8rem). It follows the old curve (1 at 9rem, falling) until two rem short of the
  * buttons' band, is fully on across the band (the buttons' bottom edge is the hero body's
  * bottom padding, 15rem; they are 3.1rem tall), then thins out steadily: well under half
  * behind the paragraph, where the brightest glyph must still leave its text 4.5:1 in both
- * themes, down to 0.1 where the headline ends (9.8rem above the band's bottom edge), and to
- * nothing at the field's top. The phone's stops sit 3rem lower, as its
- * padding does.
+ * themes, down to 0.1 where the headline ends (9.8rem above the band's bottom edge). From
+ * there it keeps fading, slowly, so it is a ghost of 0.06 at the hero's top (the
+ * hero is at most 38.5rem tall) and nothing at the field's top. The phone's stops sit 3rem
+ * lower, as its padding does.
  * tests/hero-fade.test.mjs checks the numbers against the layout.
  */
 .hero {
@@ -483,8 +517,11 @@ html.js:not(.bar-on, .bar-off) .bar {
     rgb(0 0 0 / 0.22) 21.6rem,
     rgb(0 0 0 / 0.13) 23.6rem,
     rgb(0 0 0 / 0.1) 24.8rem,
-    rgb(0 0 0 / 0.04) 27.5rem,
-    transparent 30rem
+    rgb(0 0 0 / 0.09) 28rem,
+    rgb(0 0 0 / 0.08) 32rem,
+    rgb(0 0 0 / 0.07) 36rem,
+    rgb(0 0 0 / 0.06) 38.5rem,
+    transparent 40rem
   );
   position: relative;
   overflow: hidden;
@@ -533,13 +570,13 @@ html.js:not(.bar-on, .bar-off) .bar {
   opacity: 0.8;
 }
 
-/* The live canvas sits exactly over the static frame (30 rows of 1.25 x 0.8rem). */
+/* The live canvas sits exactly over the static frame (40 rows of 1.25 x 0.8rem). */
 .field {
   position: absolute;
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 30rem;
+  height: 40rem;
   opacity: 0.6;
   pointer-events: none;
   mask-image: var(--fade);
@@ -912,8 +949,11 @@ html.js:not(.bar-on, .bar-off) .bar {
       rgb(0 0 0 / 0.22) 18.6rem,
       rgb(0 0 0 / 0.13) 20.6rem,
       rgb(0 0 0 / 0.1) 21.8rem,
-      rgb(0 0 0 / 0.04) 24.5rem,
-      transparent 27rem
+      rgb(0 0 0 / 0.09) 25rem,
+      rgb(0 0 0 / 0.08) 29rem,
+      rgb(0 0 0 / 0.07) 33rem,
+      rgb(0 0 0 / 0.06) 35.5rem,
+      transparent 37rem
     );
   }
 

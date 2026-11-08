@@ -216,13 +216,13 @@ test("hex digits are hex, stable within a tick, and cycle between ticks", () => 
 
 test("rows added above the original 20 leave those 20 exactly as they were", () => {
   const same = { cols: 100, rows: 20 };
-  const tall = { cols: 100, rows: 30 };
+  const tall = { cols: 100, rows: 40 };
   for (const t of [0, 1.3, 9]) {
     for (let row = 0; row < 20; row++) {
       for (let col = -5; col < 105; col += 3) {
         assert.equal(
           ambient(col, row, t, same),
-          ambient(col, row + 10, t, tall),
+          ambient(col, row + 20, t, tall),
           `${col},${row} at ${t}`,
         );
       }

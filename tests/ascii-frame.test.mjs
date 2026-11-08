@@ -9,7 +9,7 @@ import {
   TIER_ALPHA,
   tierOf,
 } from "../src/lib/ascii-field.ts";
-import { asciiFrame, asciiTiers } from "../src/lib/ascii-frame.ts";
+import { asciiFrame, asciiTiers, packTabs } from "../src/lib/ascii-frame.ts";
 
 const RAMP = new Set(FIELD_RAMP);
 const ink = (line) => [...line].filter((char) => char !== " ").length;
@@ -91,9 +91,9 @@ test("the static frame is masked at its left and right edges over exactly EDGE_C
   assert.equal(FRAME.cols, 100);
 });
 
-test("the default frame is 30 rows of at most 100 columns", () => {
+test("the default frame is 40 rows of at most 100 columns", () => {
   const frame = asciiFrame();
-  assert.equal(frame.length, 30);
+  assert.equal(frame.length, 40);
   assert.ok(frame.every((line) => line.length <= 100));
 });
 
@@ -129,4 +129,40 @@ test("the frame is not blank and uses more than one density", () => {
 
 test("different sizes give different frames", () => {
   assert.notDeepEqual(asciiFrame({ cols: 60, rows: 12 }), asciiFrame({ cols: 61, rows: 12 }));
+});
+
+/** What a <pre> shows: each tab runs to the next stop, eight columns apart. */
+function expandTabs(text) {
+  return text
+    .split("\n")
+    .map((line) => {
+      let out = "";
+      for (const ch of line) {
+        out += ch === "\t" ? " ".repeat(8 - (out.length % 8)) : ch;
+      }
+      return out;
+    })
+    .join("\n");
+}
+
+test("packing the tiers into tabs lays them out exactly as before, and is much smaller", () => {
+  let before = 0;
+  let after = 0;
+  for (const block of asciiTiers()) {
+    const packed = packTabs(block);
+    assert.equal(expandTabs(packed), block);
+    before += block.length;
+    after += packed.length;
+  }
+  assert.ok(after < before * 0.75, `${after} of ${before} bytes`);
+});
+
+test("a tab is only used where it replaces at least two spaces, on a stop of eight", () => {
+  assert.equal(packTabs("a       b"), "a\tb"); // 7 spaces: col 1 to the stop at 8
+  assert.equal(packTabs("        b"), "\tb"); // 8 spaces from the line start
+  assert.equal(packTabs("abcdefg b"), "abcdefg b"); // one space to the stop: not worth a tab
+  assert.equal(packTabs("abcdef  b"), "abcdef\tb");
+  assert.equal(packTabs("a               b"), "a\t\tb"); // 15 spaces: stops at 8 and 16
+  assert.equal(packTabs("x       "), "x\t"); // trailing runs follow the same rule
+  assert.equal(packTabs(" \n  "), " \n  ", "short runs stay");
 });
