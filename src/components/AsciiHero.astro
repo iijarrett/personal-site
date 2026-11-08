@@ -1,7 +1,7 @@
 ---
-import { asciiTiers } from "../lib/ascii-frame";
+import { asciiTiers, packTabs } from "../lib/ascii-frame";
 
-const tiers = asciiTiers();
+const tiers = asciiTiers().map(packTabs);
 ---
 
 <div class="ascii" aria-hidden="true">

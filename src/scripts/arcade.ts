@@ -32,15 +32,25 @@ import {
   W,
 } from "../lib/brick.ts";
 import type { ArcadeEnv } from "./lazy.ts";
+import { initWaterfall } from "./waterfall.ts";
 
 const BEST = "jd-brick-best";
 const LEFT = ["ArrowLeft", "a", "A"];
 const RIGHT = ["ArrowRight", "d", "D"];
 const GO = [" ", "Enter", "ArrowUp", "w", "W"];
 const OTHER = "a,button,input,select,summary,textarea,[contenteditable]";
-const HELP = "← → or A D, or drag, to move · esc to stop";
+// What the box lists depends on the device: a keyboard and mouse, or a finger.
+const KEYS = ["← → or A D, or mouse, to move", "esc to stop"];
+const TOUCH = ["slide to move"];
+const HELP = "← → or A D, or slide, to move · esc to stop"; // read aloud only
 
+/** What the lazy loader calls: the footer game, then the falling-symbols strip below it. */
 export function initArcade(env: ArcadeEnv): void {
+  initGame(env);
+  initWaterfall(env);
+}
+
+function initGame(env: ArcadeEnv): void {
   const mount = env.footer.querySelector<HTMLElement>(".arcade");
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
@@ -48,7 +58,8 @@ export function initArcade(env: ArcadeEnv): void {
   const gfx = ctx;
 
   const help = document.createElement("p");
-  help.className = "label";
+  // Read aloud only: what the keys are, and the score. The controls are drawn inside the box.
+  help.className = "sr-only";
   help.setAttribute("role", "status");
   canvas.tabIndex = 0;
   canvas.setAttribute("role", "img");
@@ -73,6 +84,8 @@ export function initArcade(env: ArcadeEnv): void {
   let last = 0;
   let acc = 0;
   const font = getComputedStyle(canvas).fontFamily || "monospace";
+  // A finger as the main pointer: the box then says tap and drag, and lists no keys.
+  const touch = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
   let ink = "";
   let tint = "";
   let dim = "";
@@ -103,14 +116,23 @@ export function initArcade(env: ArcadeEnv): void {
     gfx.fillRect(g.bx - R, g.by - R, 2 * R, 2 * R);
     gfx.fillStyle = dim;
     gfx.font = `9px ${font}`;
+    const go = touch ? "tap" : "click or press space";
     const note = !active
-      ? "tap or press space to play"
+      ? `${go} to play`
       : g.mode === "over"
         ? "game over"
         : g.mode === "ready"
-          ? "tap or press space"
+          ? go
           : "";
-    gfx.fillText(note, W / 2, 100);
+    gfx.fillText(note, W / 2, 80);
+    if (!active) {
+      // The controls, in the box and only until the first start, so they never sit in the way:
+      // one short line each, with room around them.
+      gfx.font = `7px ${font}`;
+      for (const [k, line] of (touch ? TOUCH : KEYS).entries())
+        gfx.fillText(line, W / 2, 97 + k * 12);
+      gfx.font = `9px ${font}`;
+    }
     for (let k = 0; k < g.lives; k++) gfx.fillRect(4 + k * 7, 4, 4, 4);
     gfx.textAlign = "right";
     gfx.fillText(`${best ? `HI ${best}  ` : ""}${g.score}`, W - 4, 7);

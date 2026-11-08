@@ -2,7 +2,9 @@
  * Loads the footer arcade chunk, once, and only for a real visitor. It needs the footer within
  * 800px of the viewport and a trusted press, touch, wheel or key; a page that is only opened, a
  * crawler or a Lighthouse run never requests it. It stays out of the way of people who asked
- * their browser to save data, and where IntersectionObserver is missing. The chunk is a
+ * their browser to save data, and where IntersectionObserver is missing (the footer is then marked
+ * data-still, which gives back the room CSS holds for the game and the strip, as it does if the
+ * chunk fails to load). The chunk is a
  * same-origin file, so the CSP (script-src 'self') already covers it.
  */
 
@@ -21,7 +23,11 @@ const ACTIONS = ["pointerdown", "keydown", "touchstart", "wheel"] as const;
 export function initLazy(load: () => Promise<ArcadeModule>, env: Omit<ArcadeEnv, "footer">): void {
   const footer = document.querySelector<HTMLElement>(".site-footer");
   const saveData = (navigator as { connection?: { saveData?: boolean } }).connection?.saveData;
-  if (!footer || saveData || typeof IntersectionObserver === "undefined") return;
+  if (!footer || saveData || typeof IntersectionObserver === "undefined") {
+    // Nothing will build the game or the strip, so the footer stops holding room for them.
+    if (footer) footer.dataset.still = "";
+    return;
+  }
 
   const act = (event: Event): void => {
     if (event.isTrusted) gate.setActed();
@@ -37,7 +43,9 @@ export function initLazy(load: () => Promise<ArcadeModule>, env: Omit<ArcadeEnv,
     observer.disconnect();
     load()
       .then((chunk) => chunk.initArcade({ footer, ...env }))
-      .catch(() => {});
+      .catch(() => {
+        footer.dataset.still = "";
+      });
   });
   for (const name of ACTIONS) addEventListener(name, act, { passive: true });
   observer.observe(footer);
