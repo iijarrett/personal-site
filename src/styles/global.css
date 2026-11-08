@@ -365,6 +365,36 @@ html.js:not(.bar-on, .bar-off) .bar {
   user-select: none;
 }
 
+/* The footer game: a small canvas on its own row, built by the lazy arcade script, so without
+   JavaScript (or before it loads) the box is empty and takes no room. Idle, a drag on the canvas
+   still scrolls the page; once a visitor starts it (.live) the canvas keeps touches for itself. */
+.arcade {
+  flex: 1 0 100%;
+  order: 1;
+}
+
+.arcade:empty {
+  display: none;
+}
+
+.arcade canvas {
+  display: block;
+  width: 100%;
+  max-width: 36rem;
+  aspect-ratio: 8 / 5;
+  margin-block: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  cursor: pointer;
+  touch-action: pan-y;
+}
+
+.arcade.live canvas {
+  touch-action: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
