@@ -124,13 +124,13 @@ function initGame(env: ArcadeEnv): void {
         : g.mode === "ready"
           ? go
           : "";
-    gfx.fillText(note, W / 2, 74);
+    gfx.fillText(note, W / 2, 80);
     if (!active) {
       // The controls, in the box and only until the first start, so they never sit in the way:
       // one short line each, with room around them.
       gfx.font = `7px ${font}`;
       for (const [k, line] of (touch ? TOUCH : KEYS).entries())
-        gfx.fillText(line, W / 2, 88 + k * 10);
+        gfx.fillText(line, W / 2, 97 + k * 12);
       gfx.font = `9px ${font}`;
     }
     for (let k = 0; k < g.lives; k++) gfx.fillRect(4 + k * 7, 4, 4, 4);
