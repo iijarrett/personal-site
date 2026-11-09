@@ -3,20 +3,19 @@ import { COVER, FACE } from "../lib/portrait-art.ts";
 import ContactList from "./ContactList.astro";
 import PortraitScript from "./PortraitScript.astro";
 
-// The Me page: contact details at the top, the page's tiles below. A thin banner of code fades
-// into the top of the page, the face sits over its lower edge (not in a circle), and nothing has
-// an outline. Two layouts share this markup. "a" stacks: the head, then the contact chips across,
-// then the tiles. "b" is a sidebar: the head and the contact rows on the left, the tiles beside
-// them. On a phone both fall back to the same stack. Both pictures are decoration: the script
-// draws them, and nothing is lost without them. The drawing is src/scripts/portrait.ts.
+// The Me page: contact details and the page's tiles together. A thin banner of code fades into the
+// top of the page, the face sits over its lower edge (not in a circle), and nothing has an
+// outline. On a wide screen the head and the contact rows form a sidebar with the tiles beside
+// it; on a phone everything stacks, with the contact list as a row of icons. Both pictures are
+// decoration: the script draws them, and nothing is lost without them. The drawing is
+// src/scripts/portrait.ts.
 interface Props {
   name: string;
   headline: string;
   status: string;
-  layout?: "a" | "b";
 }
 
-const { name, headline, status, layout = "a" } = Astro.props;
+const { name, headline, status } = Astro.props;
 
 const art = (kind: string, a: typeof FACE | typeof COVER) => ({
   "data-portrait": true,
@@ -28,7 +27,7 @@ const art = (kind: string, a: typeof FACE | typeof COVER) => ({
 });
 ---
 
-<div class={`profile profile-${layout}`}>
+<div class="profile">
   <div class="profile-cover" aria-hidden="true">
     <div class="portrait" {...art("cover", COVER)}></div>
   </div>
@@ -102,15 +101,15 @@ const art = (kind: string, a: typeof FACE | typeof COVER) => ({
     aspect-ratio: 864 / 96;
   }
 
-  .profile-cols {
+  .profile-cols,
+  .profile-aside,
+  .profile-main {
     display: grid;
     gap: var(--space-3);
   }
 
   .profile-aside,
   .profile-main {
-    display: grid;
-    gap: var(--space-3);
     align-content: start;
     min-width: 0;
   }
@@ -153,9 +152,10 @@ const art = (kind: string, a: typeof FACE | typeof COVER) => ({
     color: var(--accent-text);
   }
 
+  /* Phone: five icons in a row, the detail lines hidden. */
   .contact {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: var(--space-2);
     margin: 0;
     padding: 0;
@@ -168,10 +168,13 @@ const art = (kind: string, a: typeof FACE | typeof COVER) => ({
 
   .profile .item {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-2) var(--space-3);
+    gap: var(--space-1);
+    padding: var(--space-2) 0;
     color: var(--text);
+    font-size: 0.75rem;
+    text-align: center;
     text-decoration: none;
   }
 
@@ -236,64 +239,34 @@ const art = (kind: string, a: typeof FACE | typeof COVER) => ({
     border-radius: 999px;
   }
 
-  /* Phone, layout b: the contact list becomes a row of five icons. */
-  .profile-b .contact {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-
-  .profile-b .item {
-    flex-direction: column;
-    gap: var(--space-1);
-    padding: var(--space-2) 0;
-    font-size: 0.75rem;
-    text-align: center;
-  }
-
+  /* Wide: the head and the contact rows become a sidebar, the tiles sit beside it. */
   @media (min-width: 48rem) {
-    .profile-head {
-      grid-template-columns: 13rem minmax(0, 1fr);
-      padding-inline: var(--space-4);
-    }
-
-    .profile-photo {
-      margin-top: -4.5rem;
-    }
-
     .profile-cover .portrait {
       width: 100%;
       margin-left: 0;
     }
 
-    .profile-a .profile-main {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .profile .wide {
-      grid-column: 1 / -1;
-    }
-
-    .profile-b .profile-cols {
+    .profile-cols {
       grid-template-columns: 19rem minmax(0, 1fr);
       gap: var(--space-4);
     }
 
-    .profile-b .profile-head {
+    .profile-head {
       grid-template-columns: minmax(0, 1fr);
       padding-inline: 0;
     }
 
-    .profile-b .profile-photo {
+    .profile-photo {
       grid-row: auto;
       width: 15rem;
+      margin-top: -4.5rem;
     }
 
-    .profile-b .contact {
-      display: grid;
+    .contact {
       grid-template-columns: minmax(0, 1fr);
     }
 
-    .profile-b .item {
+    .profile .item {
       flex-direction: row;
       gap: var(--space-3);
       padding: var(--space-3);
@@ -301,7 +274,7 @@ const art = (kind: string, a: typeof FACE | typeof COVER) => ({
       text-align: left;
     }
 
-    .profile-b .contact .hd {
+    .contact .hd {
       display: block;
       color: var(--muted);
       font-size: 0.875rem;
@@ -310,8 +283,12 @@ const art = (kind: string, a: typeof FACE | typeof COVER) => ({
   }
 
   @media (min-width: 64rem) {
-    .profile-b .profile-main {
+    .profile-main {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .profile .wide {
+      grid-column: 1 / -1;
     }
   }
 </style>
