@@ -1,0 +1,28 @@
+---
+// The script that draws the pictures (face, JD mark, cover strip), and the rules every picture
+// shares. One component carries both, so pages that hold a picture through different components
+// still load one script and one copy of the rules.
+---
+
+<style is:global>
+  .portrait {
+    position: relative;
+  }
+
+  .portrait canvas {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    font-family: var(--font-mono);
+  }
+
+  html:not(.no-fx) .portrait canvas {
+    animation: arrive 0.5s ease-out;
+  }
+</style>
+
+<script>
+  import "../scripts/portrait.ts";
+</script>

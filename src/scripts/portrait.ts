@@ -105,12 +105,9 @@ function mount(host: HTMLElement): void {
   };
 
   const fit = (): void => {
-    const w = canvas.clientWidth;
-    const h = canvas.clientHeight;
-    if (!w || !h) return;
     const s = Math.min(2, Math.max(1, Math.round(devicePixelRatio || 1)));
-    canvas.width = w * s;
-    canvas.height = h * s;
+    canvas.width = canvas.clientWidth * s;
+    canvas.height = canvas.clientHeight * s;
     gfx.setTransform(s, 0, 0, s, 0, 0);
     draw();
   };
@@ -182,7 +179,7 @@ function mount(host: HTMLElement): void {
   };
   // The symbols want the mono font; draw once it is there, or at once if it cannot be waited for.
   if (document.fonts?.load) {
-    document.fonts.load(`${SYMBOL_H}px "JetBrains Mono"`, "01@").then(ready, ready).catch(ready);
+    document.fonts.load(`${SYMBOL_H}px "JetBrains Mono"`, "01@").then(ready, ready);
   } else {
     ready();
   }

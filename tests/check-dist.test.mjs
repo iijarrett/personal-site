@@ -621,14 +621,14 @@ test("all JavaScript together is capped at 26,000 bytes", () => {
   assert.match(split.output, /JavaScript totals 28,000 bytes/);
 });
 
-test("all CSS together is capped at 16,000 bytes", () => {
-  const atLimit = run({ "_astro/a.css": cssOf(16_000) });
+test("all CSS together is capped at 17,500 bytes", () => {
+  const atLimit = run({ "_astro/a.css": cssOf(17_500) });
   assert.equal(atLimit.status, 0, atLimit.output);
-  assert.match(atLimit.output, /CSS total: +16,000 bytes \(limit 16,000\)/);
+  assert.match(atLimit.output, /CSS total: +17,500 bytes \(limit 17,500\)/);
 
-  const over = run({ "_astro/a.css": cssOf(16_001) });
+  const over = run({ "_astro/a.css": cssOf(17_501) });
   assert.equal(over.status, 1, over.output);
-  assert.match(over.output, /CSS totals 16,001 bytes, over the 16,000 byte limit/);
+  assert.match(over.output, /CSS totals 17,501 bytes, over the 17,500 byte limit/);
 
   const split = run({ "_astro/a.css": cssOf(9_000), "_astro/b.css": cssOf(9_000) });
   assert.equal(split.status, 1, split.output);
@@ -638,7 +638,7 @@ test("all CSS together is capped at 16,000 bytes", () => {
 test("a clean build reports both totals", () => {
   const { output } = run();
   assert.match(output, /JS total: .*limit 26,000/);
-  assert.match(output, /CSS total: .*limit 16,000/);
+  assert.match(output, /CSS total: .*limit 17,500/);
 });
 
 test("fails when the home page HTML is over 14 KB", () => {

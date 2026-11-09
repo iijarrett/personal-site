@@ -14,7 +14,7 @@ import {
   TONES,
   tones,
 } from "../src/lib/portrait.ts";
-import { FACE, MARK } from "../src/lib/portrait-art.ts";
+import { COVER, FACE, MARK } from "../src/lib/portrait-art.ts";
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const glyph = () => ({ ch: "", alpha: 0, tone: 0 });
@@ -30,6 +30,23 @@ test("each picture is cols by rows, written only in ramp characters", () => {
       for (const c of row) assert.ok(RAMP.includes(c), `${JSON.stringify(c)} is not on the ramp`);
     }
   }
+});
+
+test("the cover strip is cols by rows, lit in every cell, and is a photo (binary symbols)", () => {
+  assert.equal(COVER.tone, "photo");
+  assert.equal(COVER.cells.length, COVER.rows);
+  for (const row of COVER.cells) {
+    assert.equal(row.length, COVER.cols);
+    for (const c of row) assert.ok(RAMP.includes(c) && c !== " ", `${JSON.stringify(c)} is lit`);
+  }
+  // Soft: nothing near full, so the strip stays a quiet texture behind the picture.
+  const top = Math.max(
+    ...COVER.cells
+      .join("")
+      .split("")
+      .map((c) => RAMP.indexOf(c)),
+  );
+  assert.ok(top <= 9, `the brightest cover cell is level ${top}`);
 });
 
 test("the face and the mark are both really there, with empty margin all round", () => {
@@ -359,11 +376,26 @@ test("with motion on it starts from field alone, resolves, then holds and keeps 
 test("the page wiring: both pages carry a picture, none of it inline, the main script untouched", () => {
   const about = read("../src/pages/about.astro");
   const contact = read("../src/pages/contact.astro");
-  assert.match(about, /<Portrait kind="face">/);
-  assert.match(contact, /<Portrait kind="mark">/);
+  assert.match(about, /<Profile\b/);
+  // The JD mark sits behind the tiles: first inside the block that holds them.
+  assert.match(contact, /<div class="channels-wrap">\s*<Portrait \/>\s*<ul class="channels">/);
   const part = read("../src/components/Portrait.astro");
+  assert.match(part, /data-kind="mark"/);
   assert.match(part, /aria-hidden="true"/);
   assert.doesNotMatch(part, /style=/);
+  // The Me page's profile layout carries the face (in a round frame) and the cover strip.
+  const profile = read("../src/components/Profile.astro");
+  assert.match(profile, /data-kind="face"/);
+  assert.match(profile, /data-kind="cover"/);
+  assert.match(profile, /border-radius: 50%/);
+  assert.doesNotMatch(profile, /style=/);
+  // One component carries the script, so both pages load the same single script.
+  assert.match(profile, /<PortraitScript \/>/);
+  assert.match(part, /<PortraitScript \/>/);
+  assert.match(
+    read("../src/components/PortraitScript.astro"),
+    /import "\.\.\/scripts\/portrait\.ts"/,
+  );
   assert.doesNotMatch(read("../src/scripts/interactive.ts"), /portrait/i);
   assert.doesNotMatch(read("../src/styles/global.css"), /portrait/i);
 });

@@ -5,6 +5,8 @@
  * that resolves into place.
  */
 
+import { hash, RAMP } from "./portrait.ts";
+
 export interface Art {
   cols: number;
   rows: number;
@@ -95,4 +97,33 @@ export const MARK: Art = {
     "                                                                        ",
     "                                                                        ",
   ],
+};
+
+/**
+ * The strip across the top of the Me page: a field of code symbols, lit everywhere, that
+ * resolves from the left and then holds, like the face. It is written by a rule, not by hand:
+ * soft diagonal waves with a little noise, dimmer towards the bottom edge. The same 5.4 px by
+ * 12 px cell as the pictures above.
+ */
+function makeCover(cols: number, rows: number): readonly string[] {
+  const out: string[] = [];
+  for (let y = 0; y < rows; y++) {
+    let row = "";
+    for (let x = 0; x < cols; x++) {
+      const wave = 0.5 + 0.5 * Math.sin(x * 0.09 + y * 0.55) * Math.cos(x * 0.031 - y * 0.2);
+      const noise = 0.55 + 0.45 * hash(x, y + 101);
+      const down = 1 - (y / (rows - 1)) ** 2 * 0.7;
+      const level = Math.round(2 + 6 * wave * noise * down);
+      row += RAMP.charAt(Math.min(RAMP.length - 1, Math.max(1, level)));
+    }
+    out.push(row);
+  }
+  return out;
+}
+
+export const COVER: Art = {
+  cols: 160,
+  rows: 14,
+  tone: "photo",
+  cells: makeCover(160, 14),
 };

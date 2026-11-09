@@ -27,9 +27,10 @@ const channels: Channel[] = [
 ---
 
 <Page title="Contact" description="Ways to get in touch.">
-  <Portrait kind="mark">
-    <h1>Contact</h1>
-    <p>Open to internships and entry-level security roles. Details below are placeholders.</p>
+  <h1>Contact</h1>
+  <p>Open to internships and entry-level security roles. Details below are placeholders.</p>
+  <div class="channels-wrap">
+    <Portrait />
     <ul class="channels">
       {
         channels.map((channel) => (
@@ -55,5 +56,5 @@ const channels: Channel[] = [
         ))
       }
     </ul>
-  </Portrait>
+  </div>
 </Page>
