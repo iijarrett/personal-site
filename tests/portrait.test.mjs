@@ -14,11 +14,26 @@ import {
   TONES,
   tones,
 } from "../src/lib/portrait.ts";
-import { COVER, FACE, MARK } from "../src/lib/portrait-art.ts";
+import { COVER, FACE } from "../src/lib/portrait-art.ts";
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const glyph = () => ({ ch: "", alpha: 0, tone: 0 });
 const lit = (art) => [...art.cells.join("")].filter((c) => c !== " ").length;
+
+// The drawing code still handles a bold "mark" picture (the site ships none now), so these tests
+// feed it a solid ellipse of their own, with an empty margin all round.
+const MARK = {
+  cols: 80,
+  rows: 40,
+  tone: "mark",
+  cells: Array.from({ length: 40 }, (_, y) =>
+    Array.from({ length: 80 }, (_, x) => {
+      const dx = (x - 39.5) / 28;
+      const dy = (y - 19.5) / 14;
+      return dx * dx + dy * dy <= 1 ? "@" : " ";
+    }).join(""),
+  ),
+};
 
 // ---- the art ------------------------------------------------------------------------------
 
@@ -373,25 +388,21 @@ test("with motion on it starts from field alone, resolves, then holds and keeps 
   assert.equal(a.frames.length, 1, "and it is still running");
 });
 
-test("the page wiring: both pages carry a picture, none of it inline, the main script untouched", () => {
+test("the page wiring: the Me page carries both pictures, none of it inline, the main script untouched", () => {
   const about = read("../src/pages/about.astro");
-  const contact = read("../src/pages/contact.astro");
   assert.match(about, /<Profile\b/);
-  // The JD mark sits behind the tiles: first inside the block that holds them.
-  assert.match(contact, /<div class="channels-wrap">\s*<Portrait \/>\s*<ul class="channels">/);
-  const part = read("../src/components/Portrait.astro");
-  assert.match(part, /data-kind="mark"/);
-  assert.match(part, /aria-hidden="true"/);
-  assert.doesNotMatch(part, /style=/);
-  // The Me page's profile layout carries the face (in a round frame) and the cover strip.
+  // The Me page's profile layout carries the face (not in a circle) and the cover strip.
   const profile = read("../src/components/Profile.astro");
-  assert.match(profile, /data-kind="face"/);
-  assert.match(profile, /data-kind="cover"/);
-  assert.match(profile, /border-radius: 50%/);
+  assert.match(profile, /art\("face", FACE\)/);
+  assert.match(profile, /art\("cover", COVER\)/);
+  assert.doesNotMatch(profile, /border-radius: 50%/);
   assert.doesNotMatch(profile, /style=/);
-  // One component carries the script, so both pages load the same single script.
+  // The contact list is part of the page, with the id the header's Contact link jumps to.
+  assert.match(profile, /<ContactList \/>/);
+  assert.match(read("../src/components/ContactList.astro"), /id="contact"/);
+  assert.match(read("../src/components/Header.astro"), /href: "\/about\/#contact"/);
+  // One component carries the script.
   assert.match(profile, /<PortraitScript \/>/);
-  assert.match(part, /<PortraitScript \/>/);
   assert.match(
     read("../src/components/PortraitScript.astro"),
     /import "\.\.\/scripts\/portrait\.ts"/,

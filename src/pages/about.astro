@@ -3,13 +3,13 @@ import Profile from "../components/Profile.astro";
 import Page from "../layouts/Page.astro";
 ---
 
-<Page title="Me" description="Background, skills and experience.">
+<Page title="Me" description="Contact details, background, skills and experience.">
   <Profile
     name="JD"
     headline="Cybersecurity engineering master's student, University of San Diego"
     status="Open to internships and entry-level security roles"
   >
-    <section class="profile-card" aria-labelledby="about-h">
+    <section class="profile-card wide" aria-labelledby="about-h">
       <h2 id="about-h">About</h2>
       <p>
         Placeholder resume. A short paragraph on what I do, what I am studying and the kind of role
@@ -33,12 +33,13 @@ import Page from "../layouts/Page.astro";
       <ul class="rows">
         <li>
           <p class="label">Dates</p>
-          <h3>Programme, institution</h3>
+          <h3>M.S. Cybersecurity Engineering</h3>
+          <p>University of San Diego</p>
         </li>
       </ul>
     </section>
 
-    <section class="profile-card" aria-labelledby="skills-h">
+    <section class="profile-card wide" aria-labelledby="skills-h">
       <h2 id="skills-h">Skills</h2>
       <ul class="tags" aria-label="Skills">
         <li>networking</li>

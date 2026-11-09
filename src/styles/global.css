@@ -879,39 +879,6 @@ html:not(.no-fx) :is(.arcade, .waterfall) canvas {
   font-size: 1.3rem;
 }
 
-/* ---------- Contact ---------- */
-.channels {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-  margin: var(--space-4) 0;
-  padding: 0;
-  list-style: none;
-  max-width: none;
-  border-top: 1px solid var(--border);
-  border-left: 1px solid var(--border);
-}
-
-.channels li {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border-right: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-}
-
-.channels svg {
-  flex: none;
-  color: var(--muted);
-}
-
-.channels li > span {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
-}
-
 .prose li + li {
   margin-top: var(--space-1);
 }
