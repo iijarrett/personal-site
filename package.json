@@ -14,7 +14,7 @@
     "lint": "biome ci .",
     "format": "biome format --write .",
     "test": "node --test tests/",
-    "check:dist": "python scripts/check_dist.py",
+    "check:dist": "python scripts/check_dist.py && python scripts/check_headers.py",
     "verify": "npm run check && npm run lint && npm run test && npm run build && npm run check:dist"
   },
   "devDependencies": {
