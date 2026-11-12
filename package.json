@@ -14,9 +14,10 @@
     "check": "astro check",
     "lint": "biome ci .",
     "format": "biome format --write .",
-    "test": "node --test tests/",
+    "test": "node --test tests/*.test.mjs",
     "check:dist": "python scripts/check_dist.py && python scripts/check_headers.py",
-    "verify": "npm run check && npm run lint && npm run test && npm run build && npm run check:dist"
+    "check:ci": "python scripts/check_workflows.py",
+    "verify": "npm run check && npm run lint && npm run test && npm run build && npm run check:dist && npm run check:ci"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.12",
