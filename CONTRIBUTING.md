@@ -32,18 +32,18 @@ Original code only. openclaw.ai is inspiration; do not copy its code, mascot or 
 
 Needs Node `>=22.23.4` and Python 3 (standard library only). Run everything from the repo root.
 
-| Command                   | What it does                                                                                    |
-| ------------------------- | ----------------------------------------------------------------------------------------------- |
-| `npm ci --ignore-scripts` | Install from the lockfile. Never plain `npm install`, and ask before adding a dependency.       |
-| `npm run dev`             | Dev server at `http://localhost:4321`.                                                          |
-| `npm run check`           | `astro check`: types for `.astro` files and the content schemas.                                |
-| `npm run lint`            | `biome ci .`: lint and format check, fails on any diff.                                         |
-| `npm run format`          | `biome format --write .`: apply the formatting.                                                 |
-| `npm test`                | `node --test tests/`: unit tests, including both check scripts against fixture builds.          |
-| `npm run build`           | Static build into `dist/`.                                                                      |
-| `npm run check:dist`      | `check_dist.py` (rules and budgets on `dist/`), then `check_headers.py` (see below).            |
-| `npm run preview`         | Serve `dist/` locally. It ignores `_headers`.                                                   |
-| `npm run check:ci`        | `check_workflows.py`: the GitHub Actions and Dependabot rules (see CI below).                   |
+| Command                   | What it does                                                                                                |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `npm ci --ignore-scripts` | Install from the lockfile. Never plain `npm install`, and ask before adding a dependency.                   |
+| `npm run dev`             | Dev server at `http://localhost:4321`.                                                                      |
+| `npm run check`           | `astro check`: types for `.astro` files and the content schemas.                                            |
+| `npm run lint`            | `biome ci .`: lint and format check, fails on any diff.                                                     |
+| `npm run format`          | `biome format --write .`: apply the formatting.                                                             |
+| `npm test`                | `node --test tests/`: unit tests, including both check scripts against fixture builds.                      |
+| `npm run build`           | Static build into `dist/`.                                                                                  |
+| `npm run check:dist`      | `check_dist.py` (rules and budgets on `dist/`), then `check_headers.py` (see below).                        |
+| `npm run preview`         | Serve `dist/` locally. It ignores `_headers`.                                                               |
+| `npm run check:ci`        | `check_workflows.py`: the GitHub Actions and Dependabot rules (see CI below).                               |
 | `npm run verify`          | `check`, `lint`, `test`, `build`, `check:dist`, `check:ci` in order. Run this before saying a task is done. |
 
 Notes:
@@ -68,12 +68,12 @@ Nothing here runs until the repo is on GitHub. Every workflow is in `.github/wor
 
 What runs:
 
-| Workflow         | When                    | What it does                                                                                     |
-| ---------------- | ----------------------- | ------------------------------------------------------------------------------------------------ |
-| `ci.yml`         | push to main, every PR  | `npm run verify`, then Lighthouse on five pages held to the budgets in `check_lighthouse.py`.    |
-| `codeql.yml`     | push, PR, weekly        | CodeQL for the workflows, JavaScript/TypeScript and Python.                                      |
-| `scorecard.yml`  | push, weekly            | OpenSSF Scorecard, published for the badge in the README.                                        |
-| `provenance.yml` | push to main            | Builds and verifies, writes an SBOM (CycloneDX), and signs the site tarball with a build provenance attestation and an SBOM attestation. |
+| Workflow         | When                   | What it does                                                                                                                             |
+| ---------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `ci.yml`         | push to main, every PR | `npm run verify`, then Lighthouse on five pages held to the budgets in `check_lighthouse.py`.                                            |
+| `codeql.yml`     | push, PR, weekly       | CodeQL for the workflows, JavaScript/TypeScript and Python.                                                                              |
+| `scorecard.yml`  | push, weekly           | OpenSSF Scorecard, published for the badge in the README.                                                                                |
+| `provenance.yml` | push to main           | Builds and verifies, writes an SBOM (CycloneDX), and signs the site tarball with a build provenance attestation and an SBOM attestation. |
 
 Check the deployed site with `python scripts/check_headers.py --url https://jarrettd.com`. It requests the live pages and holds the headers it really sends to the same rules as `dist/_headers`. With only `--url` it does not need a build. Plain http is refused except for localhost.
 
