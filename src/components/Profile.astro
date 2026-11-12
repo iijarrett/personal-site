@@ -1,0 +1,296 @@
+---
+import { COVER, FACE } from "../lib/portrait-art.ts";
+import ContactList from "./ContactList.astro";
+import PortraitScript from "./PortraitScript.astro";
+
+// The Me page: contact details and the page's tiles together. A thin banner of code fades into the
+// top of the page, the face sits over its lower edge (not in a circle), and nothing has an
+// outline. On a wide screen the head and the contact rows form a sidebar with the tiles beside
+// it; on a phone everything stacks, with the contact list as a row of icons. Both pictures are
+// decoration: the script draws them, and nothing is lost without them. The drawing is
+// src/scripts/portrait.ts.
+interface Props {
+  name: string;
+  headline: string;
+  status: string;
+}
+
+const { name, headline, status } = Astro.props;
+
+const art = (kind: string, a: typeof FACE | typeof COVER) => ({
+  "data-portrait": true,
+  "data-kind": kind,
+  "data-tone": a.tone,
+  "data-cols": a.cols,
+  "data-rows": a.rows,
+  "data-cells": a.cells.join(""),
+});
+---
+
+<div class="profile">
+  <div class="profile-cover" aria-hidden="true">
+    <div class="portrait" {...art("cover", COVER)}></div>
+  </div>
+  <div class="profile-cols">
+    <div class="profile-aside">
+      <section class="profile-head" aria-labelledby="profile-name">
+        <div class="profile-photo" aria-hidden="true">
+          <div class="portrait" {...art("face", FACE)}></div>
+        </div>
+        <div class="profile-who">
+          <h1 id="profile-name">{name}</h1>
+          <p class="headline">{headline}</p>
+        </div>
+        <p class="label profile-status">{status}</p>
+      </section>
+      <ContactList />
+    </div>
+    <div class="profile-main">
+      <slot />
+    </div>
+  </div>
+</div>
+
+<style is:global>
+  .profile {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  /* A tile: a flat fill that warms toward the accent at its foot. No border. */
+  .profile-card,
+  .profile .item {
+    background: linear-gradient(
+      to top,
+      color-mix(in srgb, var(--accent) 20%, var(--surface)),
+      var(--surface) 82%
+    );
+    border-radius: var(--radius);
+  }
+
+  .profile-card {
+    padding: var(--space-4);
+  }
+
+  .profile-card h2 {
+    margin-top: 0;
+  }
+
+  .profile-card > :last-child {
+    margin-bottom: 0;
+  }
+
+  /* The banner keeps the shape of its art (5.4 x 12 px cells), so nothing moves when it is drawn.
+     It fades out at the foot and at both ends, so it reads as part of the page, not a box. On a
+     phone the art is drawn wider than the screen and cropped, so its symbols stay legible. */
+  .profile-cover {
+    overflow: hidden;
+    -webkit-mask-image:
+      linear-gradient(to bottom, #000 30%, transparent),
+      linear-gradient(to right, transparent, #000 14%, #000 86%, transparent);
+    -webkit-mask-composite: source-in;
+    mask-image:
+      linear-gradient(to bottom, #000 30%, transparent),
+      linear-gradient(to right, transparent, #000 14%, #000 86%, transparent);
+    mask-composite: intersect;
+  }
+
+  .profile-cover .portrait {
+    width: 150%;
+    margin-left: -25%;
+    aspect-ratio: 864 / 96;
+  }
+
+  .profile-cols,
+  .profile-aside,
+  .profile-main {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .profile-aside,
+  .profile-main {
+    align-content: start;
+    min-width: 0;
+  }
+
+  .profile-head {
+    display: grid;
+    grid-template-columns: 9rem minmax(0, 1fr);
+    column-gap: var(--space-3);
+    padding-inline: var(--space-3);
+  }
+
+  /* The face is a whole head, taller than wide, drawn straight onto the page. */
+  .profile-photo {
+    grid-row: 1 / 3;
+    margin-top: -2.5rem;
+  }
+
+  .profile-photo .portrait {
+    width: 100%;
+    aspect-ratio: 475.2 / 672;
+  }
+
+  .profile-who {
+    align-self: end;
+    min-width: 0;
+  }
+
+  .profile-who h1 {
+    margin: 0;
+  }
+
+  .headline {
+    margin: var(--space-1) 0 0;
+    font-size: 1.1rem;
+  }
+
+  .profile-status {
+    align-self: start;
+    margin: var(--space-2) 0 0;
+    color: var(--accent-text);
+  }
+
+  /* Phone: five icons in a row, the detail lines hidden. */
+  .contact {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .contact li {
+    margin: 0;
+  }
+
+  .profile .item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-2) 0;
+    color: var(--text);
+    font-size: 0.75rem;
+    text-align: center;
+    text-decoration: none;
+  }
+
+  .profile .item strong {
+    font-weight: 600;
+  }
+
+  .profile span.item {
+    color: var(--muted);
+  }
+
+  .profile .item.main {
+    background: linear-gradient(
+      to top,
+      color-mix(in srgb, var(--accent) 38%, var(--surface)),
+      var(--surface) 82%
+    );
+  }
+
+  .profile a.item:hover {
+    color: var(--accent-text);
+  }
+
+  .contact .hd {
+    display: none;
+  }
+
+  .contact .lg {
+    flex: none;
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: currentcolor;
+  }
+
+  .contact .lg.line {
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* Entries inside a tile run on without the rules the other pages use. */
+  .profile .rows {
+    margin: var(--space-3) 0 0;
+    border-top: 0;
+  }
+
+  .profile .rows li {
+    padding-block: 0;
+    border-bottom: 0;
+  }
+
+  .profile .tags {
+    margin: 0;
+    padding: 0;
+  }
+
+  .profile .tags li {
+    padding: var(--space-1) var(--space-3);
+    background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+    border-radius: 999px;
+  }
+
+  /* Wide: the head and the contact rows become a sidebar, the tiles sit beside it. */
+  @media (min-width: 48rem) {
+    .profile-cover .portrait {
+      width: 100%;
+      margin-left: 0;
+    }
+
+    .profile-cols {
+      grid-template-columns: 19rem minmax(0, 1fr);
+      gap: var(--space-4);
+    }
+
+    .profile-head {
+      grid-template-columns: minmax(0, 1fr);
+      padding-inline: 0;
+    }
+
+    .profile-photo {
+      grid-row: auto;
+      width: 15rem;
+      margin-top: -4.5rem;
+    }
+
+    .contact {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .profile .item {
+      flex-direction: row;
+      gap: var(--space-3);
+      padding: var(--space-3);
+      font-size: 1rem;
+      text-align: left;
+    }
+
+    .contact .hd {
+      display: block;
+      color: var(--muted);
+      font-size: 0.875rem;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .profile-main {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .profile .wide {
+      grid-column: 1 / -1;
+    }
+  }
+</style>
+
+<PortraitScript />

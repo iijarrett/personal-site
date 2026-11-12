@@ -1,18 +1,31 @@
 /**
  * The footer brick breaker, in the spirit of the browser's offline dinosaur: it sits idle in the
- * footer, one press starts it, and the only saved thing is the best score, kept on this device in
- * localStorage. It is a separate file that lazy.ts requests only after a real visitor has the
- * footer in reach, so it is never part of the first load. The build check lets this file export
- * but never import, so ../lib/brick.ts must be used by this file alone (the bundler then folds it
- * in) and nothing else may be shared with the page script.
+ * footer, one press starts it, and two things are saved: the best score, kept on this device in
+ * localStorage, and the colour won by clearing a wave, kept for this tab in sessionStorage so
+ * every page wears it until the tab closes. It is a separate file that lazy.ts requests only
+ * after a real visitor has the footer in reach, so it is never part of the first load. The build
+ * check lets this file export but never import, so ../lib/brick.ts must be used by this file alone
+ * (the bundler then folds it in) and nothing else may be shared with the page script.
  *
  * Idle, it draws once and does nothing else: the page scrolls as normal, and only the focused
  * canvas answers keys. A tap, a click, or space, Enter, up or W on the focused canvas starts it.
- * From then on arrows or A and D move, a finger or mouse over the canvas moves the paddle, and keys
- * are taken while the canvas is on screen. Escape, Tab, or scrolling away puts it back to idle.
+ * From then on arrows or A and D move, and so does a finger sliding on the canvas or a mouse
+ * dragging with its button down (a mouse merely passing over does not), and keys are taken while
+ * the canvas is on screen. Escape or Tab puts it back to idle. Scrolling away pauses it as it
+ * is, and a press carries on; a game that is over just goes back to idle.
  * It never runs while the canvas is off screen or the tab is hidden.
  */
 
+import {
+  ACCENT_KEY,
+  ACCENT_VARS,
+  ACCENTS,
+  accentIndex,
+  accentRecord,
+  accentValues,
+  HOME_NAME,
+  nextAccent,
+} from "../lib/accents.ts";
 import {
   aim,
   BH,
@@ -40,9 +53,9 @@ const RIGHT = ["ArrowRight", "d", "D"];
 const GO = [" ", "Enter", "ArrowUp", "w", "W"];
 const OTHER = "a,button,input,select,summary,textarea,[contenteditable]";
 // What the box lists depends on the device: a keyboard and mouse, or a finger.
-const KEYS = ["← → or A D, or mouse, to move", "esc to stop"];
+const KEYS = ["← → or A D, or click and drag, to move", "esc to stop"];
 const TOUCH = ["slide to move"];
-const HELP = "← → or A D, or slide, to move · esc to stop"; // read aloud only
+const HELP = "← → or A D, or drag, to move · esc to stop"; // read aloud only
 
 /** What the lazy loader calls: the footer game, then the falling-symbols strip below it. */
 export function initArcade(env: ArcadeEnv): void {
@@ -89,6 +102,15 @@ function initGame(env: ArcadeEnv): void {
   let ink = "";
   let tint = "";
   let dim = "";
+  // The accent the whole page wears: -1 is the home purple, else an ACCENTS index. A colour won
+  // on an earlier page of this tab is already on the page (theme-init.js), so carry on from it.
+  let shade = -1;
+  try {
+    shade = accentIndex(sessionStorage.getItem(ACCENT_KEY));
+  } catch {}
+  let wave = 1; // the wave the game was last seen on, to spot a cleared one
+  let unlocked = ""; // the colour just won, shown until the next launch
+  let paused = false; // scrolled out of view mid-game: frozen until a press carries on
 
   const colours = (): void => {
     const style = getComputedStyle(root);
@@ -97,6 +119,28 @@ function initGame(env: ArcadeEnv): void {
       style.getPropertyValue("--accent-text").trim() || style.getPropertyValue("--accent").trim();
     ink = style.getPropertyValue("--text").trim();
     dim = style.getPropertyValue("--muted").trim();
+  };
+
+  /**
+   * Dress the page in the current accent: four values go on <html> as custom properties, and
+   * global.css turns them into the tokens for the theme that is showing (home purple takes them
+   * off again). data-accent changing tells the hero, the strip and the pictures to read their
+   * colour again. The colour is also kept for the tab, so every page of the site wears it.
+   */
+  const paintAccent = (): void => {
+    const a = ACCENTS[shade];
+    const values = a ? accentValues(a) : [];
+    ACCENT_VARS.forEach((name, k) => {
+      const v = values[k];
+      if (v) root.style.setProperty(name, v);
+      else root.style.removeProperty(name);
+    });
+    if (a) root.dataset.accent = a.name.toLowerCase();
+    else delete root.dataset.accent;
+    try {
+      if (a) sessionStorage.setItem(ACCENT_KEY, accentRecord(a));
+      else sessionStorage.removeItem(ACCENT_KEY);
+    } catch {}
   };
 
   function draw(): void {
@@ -119,12 +163,19 @@ function initGame(env: ArcadeEnv): void {
     const go = touch ? "tap" : "click or press space";
     const note = !active
       ? `${go} to play`
-      : g.mode === "over"
-        ? "game over"
-        : g.mode === "ready"
-          ? go
-          : "";
+      : paused
+        ? `paused, ${go} to continue`
+        : g.mode === "over"
+          ? "game over"
+          : g.mode === "ready"
+            ? go
+            : "";
     gfx.fillText(note, W / 2, 80);
+    if (unlocked && g.mode === "ready") {
+      gfx.fillStyle = tint;
+      gfx.fillText(`color unlocked: ${unlocked}`, W / 2, 68);
+      gfx.fillStyle = dim;
+    }
     if (!active) {
       // The controls, in the box and only until the first start, so they never sit in the way:
       // one short line each, with room around them.
@@ -155,8 +206,11 @@ function initGame(env: ArcadeEnv): void {
   const reset = (): void => {
     stop();
     g = newGame();
+    wave = 1;
+    unlocked = "";
     over = 0;
     active = false;
+    paused = false;
     held[0] = held[1] = false;
     if (pressed) quiet = true;
     mount.classList.remove("live");
@@ -173,21 +227,31 @@ function initGame(env: ArcadeEnv): void {
       step(g, DT, dir);
       acc -= DT;
     }
+    if (g.wave !== wave) {
+      // The last brick went: the whole page moves on to the next colour.
+      wave = g.wave;
+      shade = nextAccent(shade);
+      unlocked = ACCENTS[shade]?.name ?? HOME_NAME;
+      paintAccent();
+      colours();
+      say(`wave cleared · color unlocked: ${unlocked}`);
+    }
+    if (g.score > best) {
+      // Banked the moment it is passed, so a run left half way still counts.
+      best = g.score;
+      try {
+        localStorage.setItem(BEST, String(best));
+      } catch {}
+    }
     if (g.mode === "over" && !over) {
       over = performance.now();
-      if (g.score > best) {
-        best = g.score;
-        try {
-          localStorage.setItem(BEST, String(best));
-        } catch {}
-      }
       say(`game over · score ${g.score} · best ${best}`);
     }
     draw();
     if (g.mode === "play" || dir) raf = requestAnimationFrame(frame);
   };
   const kick = (): void => {
-    if (raf || !active || !seen || document.hidden) return;
+    if (raf || !active || paused || !seen || document.hidden) return;
     last = performance.now();
     acc = 0;
     raf = requestAnimationFrame(frame);
@@ -198,13 +262,20 @@ function initGame(env: ArcadeEnv): void {
   };
   /** One press: start, launch the ball, or play again. */
   const go = (): void => {
-    begin();
-    if (g.mode !== "over") launch(g);
-    else if (performance.now() - over >= 600) {
-      // the pause stops a mashed key from skipping the score
-      g = newGame();
-      over = 0;
-      say(HELP);
+    if (paused) {
+      // Back in view after a scroll away: this press only carries on, it does not also launch.
+      paused = false;
+    } else {
+      begin();
+      unlocked = "";
+      if (g.mode !== "over") launch(g);
+      else if (performance.now() - over >= 600) {
+        // the pause stops a mashed key from skipping the score
+        g = newGame();
+        wave = 1;
+        over = 0;
+        say(HELP);
+      }
     }
     draw();
     kick();
@@ -240,7 +311,7 @@ function initGame(env: ArcadeEnv): void {
     if (RIGHT.includes(e.key)) held[1] = false;
   };
   const at = (e: MouseEvent): void => {
-    if (!active) return;
+    if (!active || paused) return;
     const box = canvas.getBoundingClientRect();
     aim(g, ((e.clientX - box.left) / box.width) * W);
     kick();
@@ -261,17 +332,24 @@ function initGame(env: ArcadeEnv): void {
     } else kick();
   });
   new MutationObserver(() => {
-    colours();
+    colours(); // the stylesheet already swapped the accent for the new theme
     draw();
   }).observe(root, { attributes: true, attributeFilter: ["data-theme"] });
-  // Scrolling the canvas fully out of view puts the game back to idle.
+  // Scrolling the canvas fully out of view pauses a game that is on; one that is over, or not
+  // started, goes back to idle (an ended game's score is already kept).
   new IntersectionObserver((entries) => {
     seen = !!entries.at(-1)?.isIntersecting;
     if (seen) kick();
-    else reset();
+    else if (active && g.mode !== "over") {
+      // Freeze it as it is until a press carries on. A key still held is let go by its keyup.
+      stop();
+      paused = true;
+      draw();
+    } else reset();
   }).observe(canvas);
   // A click (a tap or a mouse click, never the start of a scroll) starts it; after that a press
-  // launches at once and moving over the canvas steers.
+  // launches at once and dragging steers. A mouse only steers with its button down, so a cursor
+  // wandering across the box while the keys are in use never grabs the paddle.
   canvas.addEventListener("click", (e) => {
     const skip = active || quiet; // quiet: Escape came in the middle of this press
     quiet = false;
@@ -280,7 +358,10 @@ function initGame(env: ArcadeEnv): void {
     at(e);
     go();
   });
-  canvas.addEventListener("pointermove", at);
+  canvas.addEventListener("pointermove", (e) => {
+    if (e.pointerType === "mouse" && !pressed) return;
+    at(e);
+  });
   const lift = (): void => {
     pressed = false;
   };

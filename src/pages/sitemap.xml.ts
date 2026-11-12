@@ -1,7 +1,7 @@
 import { getCollection } from "astro:content";
 import type { APIRoute } from "astro";
 
-const staticPaths = ["/", "/projects/", "/writeups/", "/about/", "/contact/", "/security/"];
+const staticPaths = ["/", "/projects/", "/writeups/", "/about/", "/security/"];
 
 export const GET: APIRoute = async ({ site }) => {
   if (!site) {

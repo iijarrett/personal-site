@@ -109,7 +109,7 @@ export function initWaterfall(env: ArcadeEnv): void {
   new MutationObserver(() => {
     colours();
     draw();
-  }).observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+  }).observe(root, { attributes: true, attributeFilter: ["data-theme", "data-accent"] });
   new IntersectionObserver((entries) => {
     seen = !!entries.at(-1)?.isIntersecting;
     sync();

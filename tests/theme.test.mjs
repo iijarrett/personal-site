@@ -114,7 +114,7 @@ test("the head script keeps to the rules every built script follows", () => {
     assert.ok(!banned.test(init), `theme-init.js matches ${banned}`);
   }
   assert.ok(!/https?:\/\//.test(init));
-  assert.ok(init.length < 450, `theme-init.js is ${init.length} bytes`);
+  assert.ok(init.length < 800, `theme-init.js is ${init.length} bytes`);
 });
 
 import { parseTheme, THEME_COLOR, THEME_KEY } from "../src/lib/theme.ts";
@@ -162,4 +162,63 @@ test("the .js class goes on before storage is touched, so a storage error cannot
     },
   });
   assert.deepEqual(order, ["js", "read"]);
+});
+
+/** Runs the head script with a tab's session storage, and reports what it put on the page. */
+function runAccent(record, { blocked = false } = {}) {
+  const props = {};
+  const root = {
+    dataset: {},
+    classList: { add() {} },
+    style: { setProperty: (name, value) => (props[name] = value) },
+  };
+  vm.runInNewContext(init, {
+    localStorage: { getItem: () => null },
+    sessionStorage: {
+      getItem(key) {
+        if (blocked) throw new Error("storage is blocked");
+        return key === "accent" ? record : null;
+      },
+    },
+    document: { documentElement: root, querySelector: () => null },
+  });
+  return { accent: root.dataset.accent, props };
+}
+
+test("a colour kept for the tab is on the page before first paint, on every page", () => {
+  const ok = "cyan,#7dcfff,#007197,#005f7a,#d6eef6";
+  assert.deepEqual(runAccent(ok), {
+    accent: "cyan",
+    props: { "--x0": "#7dcfff", "--x1": "#007197", "--x2": "#005f7a", "--x3": "#d6eef6" },
+  });
+});
+
+test("anything that is not a colour record is ignored, and blocked storage does not throw", () => {
+  for (const bad of [
+    null,
+    "",
+    "cyan",
+    "cyan,#7dcfff",
+    "Cyan,#7dcfff,#007197,#005f7a,#d6eef6",
+    "cyan,red,#007197,#005f7a,#d6eef6",
+    "cyan,#7dcfff,#007197,#005f7a,#d6eef6,#ffffff",
+    "cyan,#7dcfff,#007197,#005f7a,#d6eef6;x",
+    "cyan,url(x),#007197,#005f7a,#d6eef6",
+  ]) {
+    assert.deepEqual(runAccent(bad), { accent: undefined, props: {} }, String(bad));
+  }
+  assert.deepEqual(runAccent("cyan,#7dcfff,#007197,#005f7a,#d6eef6", { blocked: true }), {
+    accent: undefined,
+    props: {},
+  });
+});
+
+test("the head script and the game agree on the key and the shape of the record", async () => {
+  const { ACCENT_KEY, ACCENTS, accentRecord } = await import("../src/lib/accents.ts");
+  assert.ok(init.includes(`getItem("${ACCENT_KEY}")`));
+  for (const a of ACCENTS) {
+    const result = runAccent(accentRecord(a));
+    assert.equal(result.accent, a.name.toLowerCase(), a.name);
+    assert.equal(Object.keys(result.props).length, 4, a.name);
+  }
 });

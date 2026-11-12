@@ -13,7 +13,9 @@ test("the page is named Me, but its URL is still /about/", () => {
 
   const page = read("../src/pages/about.astro");
   assert.match(page, /<Page title="Me" /);
-  assert.match(page, /<h1>Me<\/h1>/);
+  // The page is a profile: its heading is the name, set by the Profile component's h1.
+  assert.match(page, /<Profile\s+name="JD"/);
+  assert.match(read("../src/components/Profile.astro"), /<h1 id="profile-name">\{name\}<\/h1>/);
   assert.ok(!/<h1>About<\/h1>/.test(page));
 
   assert.match(read("../src/pages/sitemap.xml.ts"), /"\/about\/"/);

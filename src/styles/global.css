@@ -1,6 +1,24 @@
 @import "./fonts.css";
 @import "./tokens.css";
 
+/* A colour won in the footer game. theme-init.js and arcade.ts put it on <html> as --x0 to --x3
+   (dark colour, light accent, light text, light glow); these two rules turn it into the accent
+   tokens for the showing theme, so a theme switch needs no script. Without data-accent the
+   tokens stay purple. */
+html[data-accent] {
+  --accent: var(--x0);
+  --accent-text: var(--x0);
+  --glow: var(--x0);
+  --ring: var(--x0);
+}
+
+html[data-accent][data-theme="light"] {
+  --accent: var(--x1);
+  --accent-text: var(--x2);
+  --glow: var(--x3);
+  --ring: var(--x2);
+}
+
 *,
 *::before,
 *::after {
@@ -376,20 +394,28 @@ html.js .site-footer:not([data-still]) .arcade:empty {
 html.js .site-footer:not([data-still]) .arcade:empty::before {
   content: "";
   display: block;
-  max-width: 36rem;
+  max-width: 30rem;
   aspect-ratio: 8 / 5;
-  margin-block: var(--space-2);
+  margin: var(--space-2) auto;
 }
 
 .arcade canvas {
   display: block;
   width: 100%;
-  max-width: 36rem;
+  max-width: 30rem;
   aspect-ratio: 8 / 5;
-  margin-block: var(--space-2);
-  border: 1px solid var(--border);
+  margin: var(--space-2) auto;
+  /* Idle there is no box at all: no line, and a fill that fades out towards its edges, so the
+     bricks and the words float on the page. Once a game starts (.live) the box appears: a solid
+     fill, an accent line and a soft glow. */
+  border: 1px solid transparent;
   border-radius: var(--radius);
-  background: var(--surface);
+  background:
+    radial-gradient(ellipse at center, var(--surface) 35%, transparent 75%) no-repeat,
+    transparent;
+  box-shadow:
+    0 0 14px 1px transparent,
+    inset 0 0 14px 1px transparent;
   font-family: var(--font-mono);
   cursor: pointer;
   touch-action: pan-y;
@@ -397,6 +423,18 @@ html.js .site-footer:not([data-still]) .arcade:empty::before {
 
 .arcade.live canvas {
   touch-action: none;
+  border-color: var(--accent);
+  background-color: var(--surface);
+  box-shadow:
+    0 0 14px 1px var(--accent),
+    inset 0 0 14px 1px var(--accent);
+}
+
+html:not(.no-fx) .arcade canvas {
+  transition:
+    border-color 0.5s ease,
+    background-color 0.5s ease,
+    box-shadow 0.5s ease;
 }
 
 /* The falling-symbols strip along the very bottom, drawn by the same lazy script. Decoration only:
@@ -839,39 +877,6 @@ html:not(.no-fx) :is(.arcade, .waterfall) canvas {
 
 .prose h2 {
   font-size: 1.3rem;
-}
-
-/* ---------- Contact ---------- */
-.channels {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-  margin: var(--space-4) 0;
-  padding: 0;
-  list-style: none;
-  max-width: none;
-  border-top: 1px solid var(--border);
-  border-left: 1px solid var(--border);
-}
-
-.channels li {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border-right: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-}
-
-.channels svg {
-  flex: none;
-  color: var(--muted);
-}
-
-.channels li > span {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
 }
 
 .prose li + li {

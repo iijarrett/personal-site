@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
+import { ACCENT_VARS, ACCENTS, accentRecord, accentValues } from "../src/lib/accents.ts";
 import { initArcade } from "../src/scripts/arcade.ts";
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
@@ -118,6 +119,8 @@ function install(
   {
     storage = new Map(),
     throwingStorage = false,
+    session = new Map(),
+    throwingSession = false,
     noContext = false,
     mountFull = false,
     touch = false,
@@ -146,7 +149,27 @@ function install(
   let nextFrame = 1;
   const observers = { io: null, mo: null };
   const root = new El("html");
+  // The page's accent: inline values the game puts on <html>, which win over the stylesheet's.
+  const inline = new Map();
+  root.dataset = {};
+  root.style = {
+    setProperty: (name, value) => inline.set(name, value),
+    removeProperty: (name) => inline.delete(name),
+  };
   const created = [];
+
+  // What global.css makes of the colour on <html>: four values feed the tokens, by theme.
+  const cssValue = (name) => {
+    if (root.dataset.accent === undefined) return undefined;
+    const light = root.dataset.theme === "light";
+    const from = {
+      "--accent": light ? "--x1" : "--x0",
+      "--accent-text": light ? "--x2" : "--x0",
+      "--glow": light ? "--x3" : "--x0",
+      "--ring": light ? "--x2" : "--x0",
+    }[name];
+    return from && inline.get(from);
+  };
 
   set("document", {
     documentElement: root,
@@ -163,7 +186,7 @@ function install(
   });
   set("getComputedStyle", () => ({
     fontFamily: "JetBrains Mono, monospace",
-    getPropertyValue: (name) => ` ${state.vars[name] ?? ""} `,
+    getPropertyValue: (name) => ` ${cssValue(name) ?? state.vars[name] ?? ""} `,
   }));
   set("addEventListener", (name, fn) => win.add(name, fn));
   set("removeEventListener", (name) => win.delete(name));
@@ -183,6 +206,20 @@ function install(
     setItem(key, value) {
       if (throwingStorage) throw new Error("blocked");
       storage.set(key, String(value));
+    },
+  });
+  set("sessionStorage", {
+    getItem(key) {
+      if (throwingSession) throw new Error("blocked");
+      return session.get(key) ?? null;
+    },
+    setItem(key, value) {
+      if (throwingSession) throw new Error("blocked");
+      session.set(key, String(value));
+    },
+    removeItem(key) {
+      if (throwingSession) throw new Error("blocked");
+      session.delete(key);
     },
   });
   set(
@@ -218,6 +255,7 @@ function install(
   const api = {
     state,
     storage,
+    session,
     win,
     doc,
     mount,
@@ -226,6 +264,7 @@ function install(
     created,
     observers,
     root,
+    inline,
     other,
     pending: () => frames.size,
     see: (on) => observers.io.cb([{ isIntersecting: on }]),
@@ -350,8 +389,8 @@ test("with a keyboard and mouse the box says click or space and lists the keys, 
   a.see(true);
   const texts = a.texts();
   assert.ok(texts.includes("click or press space to play"), texts.join(" | "));
-  assert.ok(texts.some((s) => /A D, or mouse, to move/.test(s)));
-  assert.ok(!texts.some((s) => /\btap\b|drag|slide/.test(s)), texts.join(" | "));
+  assert.ok(texts.some((s) => /A D, or click and drag, to move/.test(s)));
+  assert.ok(!texts.some((s) => /\btap\b|slide/.test(s)), texts.join(" | "));
 });
 
 test("it does nothing when there is no arcade box, the box is not empty, or there is no canvas context", (t) => {
@@ -466,13 +505,33 @@ test("a held launch key does not relaunch or scroll, and a finger or mouse steer
   const a = started(t);
   const e = a.key(" ", { repeat: true });
   assert.equal(e.prevented, true);
-  a.pointer("pointermove", { clientX: 220 });
+  a.pointer("pointermove", { clientX: 220, pointerType: "touch" });
   a.run(0.05);
   assert.ok(Math.abs(a.shapes().paddle[1] + 18 - 60) < 1e-9, "steered to x=60");
   const down = a.pointer("pointerdown", { clientX: 220 });
   assert.deepEqual(a.canvas.captured, [down.pointerId]);
   a.pointer("pointerdown", { button: 2 });
   assert.deepEqual(a.canvas.captured, [7], "a right button is ignored");
+});
+
+test("a mouse only steers while its button is down, so passing over the box never grabs the paddle", (t) => {
+  const a = started(t);
+  a.run(0.05);
+  const before = a.shapes().paddle[1];
+  a.pointer("pointermove", { clientX: 220, pointerType: "mouse" }); // hovering
+  a.run(0.05);
+  assert.equal(a.shapes().paddle[1], before, "a hovering mouse did not move the paddle");
+  a.pointer("pointerdown", { clientX: 220, pointerType: "mouse" });
+  a.pointer("pointermove", { clientX: 220, pointerType: "mouse" });
+  a.run(0.05);
+  assert.ok(Math.abs(a.shapes().paddle[1] + 18 - 60) < 1e-9, "a dragging mouse steers to x=60");
+  a.pointer("pointerup", { pointerType: "mouse" });
+  a.pointer("pointermove", { clientX: 340, pointerType: "mouse" });
+  a.run(0.05);
+  assert.ok(
+    Math.abs(a.shapes().paddle[1] + 18 - 60) < 1e-9,
+    "released: hovering leaves it where it was",
+  );
 });
 
 test("the lives are drawn, and the best score only when there is one", (t) => {
@@ -508,6 +567,104 @@ test("a game runs to its end: game over is announced, the best is kept, and a re
     a.texts().some((s) => s === `HI ${score}  0`),
     "the best stays on screen",
   );
+});
+
+/** Plays like someone who never misses, varying where the paddle meets the ball, until `done`. */
+function autoplay(a, done, seconds = 1500) {
+  for (let i = 0; i < seconds * 60 && !done(); i++) {
+    const { ball } = a.shapes();
+    if (ball) {
+      const aim = ball[1] + 2.5 + Math.sin(i / 9) * 12; // the ball's centre, nudged off the middle
+      a.pointer("pointermove", { clientX: 100 + aim * 2, pointerType: "touch" });
+    }
+    if (!a.pending()) a.key(" "); // the next serve
+    a.tick();
+  }
+}
+
+test("clearing the bricks moves the whole page to the next colour and says so in the box", (t) => {
+  const a = started(t);
+  assert.equal(a.inline.size, 0, "purple is the stylesheet's own, nothing inline");
+  assert.equal(a.root.dataset.accent, undefined);
+  a.key(" ");
+  autoplay(a, () => a.root.dataset.accent !== undefined);
+  assert.equal(a.root.dataset.accent, "cyan", "the first colour is the first in the list");
+  for (const [k, name] of ACCENT_VARS.entries()) {
+    assert.equal(a.inline.get(name), accentValues(ACCENTS[0])[k], name);
+  }
+  assert.match(a.help.textContent, /color unlocked: Cyan/);
+  assert.ok(a.texts().includes("color unlocked: Cyan"), "the line is in the box");
+  // The bricks come back in the new colour.
+  const bricks = a.canvas.ctx.last().filter((c) => c[0] === "text" && /^[@#X+]{4}$/.test(c[1]));
+  assert.equal(bricks.length, 32);
+  assert.ok(bricks.every((c) => c[4] === ACCENTS[0].dark));
+  // The line goes at the next launch.
+  a.key(" ");
+  assert.ok(!a.texts().some((s) => /color unlocked/.test(s)));
+  // The other theme needs nothing from the game: the stylesheet picks the other values of the
+  // same colour, and the box redraws in them.
+  const before = a.inline.size;
+  a.root.dataset.theme = "light";
+  a.observers.mo.cb();
+  assert.equal(a.inline.size, before, "the game puts nothing more on the page");
+  assert.ok(a.canvas.ctx.last().some((c) => c[0] === "text" && c[4] === ACCENTS[0].light.text));
+});
+
+test("going to a fresh game keeps the colour, and Escape does not give it back", (t) => {
+  const a = started(t);
+  a.key(" ");
+  autoplay(a, () => a.root.dataset.accent !== undefined);
+  a.key("Escape");
+  assert.equal(a.inline.get("--x0"), ACCENTS[0].dark);
+});
+
+test("a colour won is kept for the tab, in the form the head script reads", (t) => {
+  const a = started(t);
+  assert.equal(a.session.has("accent"), false);
+  a.key(" ");
+  autoplay(a, () => a.root.dataset.accent !== undefined);
+  assert.equal(a.session.get("accent"), accentRecord(ACCENTS[0]));
+  assert.equal(a.storage.has("accent"), false, "the high score's storage is left alone");
+});
+
+test("a colour kept from another page carries on: the next wave is the next colour", (t) => {
+  const a = started(t, { session: new Map([["accent", accentRecord(ACCENTS[1])]]) });
+  a.key(" ");
+  autoplay(a, () => /color unlocked/.test(a.help.textContent));
+  assert.equal(a.root.dataset.accent, ACCENTS[2].name.toLowerCase());
+  assert.equal(a.session.get("accent"), accentRecord(ACCENTS[2]));
+  assert.match(a.help.textContent, new RegExp(`color unlocked: ${ACCENTS[2].name}`));
+});
+
+test("after the last colour the page goes home to purple and forgets the colour", (t) => {
+  const last = ACCENTS.length - 1;
+  const a = started(t, { session: new Map([["accent", accentRecord(ACCENTS[last])]]) });
+  // What the head script put on the page before the game loaded.
+  a.root.dataset.accent = ACCENTS[last].name.toLowerCase();
+  for (const [k, v] of accentValues(ACCENTS[last]).entries()) a.inline.set(ACCENT_VARS[k], v);
+  a.key(" ");
+  autoplay(a, () => /color unlocked/.test(a.help.textContent));
+  assert.match(a.help.textContent, /color unlocked: Purple/);
+  assert.equal(a.root.dataset.accent, undefined);
+  assert.equal(a.inline.size, 0);
+  assert.equal(a.session.has("accent"), false);
+});
+
+test("a stored colour that is not one of ours is ignored", (t) => {
+  for (const bad of ["", "orange,#ff8800,#ff8800,#ff8800,#ff8800", "garbage", "7"]) {
+    const a = started(t, { session: new Map([["accent", bad]]) });
+    a.key(" ");
+    autoplay(a, () => /color unlocked/.test(a.help.textContent));
+    assert.equal(a.root.dataset.accent, ACCENTS[0].name.toLowerCase(), JSON.stringify(bad));
+  }
+});
+
+test("blocked tab storage is tolerated: the colour still changes for this page", (t) => {
+  const a = started(t, { throwingSession: true });
+  a.key(" ");
+  autoplay(a, () => a.root.dataset.accent !== undefined);
+  assert.equal(a.root.dataset.accent, ACCENTS[0].name.toLowerCase());
+  assert.equal(a.inline.get("--x0"), ACCENTS[0].dark);
 });
 
 test("storage that throws is tolerated: the game still plays and ends", (t) => {
@@ -546,17 +703,80 @@ test("Escape and Tab put it back to idle, Tab without being taken, and the page 
   }
 });
 
-test("scrolling the canvas out of view resets it, and coming back does not resume", (t) => {
+test("scrolling the canvas out of view pauses it as it is, and a press carries on", (t) => {
   const a = started(t);
   a.key("ArrowLeft");
   a.run(0.3);
+  const frozen = a.shapes();
+  a.see(false);
+  assert.equal(a.mount.classes.has("live"), true, "still the same game, not a fresh one");
+  assert.equal(a.pending(), 0, "nothing runs while it is out of view");
+  a.see(true);
+  assert.equal(a.pending(), 0, "back in view it waits for a press");
+  assert.ok(
+    a.texts().some((s) => /paused/.test(s)),
+    "and says so in the box",
+  );
+  assert.deepEqual(a.shapes().ball, frozen.ball);
+  assert.deepEqual(a.shapes().paddle, frozen.paddle);
+  a.key(" ");
+  assert.equal(a.pending(), 1, "the press carries on");
+  assert.ok(!a.texts().some((s) => /paused/.test(s)));
+  assert.equal(a.shapes().lives, frozen.lives, "and does not also launch a new ball");
+  a.run(0.2);
+  assert.notDeepEqual(a.shapes().ball, frozen.ball, "the ball is moving again");
+});
+
+test("a paused game ignores the pointer and the arrows until the press that carries on", (t) => {
+  const a = started(t, { touch: true });
+  a.run(0.2);
+  a.see(false);
+  a.see(true);
+  const frozen = a.shapes();
+  a.pointer("pointermove", { clientX: 300, pointerType: "touch" });
+  a.key("ArrowRight");
+  assert.equal(a.pending(), 0, "nothing restarts by itself");
+  assert.deepEqual(a.shapes().paddle, frozen.paddle, "the paddle stays where it was");
+  a.key("Escape");
+  assert.equal(a.mount.classes.has("live"), false, "Escape still ends it");
+  assert.ok(!a.texts().some((s) => /paused/.test(s)));
+});
+
+test("a game that is over goes back to idle when scrolled away, its score kept", (t) => {
+  const a = started(t);
+  a.key(" ");
+  for (let miss = 0; miss < 4 && !/game over/.test(a.help.textContent); miss++) {
+    a.run(30);
+    a.key(" ");
+  }
+  assert.match(a.help.textContent, /game over/);
+  const score = Number(/score (\d+)/.exec(a.help.textContent)[1]);
   a.see(false);
   assert.equal(a.mount.classes.has("live"), false);
-  assert.equal(a.pending(), 0);
+  assert.equal(a.storage.get("jd-brick-best"), String(score));
   a.see(true);
-  assert.equal(a.pending(), 0, "idle again, so nothing runs");
-  assert.equal(a.key("ArrowLeft").prevented, false);
-  assert.equal(a.shapes().paddle[1] + 18, 120, "a fresh game");
+  assert.equal(a.pending(), 0);
+  assert.ok(a.texts().some((s) => /click or press space to play/.test(s)));
+});
+
+test("the best is banked the moment it is passed, so a run left half way still counts", (t) => {
+  const a = started(t, { storage: new Map([["jd-brick-best", "10"]]) });
+  autoplay(a, () => a.storage.get("jd-brick-best") !== "10", 60);
+  const banked = Number(a.storage.get("jd-brick-best"));
+  assert.ok(banked > 10, "the stored best moved up while the game was still going");
+  assert.ok(!/game over/.test(a.help.textContent));
+  assert.ok(
+    a.texts().some((s) => s === `HI ${banked}  ${banked}`),
+    "and the box shows it",
+  );
+  a.see(false);
+  assert.equal(a.storage.get("jd-brick-best"), String(banked), "leaving loses nothing");
+});
+
+test("a score that does not beat the best leaves the stored best alone", (t) => {
+  const a = started(t, { storage: new Map([["jd-brick-best", "99999"]]) });
+  a.run(5);
+  assert.equal(a.storage.get("jd-brick-best"), "99999");
 });
 
 test("off screen it takes no keys, and a hidden tab pauses it until the tab is back", (t) => {
@@ -591,7 +811,6 @@ test("the lazy file stays small, local and plain: no network, timers, eval, mark
     "insertAdjacentHTML",
     "document.write",
     "document.cookie",
-    "sessionStorage",
     "indexedDB",
     "Math.random",
     "http://",
@@ -608,6 +827,13 @@ test("the lazy file stays small, local and plain: no network, timers, eval, mark
     "setItem",
   ]);
   assert.equal(source.match(/"jd-brick-best"/g)?.length, 1, "one key, one place");
+  // The tab's colour is the only other thing kept, and only through the shared key.
+  assert.deepEqual([...source.matchAll(/sessionStorage\.(\w+)\(/g)].map((m) => m[1]).sort(), [
+    "getItem",
+    "removeItem",
+    "setItem",
+  ]);
+  assert.ok(!/"accent"/.test(source), "the key comes from accents.ts, not a second copy");
 });
 
 test("the rules file has no DOM, clock or randomness, so the game can be replayed", () => {

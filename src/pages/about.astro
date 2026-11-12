@@ -1,38 +1,70 @@
 ---
+import Profile from "../components/Profile.astro";
 import Page from "../layouts/Page.astro";
 ---
 
-<Page title="Me" description="Background, skills and experience.">
-  <h1>Me</h1>
-  <p>Placeholder resume. Replace each section with real content before launch.</p>
+<Page title="Me" description="Contact details, background, skills and experience.">
+  <Profile
+    name="JD"
+    headline="Cybersecurity engineering master's student, University of San Diego"
+    status="Open to internships and entry-level security roles"
+  >
+    <section class="profile-card wide" aria-labelledby="about-h">
+      <h2 id="about-h">About</h2>
+      <p>
+        Placeholder resume. A short paragraph on what I do, what I am studying and the kind of role
+        I am looking for. Replace each section with real content before launch.
+      </p>
+    </section>
 
-  <h2>Summary</h2>
-  <p>
-    A short paragraph on what I do, what I am studying and the kind of role I am looking for.
-  </p>
+    <section class="profile-card" aria-labelledby="experience-h">
+      <h2 id="experience-h">Experience</h2>
+      <ul class="rows">
+        <li>
+          <p class="label">Dates</p>
+          <h3>Role, organisation</h3>
+          <p>One or two lines on scope and outcome.</p>
+        </li>
+      </ul>
+    </section>
 
-  <h2>Experience</h2>
-  <ul class="rows">
-    <li>
-      <p class="label">Dates</p>
-      <h3>Role, organisation</h3>
-      <p>One or two lines on scope and outcome.</p>
-    </li>
-  </ul>
+    <section class="profile-card" aria-labelledby="education-h">
+      <h2 id="education-h">Education</h2>
+      <ul class="rows">
+        <li>
+          <p class="label">Dates</p>
+          <h3>M.S. Cybersecurity Engineering</h3>
+          <p>University of San Diego</p>
+        </li>
+      </ul>
+    </section>
 
-  <h2>Education</h2>
-  <ul class="rows">
-    <li>
-      <p class="label">Dates</p>
-      <h3>Programme, institution</h3>
-    </li>
-  </ul>
+    <section class="profile-card wide" aria-labelledby="labs-h">
+      <h2 id="labs-h">Labs and training</h2>
+      <ul class="rows">
+        <li>
+          <h3>Hack The Box</h3>
+          <p>Offensive security machines and challenges. Profile link to be added.</p>
+        </li>
+        <li>
+          <h3>PortSwigger Web Security Academy</h3>
+          <p>Web application attack labs from the makers of Burp Suite. Profile link to be added.</p>
+        </li>
+        <li>
+          <h3>CyberDefenders</h3>
+          <p>Blue team labs in forensics, threat hunting and incident response. Profile link to be added.</p>
+        </li>
+      </ul>
+    </section>
 
-  <h2>Skills</h2>
-  <ul class="tags" aria-label="Skills">
-    <li>networking</li>
-    <li>linux</li>
-    <li>windows</li>
-    <li>scripting</li>
-  </ul>
+    <section class="profile-card wide" aria-labelledby="skills-h">
+      <h2 id="skills-h">Skills</h2>
+      <ul class="tags" aria-label="Skills">
+        <li>networking</li>
+        <li>linux</li>
+        <li>windows</li>
+        <li>scripting</li>
+      </ul>
+    </section>
+  </Profile>
 </Page>

@@ -321,7 +321,10 @@ async function start(
   new MutationObserver(() => {
     readAccent();
     if (live) draw();
-  }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  }).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-theme", "data-accent"],
+  });
 
   subscribe((next) => {
     mode = next;

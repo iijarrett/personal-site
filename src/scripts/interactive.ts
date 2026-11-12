@@ -11,7 +11,9 @@ import { initMotion, isMotionOn, setMotionOn, subscribe } from "./motion-state.t
 import { initSettings } from "./settings.ts";
 
 initMotion();
-initBar();
+// Only the home page hides its header bar. The other pages are built with bar-on already on
+// <html> (Base.astro), so the bar is showing and there is nothing for the bar script to decide.
+if (!document.documentElement.classList.contains("bar-on")) initBar();
 initSettings({ isOn: isMotionOn, set: setMotionOn });
 initHero(subscribe);
 initLazy(() => import("./arcade.ts"), { isOn: isMotionOn, subscribe });

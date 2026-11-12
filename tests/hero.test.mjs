@@ -358,7 +358,10 @@ test("the canvas follows the data-theme attribute: the new accent is read and dr
   const [observer] = dom.themeObservers;
   assert.ok(observer, "the hero does not watch the theme");
   assert.deepEqual(observer.targets, [dom.documentElement]);
-  assert.deepEqual(observer.options, { attributes: true, attributeFilter: ["data-theme"] });
+  assert.deepEqual(observer.options, {
+    attributes: true,
+    attributeFilter: ["data-theme", "data-accent"],
+  });
   assert.equal(dom.ctx.fillStyle, "#bb9af7");
   const drawn = dom.ctx.draws.length;
   dom.setTheme("#9854f1");
