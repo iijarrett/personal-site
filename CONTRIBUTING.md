@@ -39,7 +39,7 @@ Needs Node `>=22.23.4` and Python 3 (standard library only). Run everything from
 | `npm run check`           | `astro check`: types for `.astro` files and the content schemas.                                            |
 | `npm run lint`            | `biome ci .`: lint and format check, fails on any diff.                                                     |
 | `npm run format`          | `biome format --write .`: apply the formatting.                                                             |
-| `npm test`                | `node --test tests/`: unit tests, including both check scripts against fixture builds.                      |
+| `npm test`                | `node --test tests/*.test.mjs`: unit tests and the check scripts on fixtures.                               |
 | `npm run build`           | Static build into `dist/`.                                                                                  |
 | `npm run check:dist`      | `check_dist.py` (rules and budgets on `dist/`), then `check_headers.py` (see below).                        |
 | `npm run preview`         | Serve `dist/` locally. It ignores `_headers`.                                                               |
