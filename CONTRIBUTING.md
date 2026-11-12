@@ -68,13 +68,24 @@ Nothing here runs until the repo is on GitHub. Every workflow is in `.github/wor
 
 What runs:
 
-| Workflow         | When                   | What it does                                                                                                                             |
-| ---------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `ci.yml`         | push to main, every PR | `npm run verify`, then Lighthouse on five pages held to the budgets in `check_lighthouse.py`.                                            |
-| `codeql.yml`     | push, PR, weekly       | CodeQL for the workflows, JavaScript/TypeScript and Python.                                                                              |
-| `scorecard.yml`  | push, weekly           | OpenSSF Scorecard, published for the badge in the README.                                                                                |
-| `provenance.yml` | push to main           | Builds and verifies, writes an SBOM (CycloneDX), and signs the site tarball with a build provenance attestation and an SBOM attestation. |
+| Workflow        | When                   | What it does                                                                                                                                                                           |
+| --------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ci.yml`        | push to main, every PR | `npm run verify`, then Lighthouse on five pages held to the budgets in `check_lighthouse.py`.                                                                                          |
+| `codeql.yml`    | push, PR, weekly       | CodeQL for the workflows, JavaScript/TypeScript and Python.                                                                                                                            |
+| `scorecard.yml` | push, weekly           | OpenSSF Scorecard, published for the badge in the README.                                                                                                                              |
+| `release.yml`   | push to main           | Builds and verifies, writes an SBOM (CycloneDX), signs the site tarball (build provenance and SBOM attestations), then deploys that tarball to Cloudflare and checks the live headers. |
 
 Check the deployed site with `python scripts/check_headers.py --url https://jarrettd.com`. It requests the live pages and holds the headers it really sends to the same rules as `dist/_headers`. With only `--url` it does not need a build. Plain http is refused except for localhost.
 
 Settings that are not files, so they are switched on in the repo's Settings on GitHub: secret scanning with push protection, Dependabot alerts and security updates, branch protection on `main` that requires the `Verify` and `Lighthouse budgets` checks, and, if CodeQL's default setup is on, turn it off so it does not clash with `codeql.yml`.
+
+## Deploying (Phase 6)
+
+The site is an assets-only Cloudflare Worker (`wrangler.jsonc`): the `dist/` folder, a custom 404 page, no script. There is no `workers.dev` address and no preview URLs, so the only way in is `jarrettd.com`. `release.yml` deploys on every push to `main`, from the `production` environment. Before shipping, the deploy job runs `gh attestation verify` on the tarball it downloaded, for both the provenance and the SBOM attestation, so nothing that was not built and signed by this workflow can be deployed.
+
+One-time setup, done in the dashboards and not stored in the repo:
+
+1. In Cloudflare, create an API token for this one Worker (edit Workers, plus the custom-domain permission on the `jarrettd.com` zone). Put it in the repo's `production` environment as `CLOUDFLARE_API_TOKEN`, with the account ID as `CLOUDFLARE_ACCOUNT_ID`.
+2. In the repo's `production` environment, require a reviewer if you want to approve each deploy, and limit it to the `main` branch.
+3. A custom domain cannot be made on a name that already has a CNAME record. The apex must not have one. `www` needs a redirect rule to the apex plus a proxied DNS record.
+4. After the first deploy, `python scripts/check_headers.py --url https://jarrettd.com` must pass. The job runs it itself and retries for about two minutes.
