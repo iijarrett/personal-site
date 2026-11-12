@@ -9,4 +9,8 @@ npm ci --ignore-scripts
 npm run verify
 ```
 
+## Licence
+
+The code is under the [MIT licence](LICENSE). The writing, pictures, name and likeness on the site (the writeups, page text, the ASCII face and the JD mark) are not covered by it and stay all rights reserved. The two fonts keep their own SIL Open Font License, with the licence files in `public/fonts/`.
+
 Built, tested, and hardened with help from Claude Code and Codex.
