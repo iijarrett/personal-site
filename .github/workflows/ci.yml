@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# No token permissions by default. Each job asks for the one it needs.
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ASTRO_TELEMETRY_DISABLED: "1"
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - run: npm ci --ignore-scripts
+      - run: npm run verify
+
+  lighthouse:
+    name: Lighthouse budgets
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - name: Serve the build
+        run: |
+          npm run preview -- --port 4321 > preview.log 2>&1 &
+          for _ in $(seq 1 30); do
+            curl -fsS -o /dev/null http://localhost:4321/ && exit 0
+            sleep 1
+          done
+          cat preview.log
+          exit 1
+      - name: Audit every page
+        # Lighthouse is not a dependency of the site. It runs from the registry at one exact
+        # version, and the budgets are enforced by scripts/check_lighthouse.py.
+        run: |
+          mkdir -p lighthouse
+          for page in "" about/ projects/ writeups/ security/; do
+            name=$(printf '%s' "${page:-home}" | tr -d '/')
+            for attempt in 1 2; do
+              npx --yes lighthouse@13.5.0 "http://localhost:4321/${page}" \
+                --quiet --output=json --output-path="lighthouse/${name}.json" \
+                --chrome-flags="--headless=new --no-sandbox" && break
+              [ "$attempt" = 2 ] && exit 1
+            done
+          done
+      - run: python scripts/check_lighthouse.py lighthouse
+      - name: Keep the reports when a budget fails
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: lighthouse-reports
+          path: lighthouse/
+          retention-days: 7

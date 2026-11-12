@@ -1,0 +1,33 @@
+version: 2
+
+# Weekly update pull requests. The 7-day cooldown skips brand-new releases, which is when a
+# hijacked package or action is most likely to be live. Security updates ignore the cooldown.
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: deps
+    groups:
+      astro:
+        patterns: ["astro", "@astrojs/*"]
+      tooling:
+        patterns: ["@biomejs/biome", "typescript"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns: ["*"]
