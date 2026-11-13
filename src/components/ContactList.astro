@@ -25,7 +25,6 @@ interface Contact {
   detail: string;
   mark: keyof typeof marks;
   href?: string;
-  main?: boolean;
 }
 
 // Placeholders: add the real URL as `href` and the entry becomes a link.
@@ -35,7 +34,6 @@ const contacts: Contact[] = [
     detail: "hello@jarrettd.com",
     mark: "mail",
     href: "mailto:hello@jarrettd.com",
-    main: true,
   },
   {
     name: "GitHub",
@@ -61,7 +59,7 @@ const contacts: Contact[] = [
       const mark = marks[c.mark];
       return (
         <li>
-          <Tag class={c.main ? "item main" : "item"} href={c.href}>
+          <Tag class="item" href={c.href}>
             <svg
               class={mark.line ? "lg line" : "lg"}
               viewBox="0 0 24 24"

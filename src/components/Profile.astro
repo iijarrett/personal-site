@@ -55,11 +55,20 @@ const art = (kind: string, a: typeof FACE | typeof COVER) => ({
     gap: var(--space-3);
   }
 
-  /* A tile: a flat fill, no border. It lights up like the tiles on the home page (the glow
-     rules in global.css cover these too). */
-  .profile-card,
-  .profile .item {
+  /* The head card lights up like the tiles on the home page (the glow rules in global.css
+     cover it). The contact boxes stay still: a flat fill that warms toward the accent at its
+     foot, the same for every one of them, email included. */
+  .profile-card {
     background: var(--surface);
+    border-radius: var(--radius);
+  }
+
+  .profile .item {
+    background: linear-gradient(
+      to top,
+      color-mix(in srgb, var(--accent) 20%, var(--surface)),
+      var(--surface) 82%
+    );
     border-radius: var(--radius);
   }
 
@@ -174,10 +183,6 @@ const art = (kind: string, a: typeof FACE | typeof COVER) => ({
     color: var(--muted);
   }
 
-  .item.main {
-    background: color-mix(in srgb, var(--accent) 16%, var(--surface));
-  }
-
   .profile a.item:hover {
     color: var(--accent-text);
   }
@@ -208,7 +213,7 @@ const art = (kind: string, a: typeof FACE | typeof COVER) => ({
   }
 
   .profile .rows li {
-    padding-block: 0;
+    padding-block: 0 var(--space-3);
     border-bottom: 0;
   }
 

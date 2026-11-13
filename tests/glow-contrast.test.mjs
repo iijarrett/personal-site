@@ -127,14 +127,14 @@ test("global.css draws exactly what is measured here", () => {
   assert.match(
     css,
     new RegExp(
-      String.raw`:is\(\.card, \.profile-card, \.profile \.item\)::before\s*\{[^}]*linear-gradient\(\s*to top,[^}]*transparent 65%`,
+      String.raw`:is\(\.card, \.profile-card\)::before\s*\{[^}]*linear-gradient\(\s*to top,[^}]*transparent 65%`,
     ),
   );
   assert.match(css, /@media \(hover: hover\)\s*\{[^@]*\.card:hover/);
   assert.match(
     css,
     new RegExp(
-      String.raw`@media \(hover: none\)\s*\{\s*:is\(\.card, \.profile-card, \.profile \.item\)::before\s*\{[^}]*opacity: 1`,
+      String.raw`@media \(hover: none\)\s*\{\s*:is\(\.card, \.profile-card\)::before\s*\{[^}]*opacity: 1`,
     ),
   );
 });
@@ -154,7 +154,7 @@ test("the card glow is plain CSS: nothing from the old cursor spotlight is left"
   assert.match(
     css,
     new RegExp(
-      String.raw`\.no-fx :is\(\.card, \.profile-card, \.profile \.item\),\s*\.no-fx :is\(\.card, \.profile-card, \.profile \.item\)::before\s*\{\s*transition: none`,
+      String.raw`\.no-fx :is\(\.card, \.profile-card\),\s*\.no-fx :is\(\.card, \.profile-card\)::before\s*\{\s*transition: none`,
     ),
   );
 });
