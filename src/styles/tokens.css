@@ -39,6 +39,24 @@
   --page: 64rem;
 }
 
+/*
+ * On wide screens the whole page scales up, so it does not sit as a narrow column in a big
+ * monitor. Everything is in rem (the page width, the hero's 40rem field, the type), so one
+ * step on the root size grows it all in proportion. The queries are in rem, which a media
+ * query reads as the browser's default 16px, so they mean 1600px and 2240px.
+ */
+@media (min-width: 100rem) {
+  html {
+    font-size: 112.5%;
+  }
+}
+
+@media (min-width: 140rem) {
+  html {
+    font-size: 125%;
+  }
+}
+
 html[data-theme="light"] {
   color-scheme: light;
 
