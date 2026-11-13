@@ -8,8 +8,7 @@ const { current } = Astro.props;
 const links = [
   { href: "/projects/", label: "Projects" },
   { href: "/writeups/", label: "Writeups" },
-  { href: "/about/", label: "Me" },
-  { href: "/about/#contact", label: "Contact" },
+  { href: "/about/", label: "About" },
 ];
 
 const isCurrent = (href: string) => current === href || current.startsWith(href);
@@ -31,7 +30,7 @@ const isCurrent = (href: string) => current === href || current.startsWith(href)
               </li>
             ))
           }
-          <li><a href="https://notes.jarrettd.com/">Notes</a></li>
+          <li><a href="https://notes.jarrettd.com/">Field Notes</a></li>
         </ul>
       </nav>
     </div>

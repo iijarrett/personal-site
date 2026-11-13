@@ -397,10 +397,10 @@ test("the page wiring: the Me page carries both pictures, none of it inline, the
   assert.match(profile, /art\("cover", COVER\)/);
   assert.doesNotMatch(profile, /border-radius: 50%/);
   assert.doesNotMatch(profile, /style=/);
-  // The contact list is part of the page, with the id the header's Contact link jumps to.
+  // The contact list is part of the page. The header has no Contact tab.
   assert.match(profile, /<ContactList \/>/);
   assert.match(read("../src/components/ContactList.astro"), /id="contact"/);
-  assert.match(read("../src/components/Header.astro"), /href: "\/about\/#contact"/);
+  assert.doesNotMatch(read("../src/components/Header.astro"), /#contact/);
   // One component carries the script.
   assert.match(profile, /<PortraitScript \/>/);
   assert.match(

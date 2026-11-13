@@ -82,9 +82,13 @@ test("the reveal is pure CSS: no script touches it", () => {
   }
 });
 
-test("the footer is just the copyright line, the game and the strip: no wordmark, no link", () => {
+test("the footer is the copyright line, the email, the game and the strip: no wordmark, no other link", () => {
   assert.ok(!/wordmark/.test(footer) && !/wordmark/.test(css), "the wordmark is still there");
-  assert.ok(!/<a\b/.test(footer), "the footer has a link");
+  assert.deepEqual(
+    footer.match(/<a\b[^>]*>/g),
+    ['<a href="mailto:hello@jarrettd.com">'],
+    "the email is the footer's only link",
+  );
   assert.match(footer, /&copy; \{year\} JD/);
   assert.match(footer, /<div class="arcade"><\/div>/);
   assert.match(footer, /<div class="waterfall" aria-hidden="true"><\/div>/);

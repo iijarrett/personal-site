@@ -6,13 +6,14 @@ const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const tokens = read("../src/styles/tokens.css");
 const css = read("../src/styles/global.css");
 
-test("the page is named Me, but its URL is still /about/", () => {
+test("the page is named About, and so is its URL /about/", () => {
   const header = read("../src/components/Header.astro");
-  assert.match(header, /\{ href: "\/about\/", label: "Me" \}/);
-  assert.ok(!/label: "About"/.test(header), "the nav still says About");
+  assert.match(header, /\{ href: "\/about\/", label: "About" \}/);
+  assert.ok(!/label: "Me"/.test(header), "the nav still says Me");
+  assert.ok(!/label: "Contact"/.test(header), "the nav still has a Contact tab");
 
   const page = read("../src/pages/about.astro");
-  assert.match(page, /<Page title="Me" /);
+  assert.match(page, /<Page title="About" /);
   // The page is a profile: its heading is the name, set by the Profile component's h1.
   assert.match(page, /<Profile\s+name="JD"/);
   assert.match(read("../src/components/Profile.astro"), /<h1 id="profile-name">\{name\}<\/h1>/);
