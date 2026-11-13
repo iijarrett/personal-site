@@ -123,9 +123,20 @@ test("global.css draws exactly what is measured here", () => {
     outlineTokens.every((outline) => outline === "--ring"),
     outlineTokens.join(),
   );
-  assert.match(css, /\.card::before\s*\{[^}]*linear-gradient\(\s*to top,[^}]*transparent 65%/);
+  // The home page's tiles and the Me page's tiles share one set of glow rules.
+  assert.match(
+    css,
+    new RegExp(
+      String.raw`:is\(\.card, \.profile-card, \.profile \.item\)::before\s*\{[^}]*linear-gradient\(\s*to top,[^}]*transparent 65%`,
+    ),
+  );
   assert.match(css, /@media \(hover: hover\)\s*\{[^@]*\.card:hover/);
-  assert.match(css, /@media \(hover: none\)\s*\{\s*\.card::before\s*\{[^}]*opacity: 1/);
+  assert.match(
+    css,
+    new RegExp(
+      String.raw`@media \(hover: none\)\s*\{\s*:is\(\.card, \.profile-card, \.profile \.item\)::before\s*\{[^}]*opacity: 1`,
+    ),
+  );
 });
 
 test("the hover background exists only where there is hover, so a tap cannot leave it stuck", () => {
@@ -140,5 +151,10 @@ test("the card glow is plain CSS: nothing from the old cursor spotlight is left"
   for (const gone of ["--mx", "--my", "--glow-strength", "is-lit", ".fx "]) {
     assert.ok(!css.includes(gone), `global.css still mentions ${gone}`);
   }
-  assert.match(css, /\.no-fx \.card,\s*\.no-fx \.card::before\s*\{\s*transition: none/);
+  assert.match(
+    css,
+    new RegExp(
+      String.raw`\.no-fx :is\(\.card, \.profile-card, \.profile \.item\),\s*\.no-fx :is\(\.card, \.profile-card, \.profile \.item\)::before\s*\{\s*transition: none`,
+    ),
+  );
 });

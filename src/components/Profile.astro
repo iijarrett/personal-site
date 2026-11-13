@@ -55,14 +55,11 @@ const art = (kind: string, a: typeof FACE | typeof COVER) => ({
     gap: var(--space-3);
   }
 
-  /* A tile: a flat fill that warms toward the accent at its foot. No border. */
+  /* A tile: a flat fill, no border. It lights up like the tiles on the home page (the glow
+     rules in global.css cover these too). */
   .profile-card,
   .profile .item {
-    background: linear-gradient(
-      to top,
-      color-mix(in srgb, var(--accent) 20%, var(--surface)),
-      var(--surface) 82%
-    );
+    background: var(--surface);
     border-radius: var(--radius);
   }
 
@@ -177,12 +174,8 @@ const art = (kind: string, a: typeof FACE | typeof COVER) => ({
     color: var(--muted);
   }
 
-  .profile .item.main {
-    background: linear-gradient(
-      to top,
-      color-mix(in srgb, var(--accent) 38%, var(--surface)),
-      var(--surface) 82%
-    );
+  .item.main {
+    background: color-mix(in srgb, var(--accent) 16%, var(--surface));
   }
 
   .profile a.item:hover {

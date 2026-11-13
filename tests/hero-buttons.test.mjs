@@ -72,7 +72,8 @@ test("both buttons are see-through, and the secondary is the more transparent", 
 test("the primary carries the tile's hover glow, always on, static and independent of motion", () => {
   assert.match(primary, GLOW, "no bottom-up glow gradient");
   const [, colourToken, strengthToken] = primary.match(GLOW);
-  const card = css.match(/\.card::before\s*\{[^}]*\}/)?.[0] ?? "";
+  const card =
+    css.match(/:is\(\.card, \.profile-card, \.profile \.item\)::before\s*\{[^}]*\}/)?.[0] ?? "";
   assert.ok(
     card.includes(`color-mix(in srgb, var(${colourToken}) var(${strengthToken}), transparent)`),
   );

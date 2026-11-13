@@ -138,7 +138,7 @@ test("on a phone the nav is tightened only by its gap: the type stays 15px or la
 });
 
 test("the nav link to the notes site is labelled Notes, and nothing still calls it Knowledge Base", () => {
-  assert.match(header, /<a href="https:\/\/notes\.jarrettd\.com\/">Notes<\/a>/);
+  assert.match(header, /<a href="https:\/\/notes\.jarrettd\.com\/">Field Notes<\/a>/);
   assert.ok(!/Knowledge Base/.test(header));
 });
 
