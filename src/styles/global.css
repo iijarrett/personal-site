@@ -723,7 +723,7 @@ html:not(.no-fx) :is(.arcade, .waterfall) canvas {
   margin-top: auto;
 }
 
-:is(.card, .profile-card, .profile .item) {
+:is(.card, .profile-card) {
   position: relative;
   isolation: isolate;
   transition:
@@ -745,7 +745,7 @@ html:not(.no-fx) :is(.arcade, .waterfall) canvas {
  * of two effects: where there is hover, the hovered or focused tile lights up;
  * where there is none, every tile carries the gradient all the time.
  */
-:is(.card, .profile-card, .profile .item)::before {
+:is(.card, .profile-card)::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -767,7 +767,7 @@ html:not(.no-fx) :is(.arcade, .waterfall) canvas {
   }
 
   .card:has(a:focus-visible),
-  :is(.card, .profile-card, .profile .item):hover {
+  :is(.card, .profile-card):hover {
     z-index: 1;
     box-shadow:
       inset 0 0 0 1px var(--ring),
@@ -775,13 +775,13 @@ html:not(.no-fx) :is(.arcade, .waterfall) canvas {
   }
 
   .card:has(a:focus-visible)::before,
-  :is(.card, .profile-card, .profile .item):hover::before {
+  :is(.card, .profile-card):hover::before {
     opacity: 1;
   }
 }
 
 @media (hover: none) {
-  :is(.card, .profile-card, .profile .item)::before {
+  :is(.card, .profile-card)::before {
     opacity: 1;
     background: linear-gradient(
       to top,
@@ -792,8 +792,8 @@ html:not(.no-fx) :is(.arcade, .waterfall) canvas {
 }
 
 /* The footer toggle (and prefers-reduced-motion, above) make every state instant. */
-.no-fx :is(.card, .profile-card, .profile .item),
-.no-fx :is(.card, .profile-card, .profile .item)::before {
+.no-fx :is(.card, .profile-card),
+.no-fx :is(.card, .profile-card)::before {
   transition: none;
 }
 

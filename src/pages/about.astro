@@ -3,16 +3,43 @@ import Profile from "../components/Profile.astro";
 import Page from "../layouts/Page.astro";
 ---
 
-<Page title="About" description="Contact details, background, skills and experience.">
+<Page title="About" description="Background, education, skills and contact details for JD, a cybersecurity engineer and cloud security architect.">
   <Profile
     name="JD"
-    headline="Cybersecurity engineering master's student, University of San Diego"
+    headline="Cybersecurity Engineer | Cloud Security Architect"
   >
     <section class="profile-card wide" aria-labelledby="about-h">
       <h2 id="about-h">About</h2>
       <p>
-        Placeholder resume. A short paragraph on what I do, what I am studying and the kind of role
-        I am looking for. Replace each section with real content before launch.
+        I started in banking and investing, where the job was protecting people's money and trust.
+        Now I design systems that protect them by default.
+      </p>
+      <p>
+        I am completing a Master of Engineering in Cybersecurity Engineering at the University of
+        San Diego, with a focus on cloud security architecture, OPSEC and secure development. I
+        learn by building, so I treat my own projects like production systems.
+      </p>
+      <p>
+        This site is one of them: a static site on Cloudflare Workers with a strict content
+        security policy and no third-party code, a locked-down repository, pinned and scanned
+        build pipelines, and build provenance with an SBOM on every release.
+      </p>
+      <p>
+        I also built and hardened a homelab of my own: an OPNsense firewall with segmented VLANs
+        and an isolated security lab that cannot reach the rest of the network, default-deny
+        rules, key-only SSH reached through a WireGuard VPN, and encrypted backups with tested
+        restores.
+      </p>
+      <p>
+        I am comfortable working with AWS, Azure and GCP, including identity and access (IAM),
+        infrastructure as code with Terraform, SIEM and detection work, and AI security.
+      </p>
+      <p>
+        Right now I am interested in opportunities where AI is applied to cybersecurity: finding
+        threats faster, automating security operations and keeping cloud environments safe at
+        scale, as well as securing the AI systems themselves. I am looking for cloud security,
+        security engineering and architecture roles where I can keep growing my technical skills
+        on work that matters.
       </p>
     </section>
 
@@ -20,9 +47,19 @@ import Page from "../layouts/Page.astro";
       <h2 id="experience-h">Experience</h2>
       <ul class="rows">
         <li>
-          <p class="label">Dates</p>
-          <h3>Role, organisation</h3>
-          <p>One or two lines on scope and outcome.</p>
+          <p class="label">Nov 2020 - Jan 2023</p>
+          <h3>Financial Services Specialist, Vanguard</h3>
+          <p>Investment management and foreign investment work.</p>
+        </li>
+        <li>
+          <p class="label">Dec 2019 - Sep 2020</p>
+          <h3>Financial Analyst Intern, Creative Financial Group</h3>
+          <p>Financial services and financial modeling.</p>
+        </li>
+        <li>
+          <p class="label">Jan 2016 - Dec 2019</p>
+          <h3>Bank Teller, Chase</h3>
+          <p>Customer service and banking.</p>
         </li>
       </ul>
     </section>
@@ -31,9 +68,14 @@ import Page from "../layouts/Page.astro";
       <h2 id="education-h">Education</h2>
       <ul class="rows">
         <li>
-          <p class="label">Dates</p>
-          <h3>M.S. Cybersecurity Engineering</h3>
+          <p class="label">2026 - 2027</p>
+          <h3>Master of Engineering, Cybersecurity Engineering</h3>
           <p>University of San Diego</p>
+        </li>
+        <li>
+          <p class="label">2016 - 2020</p>
+          <h3>B.S. International Business, Banking and Financial Support Services</h3>
+          <p>West Chester University of Pennsylvania</p>
         </li>
       </ul>
     </section>
@@ -59,10 +101,27 @@ import Page from "../layouts/Page.astro";
     <section class="profile-card wide" aria-labelledby="skills-h">
       <h2 id="skills-h">Skills</h2>
       <ul class="tags" aria-label="Skills">
-        <li>networking</li>
-        <li>linux</li>
-        <li>windows</li>
+        <li>cloud security architecture</li>
+        <li>AWS, Azure and GCP</li>
+        <li>cloud identity and access (IAM)</li>
+        <li>infrastructure as code (Terraform)</li>
+        <li>SIEM and detection</li>
+        <li>Splunk</li>
+        <li>Microsoft Sentinel</li>
+        <li>AI security</li>
+        <li>OPSEC</li>
+        <li>network security</li>
+        <li>network segmentation</li>
+        <li>firewalls (OPNsense)</li>
+        <li>WireGuard</li>
+        <li>DNS filtering (Pi-hole)</li>
+        <li>Linux</li>
+        <li>Docker</li>
+        <li>Cloudflare</li>
+        <li>GitHub Actions</li>
+        <li>security headers and CSP</li>
         <li>scripting</li>
+        <li>financial services</li>
       </ul>
     </section>
   </Profile>
