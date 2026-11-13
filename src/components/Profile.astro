@@ -272,6 +272,15 @@ const art = (kind: string, a: typeof FACE | typeof COVER) => ({
     }
   }
 
+  /* The Me page spreads wider than the other pages on a big screen, so it is not bunched up in
+     the middle. --page is read by the header, the footer and the settings button as well, so
+     they widen with it and stay in line with the page. */
+  @media (min-width: 72rem) {
+    body:has(.profile) {
+      --page: 88rem;
+    }
+  }
+
   @media (min-width: 64rem) {
     .profile-main {
       grid-template-columns: repeat(2, minmax(0, 1fr));
