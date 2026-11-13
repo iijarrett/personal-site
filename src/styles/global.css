@@ -1088,33 +1088,3 @@ html:not(.no-fx) :is(.arcade, .waterfall) canvas {
     animation-range: cover;
   }
 }
-
-/* ---------- Wide screens ---------- */
-/*
- * Past 1600px the content column (--page) leaves wide side margins. They get a faint dot grid
- * in the border colour, strongest beside the column and fading out toward the screen edge, so
- * the margins read as part of the page. It is fixed behind everything and never reaches the
- * content column, so no text sits on it. The hero's code field already runs the full width.
- */
-@media (min-width: 100rem) {
-  body::before {
-    --gutter: calc(50% - var(--page) / 2);
-
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    background-image: radial-gradient(circle, var(--border) 1px, transparent 1.5px);
-    background-size: 1.5rem 1.5rem;
-    mask-image: linear-gradient(
-      to right,
-      transparent,
-      rgb(0 0 0 / 0.9) calc(var(--gutter) - 5rem),
-      transparent calc(var(--gutter) - 1rem),
-      transparent calc(100% - var(--gutter) + 1rem),
-      rgb(0 0 0 / 0.9) calc(100% - var(--gutter) + 5rem),
-      transparent
-    );
-    pointer-events: none;
-  }
-}
