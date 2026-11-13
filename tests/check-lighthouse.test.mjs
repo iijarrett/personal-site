@@ -119,6 +119,71 @@ test("lighthouse: a file that is not JSON fails", () => {
   assert.match(result.out, /cannot read the report/);
 });
 
+test("lighthouse: with several runs of a page, the median performance run is judged", () => {
+  // One noisy run (a failing score and a slow blocking time) among two good ones passes.
+  const noisy = run({
+    "home.1": report({ performance: 0.77, tbt: 1_073 }),
+    "home.2": report({ performance: 0.97 }),
+    "home.3": report({ performance: 0.95 }),
+  });
+  assert.equal(noisy.code, 0, noisy.out);
+  assert.match(noisy.out, /ok\s+home \(median of 3 runs\)/);
+  assert.match(noisy.out, /1 page\(s\), 0 over budget/);
+
+  // Two bad runs out of three is a real regression and still fails.
+  const real = run({
+    "home.1": report({ performance: 0.77, tbt: 1_073 }),
+    "home.2": report({ performance: 0.8, tbt: 900 }),
+    "home.3": report({ performance: 0.97 }),
+  });
+  assert.equal(real.code, 1);
+  assert.match(real.out, /FAIL home \(median of 3 runs\)/);
+  assert.match(real.out, /performance is 80, budget is 90/);
+});
+
+test("lighthouse: an even number of runs is judged on the lower middle one", () => {
+  const result = run({
+    "page.1": report({ performance: 0.85 }),
+    "page.2": report({ performance: 0.99 }),
+  });
+  assert.equal(result.code, 1);
+  assert.match(result.out, /performance is 85, budget is 90/);
+});
+
+test("lighthouse: runs are grouped by page, so one page failing does not hide another", () => {
+  const result = run({
+    "a.1": report(),
+    "a.2": report(),
+    "a.3": report(),
+    "b.1": report({ seo: 0.5 }),
+    "b.2": report({ seo: 0.5 }),
+    "b.3": report(),
+  });
+  assert.equal(result.code, 1);
+  assert.match(result.out, /ok\s+a \(median of 3 runs\)/);
+  assert.match(result.out, /FAIL b \(median of 3 runs\)/);
+  assert.match(result.out, /2 page\(s\), 1 over budget/);
+});
+
+test("lighthouse: a run that errored is ignored when another run of the page finished", () => {
+  const result = run({
+    "home.1": { runtimeError: { code: "NO_NAVSTART" } },
+    "home.2": report(),
+    "home.3": report(),
+  });
+  assert.equal(result.code, 0, result.out);
+  assert.match(result.out, /ok\s+home \(median of 2 runs\)/);
+});
+
+test("lighthouse: a page where every run errored fails", () => {
+  const result = run({
+    "home.1": { runtimeError: { code: "NO_NAVSTART" } },
+    "home.2": { runtimeError: { code: "NO_NAVSTART" } },
+  });
+  assert.equal(result.code, 1);
+  assert.match(result.out, /did not finish \(NO_NAVSTART\)/);
+});
+
 test("lighthouse: no reports exits 2, not 0", () => {
   const result = run({});
   assert.equal(result.code, 2);
