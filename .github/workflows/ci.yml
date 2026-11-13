@@ -66,16 +66,19 @@ jobs:
           exit 1
       - name: Audit every page
         # Lighthouse is not a dependency of the site. It runs from the registry at one exact
-        # version, and the budgets are enforced by scripts/check_lighthouse.py.
+        # version, and the budgets are enforced by scripts/check_lighthouse.py. Each page is
+        # audited three times and the median run is judged, because a shared runner is noisy.
         run: |
           mkdir -p lighthouse
           for page in "" about/ projects/ writeups/ security/; do
             name=$(printf '%s' "${page:-home}" | tr -d '/')
-            for attempt in 1 2; do
-              npx --yes lighthouse@13.5.0 "http://localhost:4321/${page}" \
-                --quiet --output=json --output-path="lighthouse/${name}.json" \
-                --chrome-flags="--headless=new --no-sandbox" && break
-              [ "$attempt" = 2 ] && exit 1
+            for run in 1 2 3; do
+              for attempt in 1 2; do
+                npx --yes lighthouse@13.5.0 "http://localhost:4321/${page}" \
+                  --quiet --output=json --output-path="lighthouse/${name}.${run}.json" \
+                  --chrome-flags="--headless=new --no-sandbox" && break
+                [ "$attempt" = 2 ] && exit 1
+              done
             done
           done
       - run: python scripts/check_lighthouse.py lighthouse

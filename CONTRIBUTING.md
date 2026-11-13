@@ -70,7 +70,7 @@ What runs:
 
 | Workflow        | When                   | What it does                                                                                                                                                                           |
 | --------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ci.yml`        | push to main, every PR | `npm run verify`, then Lighthouse on five pages held to the budgets in `check_lighthouse.py`.                                                                                          |
+| `ci.yml`        | push to main, every PR | `npm run verify`, then Lighthouse on five pages (three runs each, the median judged) held to the budgets in `check_lighthouse.py`.                                                     |
 | `codeql.yml`    | push, PR, weekly       | CodeQL for the workflows, JavaScript/TypeScript and Python.                                                                                                                            |
 | `scorecard.yml` | push, weekly           | OpenSSF Scorecard, published for the badge in the README.                                                                                                                              |
 | `release.yml`   | push to main           | Builds and verifies, writes an SBOM (CycloneDX), signs the site tarball (build provenance and SBOM attestations), then deploys that tarball to Cloudflare and checks the live headers. |

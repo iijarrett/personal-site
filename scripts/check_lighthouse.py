@@ -1,7 +1,10 @@
 """Hold Lighthouse reports to the site's budgets.
 
-Reads every *.json report in a folder (the CI job writes one per page) and fails when a score
-or a metric is outside its budget, or when a report holds a run error instead of results.
+Reads every *.json report in a folder and fails when a score or a metric is outside its budget,
+or when a report holds a run error instead of results. A page can have several runs, written as
+<page>.1.json, <page>.2.json and so on: shared CI machines are noisy, so the run with the
+median performance score stands for the page, as Lighthouse itself recommends. A run that
+errored is ignored when another run of the same page finished.
 
 Usage: python scripts/check_lighthouse.py [reports-folder]
 Exit status: 0 within budget, 1 over budget, 2 no reports found.
@@ -55,6 +58,37 @@ def check_report(report: dict) -> list[str]:
     return problems
 
 
+def check_page(paths: list[Path]) -> tuple[list[str], int]:
+    """Return what is wrong with one page and how many runs it was judged on.
+
+    Runs that cannot be read or that hold a run error are set aside when at least one run
+    finished; if none finished, the first problem found is reported. Of the finished runs, the
+    one with the median performance score is the one held to the budgets (the lower middle one
+    when the count is even, so the check errs on the strict side).
+    """
+    finished: list[dict] = []
+    first_problems: list[str] = []
+    for path in paths:
+        try:
+            report = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as error:
+            first_problems = first_problems or [f"cannot read the report ({error})"]
+            continue
+        if report.get("runtimeError"):
+            first_problems = first_problems or check_report(report)
+            continue
+        finished.append(report)
+    if not finished:
+        return first_problems, len(paths)
+
+    def performance(report: dict) -> float:
+        score = report.get("categories", {}).get("performance", {}).get("score")
+        return -1.0 if score is None else score
+
+    median = sorted(finished, key=performance)[(len(finished) - 1) // 2]
+    return check_report(median), len(finished)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("folder", nargs="?", default="lighthouse", type=Path, help="reports folder (default: lighthouse)")
@@ -64,19 +98,19 @@ def main() -> int:
         print(f"error: no Lighthouse reports in {folder}.", file=sys.stderr)
         return 2
 
-    failed = 0
+    pages: dict[str, list[Path]] = {}
     for path in reports:
-        try:
-            report = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, ValueError) as error:
-            problems = [f"cannot read the report ({error})"]
-        else:
-            problems = check_report(report)
-        print(f"{'FAIL' if problems else 'ok  '} {path.stem}")
+        pages.setdefault(path.stem.split(".")[0], []).append(path)
+
+    failed = 0
+    for page, paths in pages.items():
+        problems, runs = check_page(paths)
+        note = f" (median of {runs} runs)" if runs > 1 else ""
+        print(f"{'FAIL' if problems else 'ok  '} {page}{note}")
         for problem in problems:
             print(f"     {problem}")
         failed += bool(problems)
-    print(f"lighthouse checked: {len(reports)} page(s), {failed} over budget")
+    print(f"lighthouse checked: {len(pages)} page(s), {failed} over budget")
     return 1 if failed else 0
 
 
