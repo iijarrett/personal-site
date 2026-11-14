@@ -270,10 +270,15 @@ const art = (kind: string, a: typeof FACE | typeof COVER) => ({
     }
   }
 
-  /* The Me page spreads wider than the other pages on a big screen, so it is not bunched up in
-     the middle. --page is read by the header, the footer and the settings button as well, so
-     they widen with it and stay in line with the page. */
+  /* The About page spreads wider than the other pages on a big screen, so it is not bunched up
+     in the middle, and it keeps the standard type size where the other pages scale up, so it
+     does not look zoomed in. --page is read by the header, the footer and the settings button as
+     well, so they widen with it and stay in line with the page. */
   @media (min-width: 72rem) {
+    html:has(.profile) {
+      font-size: 100%;
+    }
+
     body:has(.profile) {
       --page: 88rem;
     }
