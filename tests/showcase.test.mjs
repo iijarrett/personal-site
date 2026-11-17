@@ -171,7 +171,7 @@ test("the review claims match CONTRIBUTING.md and the repository", () => {
 
 test("the page does not promise what is not built yet, nor an automatic gate", () => {
   assert.match(page, /<h2>Not here yet<\/h2>/);
-  assert.match(page, /arrive with hosting/);
+  assert.match(page, /not on this page yet/);
   const claimed = [
     page.match(/<p>\s*This site is[\s\S]*?<\/p>/)?.[0],
     ...layers.map((l) => `${l.title} ${l.text}`),
