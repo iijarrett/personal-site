@@ -711,3 +711,22 @@ test("a missing dist directory is an error", () => {
   });
   assert.equal(result.status, 2);
 });
+
+test("fails on a meta refresh and on a link with a script-capable scheme", () => {
+  const refresh = run({
+    "index.html": page('<meta http-equiv="Refresh" content="0;url=https://elsewhere.example/">'),
+  });
+  assert.equal(refresh.status, 1, refresh.output);
+  assert.match(refresh.output, /<meta http-equiv=refresh> is not allowed/);
+  for (const href of ["javascript:go()", " JaVa\tScript:go()", "data:text/html,x", "vbscript:x"]) {
+    const result = run({ "index.html": page(`<a href="${href}">x</a>`) });
+    assert.equal(result.status, 1, `${href}\n${result.output}`);
+    assert.match(result.output, /link on <a> \(only http, https, mailto and tel are allowed\)/);
+  }
+  const fine = run({
+    "index.html": page(
+      '<a href="mailto:a@b.co">m</a><a href="tel:+15550100">t</a><a href="/about/">r</a><a href="#x">h</a>',
+    ),
+  });
+  assert.equal(fine.status, 0, fine.output);
+});

@@ -119,6 +119,11 @@ def check_csp(policy: str) -> list[str]:
     for flag in CSP_FLAGS:
         if flag not in directives:
             problems.append(f"Content-Security-Policy has no {flag}")
+    # A directive that is not listed above would be unchecked, and some (script-src-elem,
+    # worker-src, frame-src and others) override one that is. So any other directive fails.
+    for name in directives:
+        if name not in CSP_EXACT and name not in CSP_FLAGS:
+            problems.append(f"Content-Security-Policy has a directive that is not allowed: {name}")
     for name, sources in directives.items():
         for source in sources:
             if source.lower() in CSP_FORBIDDEN:
@@ -198,6 +203,17 @@ def check_headers(dist: Path) -> tuple[list[tuple[str, str]], int]:
     for rule in rules:
         if rule[0] != "/*" and any(n == "content-security-policy" for n, _ in rule[1]):
             failures.append((name, f"{rule[0]} sets its own Content-Security-Policy; Cloudflare would join it with the one on /*"))
+    # Other paths may only set caching. A security header set on a longer path is joined with the
+    # one on /*, and a detach ("! Header") removes it for that path, so neither is allowed.
+    owned = set(SIMPLE) | {"strict-transport-security", "permissions-policy"}
+    for rule in rules:
+        if rule[0] == "/*":
+            continue
+        for header, value in rule[1]:
+            if value is None:
+                failures.append((name, f"{rule[0]} detaches {header}; only /* may carry security headers"))
+            elif header in owned:
+                failures.append((name, f"{rule[0]} sets its own {header}; Cloudflare would join it with the one on /*"))
 
     # Caching, and every named path must exist, so a renamed file cannot leave a dead rule behind.
     cache: dict[str, list[str]] = {}

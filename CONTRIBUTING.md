@@ -64,7 +64,7 @@ Nothing here runs until the repo is on GitHub. Every workflow is in `.github/wor
 - Every action is pinned to a full commit SHA with a `# vX.Y.Z` comment. Dependabot opens the update pull requests, with a 7-day cooldown on new releases.
 - Each workflow starts with `permissions: {}`. A job asks for the one permission it needs, and write permissions live on jobs only.
 - `actions/checkout` sets `persist-credentials: false`. No `pull_request_target`.
-- `npm ci --ignore-scripts` only, never `npm install`. `npx` is allowed in CI only at an exact version, which is how Lighthouse runs without becoming a dependency of the site.
+- `npm ci --ignore-scripts` only, never `npm install`. `npx` is allowed in CI only at an exact version. Lighthouse is a pinned dev dependency, so CI runs it from `node_modules/.bin` and it comes from the lockfile like everything else.
 
 What runs:
 
