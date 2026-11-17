@@ -153,6 +153,9 @@ def srcset_urls(value: str) -> list[str]:
     return [part.split()[0] for part in value.split(",") if part.strip()]
 
 
+LINK_SCHEMES = {"http", "https", "mailto", "tel"}
+
+
 class PageScan(HTMLParser):
     """Collects rule violations, local resource references and visible text."""
 
@@ -178,6 +181,15 @@ class PageScan(HTMLParser):
             self.problems.append("inline <style>")
         elif tag in BANNED_TAGS:
             self.problems.append(f"<{tag}> is not allowed")
+
+        if tag == "meta" and values.get("http-equiv", "").strip().lower() == "refresh":
+            # The CSP does not stop a redirect to another origin, so no page may carry one.
+            self.problems.append("<meta http-equiv=refresh> is not allowed")
+
+        if tag in {"a", "area"} and "href" in values:
+            scheme = urlparse(re.sub(r"[\x00-\x20]", "", values["href"])).scheme.lower()
+            if scheme and scheme not in LINK_SCHEMES:
+                self.problems.append(f"{scheme}: link on <{tag}> (only http, https, mailto and tel are allowed)")
 
         if tag == "meta" and values.get("name", "").lower() == "description":
             self.text.append(values.get("content", ""))

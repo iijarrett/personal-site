@@ -283,10 +283,11 @@ test("fails on a header line that is not Name: value, or comes before any path",
   fails({ _headers: `  X-Test: 1\n${headersFile()}` }, /comes before any path/);
 });
 
-test("a comment, a blank line and a detach line are not errors", () => {
-  const ok = `${headersFile()}\n# more\n/theme-init.js\n  ! X-Test\n`;
+test("a comment and a blank line are not errors, and a detach line parses but is refused", () => {
+  const ok = `${headersFile()}\n# more\n\n`;
   const { status, output } = run({ _headers: ok });
   assert.equal(status, 0, output);
+  fails({ _headers: `${headersFile()}\n/theme-init.js\n  ! X-Test\n` }, /detaches x-test/);
 });
 
 // ---------- security.txt ----------
@@ -350,5 +351,28 @@ test("fails when Canonical is not an https .well-known/security.txt URL", () => 
   fails(
     { ".well-known/security.txt": securityTxt({ Canonical: "https://example.com/security.txt" }) },
     /Canonical .* must be an https URL/,
+  );
+});
+
+test("fails when the CSP has a directive that is not pinned, such as script-src-elem", () => {
+  fails(
+    { _headers: headersFile({ csp: `${CSP}; script-src-elem https://cdn.example` }) },
+    /directive that is not allowed: script-src-elem/,
+  );
+  fails(
+    { _headers: headersFile({ csp: `${CSP}; worker-src 'self'` }) },
+    /directive that is not allowed: worker-src/,
+  );
+});
+
+test("fails when a path rule detaches or sets a security header", () => {
+  const base = headersFile();
+  fails(
+    { _headers: `${base}\n/writeups/*\n  ! Strict-Transport-Security\n`, "writeups/x": "1" },
+    /detaches strict-transport-security/,
+  );
+  fails(
+    { _headers: `${base}\n/writeups/*\n  X-Frame-Options: SAMEORIGIN\n`, "writeups/x": "1" },
+    /sets its own x-frame-options/,
   );
 });
