@@ -39,7 +39,7 @@ Fails (exit 1) when the build output breaks a hard rule from CONTRIBUTING.md:
   * a sitemap that lists the 404 page or a page that was not built, or a built
     page that is missing from the sitemap
 
-Warns (exit code unchanged) when a page still contains the word "placeholder".
+Fails when a page still contains the word "placeholder", so unfinished content cannot ship.
 
 Sizes are uncompressed and use decimal kilobytes, which is the stricter reading.
 The header check for the deployed site is a separate script (Phase 5).
@@ -384,7 +384,7 @@ def main() -> int:
 
         hits = len(PLACEHOLDER.findall(" ".join(scan.text)))
         if hits:
-            warnings.append((name, f"'placeholder' text appears {hits} time(s)"))
+            failures.append((name, f"'placeholder' text appears {hits} time(s)"))
 
     css_links: dict[Path, list[Path]] = {}
     for css_file in sorted(dist.rglob("*.css")):

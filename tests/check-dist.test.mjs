@@ -698,11 +698,10 @@ test("fails when the sitemap lists a page that was not built", () => {
   assert.match(output, /'\/ghost\/', which was not built/);
 });
 
-test("placeholder text is a warning, not a failure", () => {
+test("placeholder text fails the build", () => {
   const { status, output } = run({ "about/index.html": page("<p>Placeholder resume</p>") });
-  assert.equal(status, 0, output);
-  assert.match(output, /WARN about\/index\.html: 'placeholder' text appears 1 time/);
-  assert.match(output, /1 warning\(s\)/);
+  assert.equal(status, 1, output);
+  assert.match(output, /FAIL about\/index\.html: 'placeholder' text appears 1 time/);
 });
 
 test("a missing dist directory is an error", () => {
