@@ -6,7 +6,6 @@
 
 import { initBar } from "./bar.ts";
 import { initHero } from "./hero.ts";
-import { initLazy } from "./lazy.ts";
 import { initMotion, isMotionOn, setMotionOn, subscribe } from "./motion-state.ts";
 import { initSettings } from "./settings.ts";
 
@@ -16,4 +15,3 @@ initMotion();
 if (!document.documentElement.classList.contains("bar-on")) initBar();
 initSettings({ isOn: isMotionOn, set: setMotionOn });
 initHero(subscribe);
-initLazy(() => import("./arcade.ts"), { isOn: isMotionOn, subscribe });

@@ -1,24 +1,6 @@
 @import "./fonts.css";
 @import "./tokens.css";
 
-/* A colour won in the footer game. theme-init.js and arcade.ts put it on <html> as --x0 to --x3
-   (dark colour, light accent, light text, light glow); these two rules turn it into the accent
-   tokens for the showing theme, so a theme switch needs no script. Without data-accent the
-   tokens stay purple. */
-html[data-accent] {
-  --accent: var(--x0);
-  --accent-text: var(--x0);
-  --glow: var(--x0);
-  --ring: var(--x0);
-}
-
-html[data-accent][data-theme="light"] {
-  --accent: var(--x1);
-  --accent-text: var(--x2);
-  --glow: var(--x3);
-  --ring: var(--x2);
-}
-
 *,
 *::before,
 *::after {
@@ -368,109 +350,6 @@ html.js:not(.bar-on, .bar-off) .bar {
 
 .site-footer p {
   margin: 0;
-}
-
-/* The footer game: a small canvas on its own row, built by the lazy arcade script, so without
-   JavaScript the box is empty and takes no room. With JavaScript it holds its room from the
-   first paint (the same size the canvas will be), so nothing below it jumps when the script
-   arrives; the loader marks the footer data-still when it will never build it. Idle, a drag on
-   the canvas still scrolls the page; once a visitor starts it (.live) the canvas keeps touches
-   for itself. */
-.arcade {
-  flex: 1 0 100%;
-  order: 1;
-}
-
-.arcade:empty {
-  display: none;
-}
-
-html.js .site-footer:not([data-still]) .arcade:empty {
-  display: block;
-}
-
-/* The room itself is a pseudo-element the size of the canvas (its width, ratio and margins), so
-   the box keeps its own full-width row, just as it does once the canvas is in it. */
-html.js .site-footer:not([data-still]) .arcade:empty::before {
-  content: "";
-  display: block;
-  max-width: 30rem;
-  aspect-ratio: 8 / 5;
-  margin: var(--space-2) auto;
-}
-
-.arcade canvas {
-  display: block;
-  width: 100%;
-  max-width: 30rem;
-  aspect-ratio: 8 / 5;
-  margin: var(--space-2) auto;
-  /* Idle there is no box at all: no line, and a fill that fades out towards its edges, so the
-     bricks and the words float on the page. Once a game starts (.live) the box appears: a solid
-     fill, an accent line and a soft glow. */
-  border: 1px solid transparent;
-  border-radius: var(--radius);
-  background:
-    radial-gradient(ellipse at center, var(--surface) 35%, transparent 75%) no-repeat,
-    transparent;
-  box-shadow:
-    0 0 14px 1px transparent,
-    inset 0 0 14px 1px transparent;
-  font-family: var(--font-mono);
-  cursor: pointer;
-  touch-action: pan-y;
-}
-
-.arcade.live canvas {
-  touch-action: none;
-  border-color: var(--accent);
-  background-color: var(--surface);
-  box-shadow:
-    0 0 14px 1px var(--accent),
-    inset 0 0 14px 1px var(--accent);
-}
-
-html:not(.no-fx) .arcade canvas {
-  transition:
-    border-color 0.5s ease,
-    background-color 0.5s ease,
-    box-shadow 0.5s ease;
-}
-
-/* The falling-symbols strip along the very bottom, drawn by the same lazy script. Decoration only:
-   it takes no pointer events and fades in from the footer above. Like the game it is empty until
-   the script builds it, and takes no room without JavaScript or once the footer is data-still;
-   otherwise it holds its room from the first paint. */
-.waterfall {
-  height: 7.5rem;
-}
-
-.waterfall:empty {
-  display: none;
-}
-
-html.js .site-footer:not([data-still]) .waterfall:empty {
-  display: block;
-}
-
-.waterfall canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-  font-family: var(--font-mono);
-  pointer-events: none;
-  mask-image: linear-gradient(to bottom, transparent, #000 70%);
-}
-
-/* They arrive with a short fade, not a pop (and not at all with Motion off). */
-html:not(.no-fx) :is(.arcade, .waterfall) canvas {
-  animation: arrive 0.5s ease-out;
-}
-
-@keyframes arrive {
-  from {
-    opacity: 0;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
