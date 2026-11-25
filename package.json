@@ -22,7 +22,7 @@
   "devDependencies": {
     "@astrojs/check": "0.9.12",
     "@biomejs/biome": "2.6.8",
-    "astro": "7.4.7",
+    "astro": "7.4.12",
     "lighthouse": "13.6.0",
     "typescript": "6.0.3"
   }
