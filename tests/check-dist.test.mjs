@@ -611,7 +611,7 @@ test("all JavaScript together is capped at 26,500 bytes", () => {
   assert.equal(atLimit.status, 0, atLimit.output);
   assert.match(atLimit.output, /JS total: +26,500 bytes \(limit 26,500\)/);
 
-  const over = run({ "_astro/a.js": jsOf(26_001) });
+  const over = run({ "_astro/a.js": jsOf(26_501) });
   assert.equal(over.status, 1, over.output);
   assert.match(over.output, /JavaScript totals 26,501 bytes, over the 26,500 byte limit/);
 
