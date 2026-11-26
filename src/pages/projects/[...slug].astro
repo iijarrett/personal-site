@@ -1,6 +1,9 @@
 ---
 import { getCollection, render } from "astro:content";
 import OsintTabs from "../../components/OsintTabs.astro";
+import ProofStrip from "../../components/ProofStrip.astro";
+import WorkedExample from "../../components/WorkedExample.astro";
+import { Content as CaseStudy } from "../../copy/osint-case-study.md";
 import Page from "../../layouts/Page.astro";
 import { statusLabel } from "../../lib/format";
 
@@ -21,6 +24,15 @@ const { Content } = await render(entry);
   <div class="prose">
     <Content />
   </div>
-  {entry.id === "osint-field-guide" && <OsintTabs />}
+  {entry.id === "osint-field-guide" && (
+    <>
+      <ProofStrip />
+      <WorkedExample />
+      <OsintTabs />
+      <div class="prose">
+        <CaseStudy />
+      </div>
+    </>
+  )}
   <p><a href="/projects/">All projects</a></p>
 </Page>

@@ -16,6 +16,7 @@ const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const page = read("../src/pages/security.astro");
 const css = read("../src/styles/global.css").replace(/\/\*[\s\S]*?\*\//g, "");
 const contributing = read("../CONTRIBUTING.md");
+const release = read("../.github/workflows/release.yml");
 const pkg = JSON.parse(read("../package.json"));
 
 const layers = [
@@ -43,11 +44,22 @@ test("every command on the page runs something the repository has", () => {
     ["npm ci --ignore-scripts", () => /npm ci --ignore-scripts/.test(contributing)],
     ["npm run verify", () => typeof pkg.scripts.verify === "string"],
     ["npm run build", () => typeof pkg.scripts.build === "string"],
+    ["public/_headers", () => existsSync(new URL("../public/_headers", import.meta.url))],
+    [
+      "gh attestation verify site-dist.tar.gz --repo iijarrett/personal-site",
+      () => /gh attestation verify site-dist\.tar\.gz --repo/.test(release),
+    ],
+    [
+      "gh attestation verify site-dist.tar.gz --repo iijarrett/personal-site --predicate-type https://cyclonedx.org/bom",
+      () => /--predicate-type https:\/\/cyclonedx\.org\/bom/.test(release),
+    ],
   ];
   const commands = [
     ...layers.map((l) => l.command),
     // The commands written straight into the markup (the layers' own are in the array above).
-    ...[...page.matchAll(/<code>([^<{]+)<\/code>/g)].map((m) => m[1]),
+    ...[...page.matchAll(/<code\s*>([^<{]+)<\/code\s*>/g)].map((m) =>
+      m[1].replace(/\s+/g, " ").trim(),
+    ),
   ];
   for (const command of commands) {
     for (const part of command.split("&&").map((p) => p.trim())) {
@@ -195,9 +207,38 @@ test("the page does not promise what is not built yet, nor an automatic gate", (
   assert.ok(!/the build (checks|enforces)|before every merge/i.test(page));
 });
 
-test("the only link the page adds goes to the public repository", () => {
+test("the links the page adds go to the public repository, the repository's own scans and three public scanners", () => {
   const hrefs = [...page.matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(hrefs, ["https://github.com/iijarrett/personal-site"]);
+  const allowed = [
+    "https://github.com/iijarrett/personal-site",
+    "https://securityheaders.com/?q=jarrettd.com&followRedirects=on",
+    "https://developer.mozilla.org/en-US/observatory/analyze?host=jarrettd.com",
+    "https://www.ssllabs.com/ssltest/analyze.html?d=jarrettd.com",
+    "https://scorecard.dev/viewer/?uri=github.com/iijarrett/personal-site",
+    "/.well-known/security.txt",
+  ];
+  for (const href of hrefs)
+    assert.ok(allowed.includes(href), `unexpected link on the Security page: ${href}`);
+  for (const href of allowed.slice(0, 5)) assert.ok(hrefs.includes(href), `missing: ${href}`);
+  assert.ok(
+    page.includes("`{REPO}/actions/workflows/codeql.yml`") ||
+      page.includes("actions/workflows/codeql.yml"),
+  );
+});
+
+test("the headers table is the headers file, read when the site is built", () => {
+  assert.match(page, /import headersFile from "\.\.\/\.\.\/public\/_headers\?raw"/);
+});
+
+test("every control the threat list names is in the repository", () => {
+  for (const [word, where] of [
+    ["CodeQL", ".github/workflows/codeql.yml"],
+    ["Scorecard", ".github/workflows/scorecard.yml"],
+    ["attestation", ".github/workflows/release.yml"],
+  ]) {
+    assert.ok(page.includes(word), word);
+    assert.ok(existsSync(new URL(`../${where}`, import.meta.url)), where);
+  }
 });
 
 test("the page word 'placeholder' is gone (it is a build warning)", () => {

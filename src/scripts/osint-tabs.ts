@@ -1,10 +1,10 @@
 /**
  * The "Pivot map | All tools" tabs. Both panels are already in the page; this decides which one
  * shows, keeps the roving focus and the arrow keys, and is the only code that writes the address
- * bar (#all-tools, or the map's data type, which also covers #pivot-map).
+ * bar (see lib/osint-state.ts for what each hash means).
  */
 
-import { fromHash, hashFor, set, state, subscribe, type Tab } from "../lib/osint-state.ts";
+import { fromHash, hashFor, set, state, subscribe } from "../lib/osint-state.ts";
 
 const root = document.querySelector<HTMLElement>("[data-os]");
 if (root) init(root);
@@ -13,6 +13,9 @@ function init(root: HTMLElement): void {
   const tabs = [...root.querySelectorAll<HTMLButtonElement>("[role=tab]")];
   const panels = [...root.querySelectorAll<HTMLElement>("[role=tabpanel]")];
   const types = [...root.querySelectorAll<HTMLElement>(".pm-panel")].map((p) => p.dataset.id ?? "");
+  const tools = [...root.querySelectorAll<HTMLElement>(".at-row")].map((r) =>
+    (r.id ?? "").replace(/^tool-/, ""),
+  );
   const bar = root.querySelector<HTMLElement>(".os-tabs");
   if (bar) bar.hidden = false;
 
@@ -32,7 +35,8 @@ function init(root: HTMLElement): void {
   subscribe(render);
 
   const go = (tab: string | undefined): void => {
-    if (tab === "pivot" || tab === "tools") set({ tab: tab as Tab });
+    if (tab === "pivot") set({ tab: "pivot" });
+    else if (tab === "tools") set({ tab: "tools", tool: "" });
   };
   root.addEventListener("click", (ev) => {
     go((ev.target as Element).closest<HTMLElement>("[role=tab]")?.dataset.tab);
@@ -57,9 +61,13 @@ function init(root: HTMLElement): void {
   });
 
   const fromLocation = (): void => {
-    const patch = fromHash(location.hash.slice(1), types);
+    const patch = fromHash(location.hash.slice(1), types, tools);
     if (patch) set(patch);
     else render();
+    // A link to a trail lands on the map, at the step the trail ends on.
+    if (patch?.trail && patch.trail.length > 1) {
+      requestAnimationFrame(() => root.querySelector<HTMLElement>(".pm-panel.on h3")?.focus());
+    }
   };
   fromLocation();
   addEventListener("hashchange", fromLocation);
