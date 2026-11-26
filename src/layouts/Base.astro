@@ -49,7 +49,7 @@ const fullTitle = home ? title : `${title} | JD`;
     <main id="main" tabindex="-1">
       <slot />
     </main>
-    <Footer />
+    <Footer game={home} />
     <script>
       import "../scripts/interactive.ts";
     </script>

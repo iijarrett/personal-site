@@ -1,4 +1,10 @@
 ---
+interface Props {
+  /** The game and the falling-symbols strip: the home page only. */
+  game?: boolean;
+}
+
+const { game = false } = Astro.props;
 const year = new Date().getFullYear();
 ---
 
@@ -6,5 +12,7 @@ const year = new Date().getFullYear();
   <div class="wrap">
     <p>&copy; {year} JD</p>
     <a href="mailto:hello@jarrettd.com">hello@jarrettd.com</a>
+    {game && <div class="arcade"></div>}
   </div>
+  {game && <div class="waterfall" aria-hidden="true"></div>}
 </footer>
