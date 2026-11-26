@@ -1,0 +1,1020 @@
+{
+  "toolCount": 87,
+  "tierCounts": {
+    "start": 41,
+    "deeper": 38,
+    "gated": 8
+  },
+  "sections": [
+    {
+      "id": "00-bench-and-loop",
+      "rank": "00",
+      "title": "Before you start: the bench and the loop"
+    },
+    {
+      "id": "01-username",
+      "rank": "01",
+      "title": "You have a username"
+    },
+    {
+      "id": "02-email",
+      "rank": "02",
+      "title": "You have an email address"
+    },
+    {
+      "id": "03-phone",
+      "rank": "03",
+      "title": "You have a phone number"
+    },
+    {
+      "id": "04-real-name",
+      "rank": "04",
+      "title": "You have a real name"
+    },
+    {
+      "id": "05-domain-ip-network",
+      "rank": "05",
+      "title": "You have a domain, IP, or network identifier"
+    },
+    {
+      "id": "06-organization",
+      "rank": "06",
+      "title": "You have a company or organization"
+    },
+    {
+      "id": "07-photo-video",
+      "rank": "07",
+      "title": "You have a photo or video"
+    },
+    {
+      "id": "08-social",
+      "rank": "08",
+      "title": "You have a social account or post"
+    },
+    {
+      "id": "09-breach-credentials",
+      "rank": "09",
+      "title": "You want breach & credential exposure"
+    },
+    {
+      "id": "10-code-and-apps",
+      "rank": "10",
+      "title": "You have source code, a repo, or an app"
+    },
+    {
+      "id": "11-wallets-tokens",
+      "rank": "11",
+      "title": "You have a wallet address or a token"
+    },
+    {
+      "id": "12-tracking",
+      "rank": "12",
+      "title": "You have a ship, an aircraft, or a place seen from above"
+    },
+    {
+      "id": "13-synthetic-media",
+      "rank": "13",
+      "title": "You suspect a fake — AI-generated or manipulated media"
+    },
+    {
+      "id": "14-tradecraft-and-analysis",
+      "rank": "14",
+      "title": "Cross-cutting: tradecraft, capture & analysis"
+    }
+  ],
+  "tools": [
+    {
+      "id": "bench-vm",
+      "name": "A research VM or a clean browser profile",
+      "section": "00-bench-and-loop",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/00-bench-and-loop.md#bench-vm",
+      "kind": "free · practice · one-time",
+      "summary": "A disposable VM or a clean browser profile to run everything from.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "bench-tools",
+      "name": "Shared prerequisites: Python, pipx, Go, Git, Docker",
+      "section": "00-bench-and-loop",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/00-bench-and-loop.md#bench-tools",
+      "kind": "free · local tools · one-time",
+      "summary": "One-time setup of Python, pipx, Go, Git and Docker so every later install is a one-liner.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "bench-keys",
+      "name": "A key vault and one login per research identity",
+      "section": "00-bench-and-loop",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/00-bench-and-loop.md#bench-keys",
+      "kind": "free · local tool",
+      "summary": "A password manager entry per service and a folder per research identity.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "bench-case",
+      "name": "A case folder and a log, the same every time",
+      "section": "00-bench-and-loop",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/00-bench-and-loop.md#bench-case",
+      "kind": "free · practice",
+      "summary": "One folder and one log per investigation, laid out the same way every time.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "bench-leaks",
+      "name": "Check what the other side can see, once",
+      "section": "00-bench-and-loop",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/00-bench-and-loop.md#bench-leaks",
+      "kind": "free · site",
+      "summary": "Confirm the exit IP, DNS resolver and WebRTC address before the first case.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "maigret",
+      "name": "Maigret",
+      "section": "01-username",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/01-username.md#maigret",
+      "kind": "free · local tool · Python",
+      "summary": "Username search across thousands of sites that also parses each hit into a profile dossier.",
+      "verified": "2026-11-23",
+      "reach": ["username"]
+    },
+    {
+      "id": "sherlock",
+      "name": "Sherlock",
+      "section": "01-username",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/01-username.md#sherlock",
+      "kind": "free · local tool · Python",
+      "summary": "The original username hunter: one handle across 400+ networks, fast and simple.",
+      "verified": "2026-11-23",
+      "reach": ["username"]
+    },
+    {
+      "id": "blackbird",
+      "name": "Blackbird",
+      "section": "01-username",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/01-username.md#blackbird",
+      "kind": "free · local tool · Python",
+      "summary": "Username and email search with PDF and CSV export, built on the WhatsMyName dataset, which is now frozen.",
+      "verified": "2026-11-25",
+      "reach": ["username", "email"]
+    },
+    {
+      "id": "handle-pivot",
+      "name": "Manual handle pivoting",
+      "section": "01-username",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/01-username.md#handle-pivot",
+      "kind": "free · practice",
+      "summary": "Vary the handle by hand (jsmith, j_smith, jsmith88) and search it as a quoted string.",
+      "verified": "2026-11-23",
+      "reach": ["username", "account"]
+    },
+    {
+      "id": "epieos",
+      "name": "Epieos",
+      "section": "02-email",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/02-email.md#epieos",
+      "kind": "free tier · site",
+      "summary": "Email or phone number in, registered services and linked Google account data out.",
+      "verified": "2026-11-23",
+      "reach": ["email", "phone"]
+    },
+    {
+      "id": "ghunt",
+      "name": "GHunt",
+      "section": "02-email",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/02-email.md#ghunt",
+      "kind": "free · local tool · Python",
+      "summary": "Deep extraction from a Google account: name, photo, Maps reviews, YouTube and Calendar.",
+      "verified": "2026-11-23",
+      "reach": ["email"]
+    },
+    {
+      "id": "holehe",
+      "name": "holehe",
+      "section": "02-email",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/02-email.md#holehe",
+      "kind": "free · local tool · stale",
+      "summary": "Checks an email against 120-odd sites through their password-recovery flows. Stale: trust hits, not misses.",
+      "verified": "2026-11-23",
+      "reach": ["email"]
+    },
+    {
+      "id": "hunterio",
+      "name": "Hunter.io & email-format guessing",
+      "section": "02-email",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/02-email.md#hunterio",
+      "kind": "free tier · site",
+      "summary": "Given a domain, the organization's email pattern and the addresses already known.",
+      "verified": "2026-11-23",
+      "reach": ["domain"]
+    },
+    {
+      "id": "email-headers",
+      "name": "Reading the headers, not just the address",
+      "section": "02-email",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/02-email.md#email-headers",
+      "kind": "free · practice + sites",
+      "summary": "Read the full message headers to see where a message really came from and whether SPF, DKIM and DMARC passed.",
+      "verified": "2026-11-23",
+      "reach": ["email"]
+    },
+    {
+      "id": "phoneinfoga",
+      "name": "PhoneInfoga",
+      "section": "03-phone",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/03-phone.md#phoneinfoga",
+      "kind": "free · local tool · Go",
+      "summary": "Country, carrier and line type for a number, then a sweep of public sources.",
+      "verified": "2026-11-23",
+      "reach": ["phone"]
+    },
+    {
+      "id": "messaging-presence",
+      "name": "Messaging-app presence check",
+      "section": "03-phone",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/03-phone.md#messaging-presence",
+      "kind": "free · practice · burner device",
+      "summary": "Save the number on a burner device and see which messaging apps show a profile.",
+      "verified": "2026-11-23",
+      "reach": ["phone"]
+    },
+    {
+      "id": "search-operators",
+      "name": "Search operators, used properly",
+      "section": "04-real-name",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/04-real-name.md#search-operators",
+      "kind": "free · practice",
+      "summary": "Quoted phrases, site:, filetype: and friends, which outperform most dedicated tools for a name.",
+      "verified": "2026-11-23",
+      "reach": ["email", "phone", "name"]
+    },
+    {
+      "id": "people-search",
+      "name": "People-search aggregators",
+      "section": "04-real-name",
+      "tier": "gated",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/04-real-name.md#people-search",
+      "reach": []
+    },
+    {
+      "id": "public-records",
+      "name": "Court, property & voter records",
+      "section": "04-real-name",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/04-real-name.md#public-records",
+      "kind": "free & paid · sites",
+      "summary": "Court, property and voter records: the primary sources the aggregators scrape.",
+      "verified": "2026-11-23",
+      "reach": ["name"]
+    },
+    {
+      "id": "genealogy",
+      "name": "Obituaries & genealogy sources",
+      "section": "04-real-name",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/04-real-name.md#genealogy",
+      "kind": "free tier · sites",
+      "summary": "Obituaries and genealogy sites that name a whole family in one permanent document.",
+      "verified": "2026-11-23",
+      "reach": ["name"]
+    },
+    {
+      "id": "whois-rdap",
+      "name": "WHOIS / RDAP & DNS history",
+      "section": "05-domain-ip-network",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#whois-rdap",
+      "kind": "free · site + CLI",
+      "summary": "Registration dates, registrar and nameservers, plus historical DNS from before privacy was switched on.",
+      "verified": "2026-11-23",
+      "reach": ["email", "domain"]
+    },
+    {
+      "id": "asn-bgp",
+      "name": "ASN, BGP & netblock lookups",
+      "section": "05-domain-ip-network",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#asn-bgp",
+      "kind": "free · sites",
+      "summary": "Map an IP to its network block and the autonomous system that runs it.",
+      "verified": "2026-11-23",
+      "reach": ["ip"]
+    },
+    {
+      "id": "crtsh",
+      "name": "Certificate transparency logs",
+      "section": "05-domain-ip-network",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#crtsh",
+      "kind": "free · site",
+      "summary": "Search the public certificate logs for every subdomain a domain has ever certified.",
+      "verified": "2026-11-23",
+      "reach": ["domain"]
+    },
+    {
+      "id": "urlscan-osint",
+      "name": "urlscan.io",
+      "section": "05-domain-ip-network",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#urlscan-osint",
+      "kind": "free tier · site + API",
+      "summary": "Sandboxed page scans with screenshot and request chain, plus a searchable archive of everyone's scans.",
+      "verified": "2026-11-23",
+      "reach": ["domain", "ip"]
+    },
+    {
+      "id": "shodan-censys",
+      "name": "Shodan, Censys & friends",
+      "section": "05-domain-ip-network",
+      "tier": "gated",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#shodan-censys",
+      "reach": []
+    },
+    {
+      "id": "leakix",
+      "name": "LeakIX",
+      "section": "05-domain-ip-network",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#leakix",
+      "kind": "free · site + API · account to see detail",
+      "summary": "Index of exposed misconfigurations: open databases, buckets, Git directories and admin panels.",
+      "verified": "2026-11-23",
+      "reach": ["domain", "ip", "org"]
+    },
+    {
+      "id": "bucket-search",
+      "name": "GrayhatWarfare — exposed cloud storage",
+      "section": "05-domain-ip-network",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#bucket-search",
+      "kind": "free tier · site",
+      "summary": "Search engine over publicly readable cloud storage buckets.",
+      "verified": "2026-11-23",
+      "reach": ["domain", "org"]
+    },
+    {
+      "id": "amass",
+      "name": "OWASP Amass",
+      "section": "05-domain-ip-network",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#amass",
+      "kind": "free · local tool · Go",
+      "summary": "Deep attack-surface mapping from dozens of passive sources, with optional active modes.",
+      "verified": "2026-11-23",
+      "reach": ["domain"]
+    },
+    {
+      "id": "projectdiscovery",
+      "name": "subfinder + httpx",
+      "section": "05-domain-ip-network",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#projectdiscovery",
+      "kind": "free · local tools · Go",
+      "summary": "subfinder lists subdomains passively; httpx shows which ones answer, with titles and tech.",
+      "verified": "2026-11-23",
+      "reach": ["domain"]
+    },
+    {
+      "id": "wayback",
+      "name": "Wayback Machine & archive.today",
+      "section": "05-domain-ip-network",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#wayback",
+      "kind": "free · sites",
+      "summary": "Archived copies of what a site used to say, and a way to preserve what it says now.",
+      "verified": "2026-11-23",
+      "reach": ["domain"]
+    },
+    {
+      "id": "dns-browser",
+      "name": "DNSDumpster, Robtex & DNSViz",
+      "section": "05-domain-ip-network",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#dns-browser",
+      "kind": "free · sites",
+      "summary": "No-install DNS views: host maps, reverse nameserver and IP pivots, DNSSEC chains.",
+      "verified": "2026-11-23",
+      "reach": ["domain", "ip"]
+    },
+    {
+      "id": "enrichment",
+      "name": "Indicator enrichment — is this already known bad?",
+      "section": "05-domain-ip-network",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#enrichment",
+      "kind": "free tier · sites + APIs",
+      "summary": "Check whether an IP, domain, URL or hash is already known bad before investigating from scratch.",
+      "verified": "2026-11-23",
+      "reach": ["ip"]
+    },
+    {
+      "id": "wigle",
+      "name": "WiGLE — geolocating a Wi-Fi network",
+      "section": "05-domain-ip-network",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#wigle",
+      "kind": "free account · site + API",
+      "summary": "Geolocate a Wi-Fi network from its BSSID or SSID in a global wardriving database.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "opencorporates",
+      "name": "OpenCorporates & national registries",
+      "section": "06-organization",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/06-organization.md#opencorporates",
+      "kind": "free tier · sites",
+      "summary": "Worldwide company registries in one search: officers, incorporation dates and filings.",
+      "verified": "2026-11-23",
+      "reach": ["name", "org"]
+    },
+    {
+      "id": "edgar-aleph",
+      "name": "SEC EDGAR & OCCRP Aleph",
+      "section": "06-organization",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/06-organization.md#edgar-aleph",
+      "kind": "free · sites",
+      "summary": "EDGAR for US public-company filings; OCCRP Aleph for leaks, sanctions and registries.",
+      "verified": "2026-11-23",
+      "reach": ["name", "org"]
+    },
+    {
+      "id": "sanctions-ownership",
+      "name": "OpenSanctions, ICIJ Offshore Leaks & Open Ownership",
+      "section": "06-organization",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/06-organization.md#sanctions-ownership",
+      "kind": "free · sites",
+      "summary": "Beneficial-ownership, sanctions and offshore-leak databases.",
+      "verified": "2026-11-23",
+      "reach": ["name", "org"]
+    },
+    {
+      "id": "theharvester",
+      "name": "theHarvester",
+      "section": "06-organization",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/06-organization.md#theharvester",
+      "kind": "free · local tool · Python",
+      "summary": "Emails, employee names, subdomains and hosts for a domain from search engines and logs.",
+      "verified": "2026-11-23",
+      "reach": ["domain"]
+    },
+    {
+      "id": "tech-stack",
+      "name": "Tech-stack fingerprinting & job postings",
+      "section": "06-organization",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/06-organization.md#tech-stack",
+      "kind": "free tier · sites + extension",
+      "summary": "Fingerprint a site's stack, and read the job postings that list the rest.",
+      "verified": "2026-11-23",
+      "reach": ["domain"]
+    },
+    {
+      "id": "tracker-ids",
+      "name": "Shared tracker & analytics IDs",
+      "section": "06-organization",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/06-organization.md#tracker-ids",
+      "kind": "free · sites + view-source",
+      "summary": "Analytics, AdSense and pixel IDs that link a network of sites to one operator.",
+      "verified": "2026-11-23",
+      "reach": ["domain"]
+    },
+    {
+      "id": "exif-osint",
+      "name": "ExifTool — read the metadata first",
+      "section": "07-photo-video",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/07-photo-video.md#exif-osint",
+      "kind": "free · local tool",
+      "summary": "Read embedded metadata first: GPS, timestamps, camera serial numbers, editing software.",
+      "verified": "2026-11-23",
+      "reach": ["image"]
+    },
+    {
+      "id": "reverse-image",
+      "name": "Reverse image search — all four engines",
+      "section": "07-photo-video",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/07-photo-video.md#reverse-image",
+      "kind": "free · sites",
+      "summary": "Yandex, Google Lens, Bing and TinEye each find different things; crop before you search.",
+      "verified": "2026-11-23",
+      "reach": ["username", "image", "account"]
+    },
+    {
+      "id": "geolocation",
+      "name": "Geolocation — the chronolocation toolkit",
+      "section": "07-photo-video",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/07-photo-video.md#geolocation",
+      "kind": "free · sites · practice",
+      "summary": "Place and date an unlabelled photo from terrain, signage, shadows and street imagery.",
+      "verified": "2026-11-23",
+      "reach": ["image"]
+    },
+    {
+      "id": "invid",
+      "name": "InVID / WeVerify — video verification",
+      "section": "07-photo-video",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/07-photo-video.md#invid",
+      "kind": "free · browser extension",
+      "summary": "Browser extension for video: keyframe extraction, metadata, magnification and forensic filters.",
+      "verified": "2026-11-23",
+      "reach": ["image"]
+    },
+    {
+      "id": "face-search",
+      "name": "Facial-recognition search engines",
+      "section": "07-photo-video",
+      "tier": "gated",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/07-photo-video.md#face-search",
+      "reach": []
+    },
+    {
+      "id": "platform-search",
+      "name": "Native platform search, used hard",
+      "section": "08-social",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/08-social.md#platform-search",
+      "kind": "free · practice",
+      "summary": "Each platform's own advanced search, which is often the only thing that still works.",
+      "verified": "2026-11-23",
+      "reach": ["username", "name"]
+    },
+    {
+      "id": "fediverse-bluesky",
+      "name": "Mastodon, the Fediverse & Bluesky",
+      "section": "08-social",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/08-social.md#fediverse-bluesky",
+      "kind": "free · sites + practice",
+      "summary": "Searching Mastodon, the wider Fediverse and Bluesky, which work differently from closed networks.",
+      "verified": "2026-11-23",
+      "reach": ["username"]
+    },
+    {
+      "id": "social-archives",
+      "name": "Deleted posts & social archives",
+      "section": "08-social",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/08-social.md#social-archives",
+      "kind": "free · sites",
+      "summary": "Archives and caches that remember what people delete.",
+      "verified": "2026-11-23",
+      "reach": ["username", "account"]
+    },
+    {
+      "id": "telegram-discord",
+      "name": "Telegram & Discord",
+      "section": "08-social",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/08-social.md#telegram-discord",
+      "kind": "free · sites + accounts",
+      "summary": "Where much threat-actor activity lives, and how to read it without joining in.",
+      "verified": "2026-11-23",
+      "reach": ["account"]
+    },
+    {
+      "id": "bot-detection",
+      "name": "Telling a real account from a fake one",
+      "section": "08-social",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/08-social.md#bot-detection",
+      "kind": "free · practice",
+      "summary": "Tell real accounts from fake ones by observable behaviour, not by a bot score.",
+      "verified": "2026-11-23",
+      "reach": ["account"]
+    },
+    {
+      "id": "darkweb",
+      "name": "Dark-web research, safely",
+      "section": "08-social",
+      "tier": "gated",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/08-social.md#darkweb",
+      "reach": []
+    },
+    {
+      "id": "hibp",
+      "name": "Have I Been Pwned",
+      "section": "09-breach-credentials",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/09-breach-credentials.md#hibp",
+      "kind": "free · site + paid API",
+      "summary": "The ethical breach index: which breaches an address is in, never the passwords.",
+      "verified": "2026-11-23",
+      "reach": ["email"]
+    },
+    {
+      "id": "breach-search",
+      "name": "Commercial breach-data search",
+      "section": "09-breach-credentials",
+      "tier": "gated",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/09-breach-credentials.md#breach-search",
+      "reach": []
+    },
+    {
+      "id": "self-exposure",
+      "name": "Run this whole guide on yourself",
+      "section": "09-breach-credentials",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/09-breach-credentials.md#self-exposure",
+      "kind": "free · practice",
+      "summary": "Run this whole guide against yourself: the best exercise on the list.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "github-dorking",
+      "name": "GitHub code search & dorking",
+      "section": "10-code-and-apps",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/10-code-and-apps.md#github-dorking",
+      "kind": "free account · site",
+      "summary": "GitHub code search qualifiers for finding committed secrets and internal naming.",
+      "verified": "2026-11-23",
+      "reach": ["username", "repo"]
+    },
+    {
+      "id": "code-search-engines",
+      "name": "grep.app, Sourcegraph, GitLab & Searchcode",
+      "section": "10-code-and-apps",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/10-code-and-apps.md#code-search-engines",
+      "kind": "free tier · sites",
+      "summary": "grep.app, Sourcegraph, GitLab and Searchcode reach code GitHub search does not.",
+      "verified": "2026-11-23",
+      "reach": ["username", "repo"]
+    },
+    {
+      "id": "secret-scanners",
+      "name": "TruffleHog",
+      "section": "10-code-and-apps",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/10-code-and-apps.md#secret-scanners",
+      "kind": "free · local tools",
+      "summary": "Scan a repo's full history for credentials and test whether they still work.",
+      "verified": "2026-11-23",
+      "reach": ["repo"]
+    },
+    {
+      "id": "apk-analysis",
+      "name": "Pulling intelligence out of a mobile app",
+      "section": "10-code-and-apps",
+      "tier": "gated",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/10-code-and-apps.md#apk-analysis",
+      "reach": []
+    },
+    {
+      "id": "block-explorers",
+      "name": "Block explorers — read the ledger directly",
+      "section": "11-wallets-tokens",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/11-wallets-tokens.md#block-explorers",
+      "kind": "free · sites",
+      "summary": "Read any chain's ledger directly: transactions, counterparties and the first funding source.",
+      "verified": "2026-11-23",
+      "reach": ["wallet"]
+    },
+    {
+      "id": "chain-tracing",
+      "name": "Visual tracing & address clustering",
+      "section": "11-wallets-tokens",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/11-wallets-tokens.md#chain-tracing",
+      "kind": "free tier · sites",
+      "summary": "Graph tools that draw fund flows and cluster addresses into entities.",
+      "verified": "2026-11-23",
+      "reach": ["wallet"]
+    },
+    {
+      "id": "rugpull-checks",
+      "name": "Token & rug-pull checks",
+      "section": "11-wallets-tokens",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/11-wallets-tokens.md#rugpull-checks",
+      "kind": "free · sites",
+      "summary": "Contract and liquidity checks that tell you whether a token is a trap.",
+      "verified": "2026-11-23",
+      "reach": ["wallet"]
+    },
+    {
+      "id": "air-tracking",
+      "name": "Flightradar24, FlightAware & ADS-B Exchange",
+      "section": "12-tracking",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/12-tracking.md#air-tracking",
+      "kind": "free tier · sites",
+      "summary": "Live and historical aircraft positions from transponder broadcasts.",
+      "verified": "2026-11-23",
+      "reach": ["craft"]
+    },
+    {
+      "id": "ship-tracking",
+      "name": "MarineTraffic, VesselFinder, Equasis & Global Fishing Watch",
+      "section": "12-tracking",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/12-tracking.md#ship-tracking",
+      "kind": "free tier · sites",
+      "summary": "AIS vessel positions plus the registry layer behind them.",
+      "verified": "2026-11-23",
+      "reach": ["craft"]
+    },
+    {
+      "id": "sat-free",
+      "name": "Free satellite imagery — Copernicus, NASA Worldview & FIRMS, Google Earth Pro",
+      "section": "12-tracking",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/12-tracking.md#sat-free",
+      "kind": "free · sites + desktop app",
+      "summary": "Free satellite imagery from Copernicus, NASA and similar sources.",
+      "verified": "2026-11-23",
+      "reach": ["location"]
+    },
+    {
+      "id": "sat-commercial",
+      "name": "High-resolution and radar imagery",
+      "section": "12-tracking",
+      "tier": "gated",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/12-tracking.md#sat-commercial",
+      "reach": []
+    },
+    {
+      "id": "change-detection",
+      "name": "Reading imagery — date, resolution, shadows, clouds",
+      "section": "12-tracking",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/12-tracking.md#change-detection",
+      "kind": "free · practice",
+      "summary": "Four questions to ask of any overhead image: date, resolution, shadows, what changed.",
+      "verified": "2026-11-23",
+      "reach": ["image", "location"]
+    },
+    {
+      "id": "c2pa",
+      "name": "Check provenance first — Content Credentials (C2PA)",
+      "section": "13-synthetic-media",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/13-synthetic-media.md#c2pa",
+      "kind": "free · site + CLI",
+      "summary": "Verify a file's signed Content Credentials; a missing manifest means unknown, not clean.",
+      "verified": "2026-11-23",
+      "reach": ["image"]
+    },
+    {
+      "id": "watermark-check",
+      "name": "Vendor watermark checkers — SynthID, OpenAI, Meta",
+      "section": "13-synthetic-media",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/13-synthetic-media.md#watermark-check",
+      "kind": "free · sites",
+      "summary": "Vendor checkers for SynthID and similar marks: strong when positive, nearly useless when negative.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "ai-detectors",
+      "name": "AI-image detectors — Hive, AI or Not & friends",
+      "section": "13-synthetic-media",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/13-synthetic-media.md#ai-detectors",
+      "kind": "free tier · sites",
+      "summary": "AI-image classifiers (Hive, AI or Not): one weak signal, never a finding.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "image-forensics",
+      "name": "Image forensics — FotoForensics, Forensically & ExifTool",
+      "section": "13-synthetic-media",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/13-synthetic-media.md#image-forensics",
+      "kind": "free · site + local",
+      "summary": "Error-level analysis, clone detection and metadata checks for manipulated images.",
+      "verified": "2026-11-23",
+      "reach": ["image"]
+    },
+    {
+      "id": "deepfake-audio-face",
+      "name": "Face-swap and voice-clone checks",
+      "section": "13-synthetic-media",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/13-synthetic-media.md#deepfake-audio-face",
+      "kind": "free · sites",
+      "summary": "DeepFake-O-Meter and voice-clone detectors; keyframe search and callbacks often beat both.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "two-indicators",
+      "name": "The two-indicator rule — context beats classifiers",
+      "section": "13-synthetic-media",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/13-synthetic-media.md#two-indicators",
+      "kind": "free · practice",
+      "summary": "Call a file synthetic or authentic only on two independent indicators.",
+      "verified": "2026-11-23",
+      "reach": ["image"]
+    },
+    {
+      "id": "capture",
+      "name": "Capture discipline — the habit, then the tool",
+      "section": "14-tradecraft-and-analysis",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/14-tradecraft-and-analysis.md#capture",
+      "kind": "free · practice",
+      "summary": "Record URL, UTC time, screenshot and archive link the moment you find something.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "archivebox",
+      "name": "ArchiveBox",
+      "section": "14-tradecraft-and-analysis",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/14-tradecraft-and-analysis.md#archivebox",
+      "kind": "free · local tool · Python / Docker",
+      "summary": "Self-hosted web archiver that keeps your own copies of pages you cite.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "singlefile",
+      "name": "SingleFile",
+      "section": "14-tradecraft-and-analysis",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/14-tradecraft-and-analysis.md#singlefile",
+      "kind": "free · browser extension + CLI",
+      "summary": "Browser extension that saves a page as one self-contained HTML file.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "webrecorder",
+      "name": "ArchiveWeb.page & Browsertrix (Webrecorder)",
+      "section": "14-tradecraft-and-analysis",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/14-tradecraft-and-analysis.md#webrecorder",
+      "kind": "free tool · hosted option",
+      "summary": "Capture pages and sessions the way a browser actually saw them, with replayable archives.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "hunchly",
+      "name": "Hunchly",
+      "section": "14-tradecraft-and-analysis",
+      "tier": "gated",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/14-tradecraft-and-analysis.md#hunchly",
+      "reach": []
+    },
+    {
+      "id": "maltego-osint",
+      "name": "Maltego Community Edition",
+      "section": "14-tradecraft-and-analysis",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/14-tradecraft-and-analysis.md#maltego-osint",
+      "kind": "free account · local tool",
+      "summary": "Graph-based link analysis; the free edition is a learning tool, not a production one.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "spiderfoot",
+      "name": "SpiderFoot",
+      "section": "14-tradecraft-and-analysis",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/14-tradecraft-and-analysis.md#spiderfoot",
+      "kind": "free · local tool · slowing",
+      "summary": "Automated OSINT across 200+ sources with a web UI. Stable but no longer advancing.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "reconng",
+      "name": "recon-ng",
+      "section": "14-tradecraft-and-analysis",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/14-tradecraft-and-analysis.md#reconng",
+      "kind": "free · local tool · dormant",
+      "summary": "Recon framework with a module marketplace and a workspace database that persists across sessions.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "directories",
+      "name": "Bellingcat's Online Investigation Toolkit",
+      "section": "14-tradecraft-and-analysis",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/14-tradecraft-and-analysis.md#directories",
+      "kind": "free · site",
+      "summary": "Bellingcat's curated toolkit directory, for the target types this guide does not cover.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "sockpuppet",
+      "name": "A research identity that survives contact",
+      "section": "14-tradecraft-and-analysis",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/14-tradecraft-and-analysis.md#sockpuppet",
+      "kind": "free · practice · slow",
+      "summary": "What a usable research identity needs, why it must be aged, and the rules to check first.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "timeline",
+      "name": "Build the timeline — where analysis starts",
+      "section": "14-tradecraft-and-analysis",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/14-tradecraft-and-analysis.md#timeline",
+      "kind": "free · practice",
+      "summary": "One UTC-ordered table of every dated finding, with observation and inference kept apart.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "verification",
+      "name": "Verification — before you believe it",
+      "section": "14-tradecraft-and-analysis",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/14-tradecraft-and-analysis.md#verification",
+      "kind": "free · practice",
+      "summary": "Ask what would make a claim, image or source false before you rely on it.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "monitoring",
+      "name": "From one-off search to standing collection",
+      "section": "14-tradecraft-and-analysis",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/14-tradecraft-and-analysis.md#monitoring",
+      "kind": "free · sites + scripts",
+      "summary": "Standing collection: alerts, certificate feeds and scheduled diffs instead of one-off searches.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "standing-intel",
+      "name": "MITRE ATT&CK, MISP & OpenCTI",
+      "section": "14-tradecraft-and-analysis",
+      "tier": "deeper",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/14-tradecraft-and-analysis.md#standing-intel",
+      "kind": "free · site + Docker",
+      "summary": "MITRE ATT&CK, MISP and OpenCTI: where indicators go once you have them.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "berkeley-protocol",
+      "name": "The Berkeley Protocol",
+      "section": "14-tradecraft-and-analysis",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/14-tradecraft-and-analysis.md#berkeley-protocol",
+      "kind": "free · reading",
+      "summary": "The UN human rights office's standard for digital open-source investigations.",
+      "verified": "2026-11-23",
+      "reach": []
+    },
+    {
+      "id": "trace-labs",
+      "name": "Trace Labs Search Party",
+      "section": "14-tradecraft-and-analysis",
+      "tier": "start",
+      "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/14-tradecraft-and-analysis.md#trace-labs",
+      "kind": "free · practice · community event",
+      "summary": "Crowdsourced OSINT events that search for missing persons under strict rules.",
+      "verified": "2026-11-23",
+      "reach": []
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+---
+import AllTools from "./AllTools.astro";
+import PivotMap from "./PivotMap.astro";
+---
+
+<div class="os" data-os>
+  <div class="os-tabs" role="tablist" aria-label="Ways into the guide" data-js hidden>
+    <button type="button" role="tab" class="btn os-tab" id="os-tab-pivot" data-tab="pivot" aria-controls="os-panel-pivot" aria-selected="true">Pivot map</button>
+    <button type="button" role="tab" class="btn os-tab" id="os-tab-tools" data-tab="tools" aria-controls="os-panel-tools" aria-selected="false" tabindex="-1">All tools</button>
+  </div>
+  <div role="tabpanel" id="os-panel-pivot" class="os-panel on" data-panel="pivot" aria-labelledby="os-tab-pivot">
+    <PivotMap />
+  </div>
+  <div role="tabpanel" id="os-panel-tools" class="os-panel" data-panel="tools" aria-labelledby="os-tab-tools">
+    <AllTools />
+  </div>
+</div>
+
+<script>
+  import "../scripts/osint.ts";
+</script>
+
+<style is:global>
+  .os-tabs { display: flex; gap: 0.5rem; margin: 1.5rem 0 0; }
+  .os .os-tab { background: none; cursor: pointer; font-size: 0.9375rem; }
+  .os-tab[aria-selected="true"] { border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+  .js .os-panel:not(.on) { display: none; }
+</style>
