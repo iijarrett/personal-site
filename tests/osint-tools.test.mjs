@@ -182,7 +182,7 @@ test("the page loads one script entry for all three behaviours, so the state is 
   for (const name of ["osint-tabs", "pivot-map", "all-tools"]) assert.ok(entry.includes(name));
   for (const file of ["AllTools", "PivotMap"]) {
     assert.ok(
-      !/<script>/.test(read(`../src/components/${file}.astro`)),
+      !/<script\b/i.test(read(`../src/components/${file}.astro`)),
       `${file} has its own script`,
     );
   }

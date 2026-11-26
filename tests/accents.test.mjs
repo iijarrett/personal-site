@@ -61,7 +61,7 @@ const blend = (fg, bg, alpha) =>
 
 const globalCss = readFileSync(new URL("../src/styles/global.css", import.meta.url), "utf8");
 const ruleOf = (selector) =>
-  globalCss.match(new RegExp(`${selector.replace(/[[\]"]/g, "\\$&")}\\s*\\{([^}]*)\\}`))?.[1] ?? "";
+  globalCss.match(new RegExp(`${selector.replace(/[[\]"\\]/g, "\\$&")}\\s*\\{([^}]*)\\}`))?.[1] ?? "";
 const mapOf = (selector) =>
   Object.fromEntries(
     [...ruleOf(selector).matchAll(/(--[a-z-]+):\s*var\((--x\d)\)/g)].map((m) => [m[1], m[2]]),
