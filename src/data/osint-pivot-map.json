@@ -1,0 +1,947 @@
+{
+  "nodes": [
+    {
+      "id": "username",
+      "label": "A username",
+      "short": "Username",
+      "guide": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/01-username.md"
+    },
+    {
+      "id": "email",
+      "label": "An email address",
+      "short": "Email",
+      "guide": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/02-email.md"
+    },
+    {
+      "id": "phone",
+      "label": "A phone number",
+      "short": "Phone",
+      "guide": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/03-phone.md"
+    },
+    {
+      "id": "name",
+      "label": "A real name",
+      "short": "Name",
+      "guide": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/04-real-name.md"
+    },
+    {
+      "id": "domain",
+      "label": "A domain",
+      "short": "Domain",
+      "guide": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md"
+    },
+    {
+      "id": "ip",
+      "label": "An IP address",
+      "short": "IP",
+      "guide": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md"
+    },
+    {
+      "id": "org",
+      "label": "A company or organization",
+      "short": "Organization",
+      "guide": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/06-organization.md"
+    },
+    {
+      "id": "image",
+      "label": "A photo or video",
+      "short": "Photo / video",
+      "guide": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/07-photo-video.md"
+    },
+    {
+      "id": "account",
+      "label": "A social account or post",
+      "short": "Account",
+      "guide": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/08-social.md"
+    },
+    {
+      "id": "exposure",
+      "label": "An exposure (breach, leak, open bucket)",
+      "short": "Exposure",
+      "guide": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/09-breach-credentials.md"
+    },
+    {
+      "id": "repo",
+      "label": "A code repository or app",
+      "short": "Code",
+      "guide": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/10-code-and-apps.md"
+    },
+    {
+      "id": "wallet",
+      "label": "A wallet address or token",
+      "short": "Wallet",
+      "guide": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/11-wallets-tokens.md"
+    },
+    {
+      "id": "craft",
+      "label": "A ship or an aircraft",
+      "short": "Ship / aircraft",
+      "guide": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/12-tracking.md"
+    },
+    {
+      "id": "location",
+      "label": "A place",
+      "short": "Place",
+      "guide": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/12-tracking.md"
+    }
+  ],
+  "edges": [
+    {
+      "from": "username",
+      "to": "account",
+      "label": "Find every site where the handle exists.",
+      "tools": [
+        {
+          "id": "maigret",
+          "name": "Maigret",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/01-username.md#maigret"
+        },
+        {
+          "id": "sherlock",
+          "name": "Sherlock",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/01-username.md#sherlock"
+        },
+        {
+          "id": "blackbird",
+          "name": "Blackbird",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/01-username.md#blackbird"
+        }
+      ],
+      "note": "A hit is a lead, not an identity. Many people share a handle."
+    },
+    {
+      "from": "username",
+      "to": "account",
+      "label": "Search the handle on each platform itself, including Mastodon and Bluesky.",
+      "tools": [
+        {
+          "id": "platform-search",
+          "name": "Native platform search, used hard",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/08-social.md#platform-search"
+        },
+        {
+          "id": "fediverse-bluesky",
+          "name": "Mastodon, the Fediverse & Bluesky",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/08-social.md#fediverse-bluesky"
+        }
+      ]
+    },
+    {
+      "from": "username",
+      "to": "account",
+      "label": "Check the archives for posts the account later deleted.",
+      "tools": [
+        {
+          "id": "social-archives",
+          "name": "Deleted posts & social archives",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/08-social.md#social-archives"
+        }
+      ]
+    },
+    {
+      "from": "username",
+      "to": "name",
+      "label": "Vary the handle by hand and search it as a quoted string; forum posts and pasted profiles may name the person.",
+      "tools": [
+        {
+          "id": "handle-pivot",
+          "name": "Manual handle pivoting",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/01-username.md#handle-pivot"
+        }
+      ]
+    },
+    {
+      "from": "username",
+      "to": "image",
+      "label": "Reverse-search the profile photo, cropped to the face or logo.",
+      "tools": [
+        {
+          "id": "reverse-image",
+          "name": "Reverse image search — all four engines",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/07-photo-video.md#reverse-image"
+        }
+      ]
+    },
+    {
+      "from": "username",
+      "to": "repo",
+      "label": "Search public code for the handle as an owner or author.",
+      "tools": [
+        {
+          "id": "github-dorking",
+          "name": "GitHub code search & dorking",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/10-code-and-apps.md#github-dorking"
+        },
+        {
+          "id": "code-search-engines",
+          "name": "grep.app, Sourcegraph, GitLab & Searchcode",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/10-code-and-apps.md#code-search-engines"
+        }
+      ]
+    },
+    {
+      "from": "email",
+      "to": "account",
+      "label": "See which services have an account registered to the address.",
+      "tools": [
+        {
+          "id": "holehe",
+          "name": "holehe",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/02-email.md#holehe"
+        },
+        {
+          "id": "epieos",
+          "name": "Epieos",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/02-email.md#epieos"
+        }
+      ],
+      "note": "Holehe is stale; trust its hits, not its misses."
+    },
+    {
+      "from": "email",
+      "to": "account",
+      "label": "If it is a Google account, read the name, photo, Maps reviews and YouTube channel.",
+      "tools": [
+        {
+          "id": "ghunt",
+          "name": "GHunt",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/02-email.md#ghunt"
+        }
+      ]
+    },
+    {
+      "from": "email",
+      "to": "username",
+      "label": "Search the address as well as the handle; Blackbird takes both.",
+      "tools": [
+        {
+          "id": "blackbird",
+          "name": "Blackbird",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/01-username.md#blackbird"
+        }
+      ]
+    },
+    {
+      "from": "email",
+      "to": "exposure",
+      "label": "Check which breaches include the address. It never shows passwords.",
+      "tools": [
+        {
+          "id": "hibp",
+          "name": "Have I Been Pwned",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/09-breach-credentials.md#hibp"
+        }
+      ]
+    },
+    {
+      "from": "email",
+      "to": "domain",
+      "label": "Look up the registration of the part after the @.",
+      "tools": [
+        {
+          "id": "whois-rdap",
+          "name": "WHOIS / RDAP & DNS history",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#whois-rdap"
+        }
+      ]
+    },
+    {
+      "from": "email",
+      "to": "ip",
+      "label": "Read the full headers for the sending servers and whether SPF, DKIM and DMARC passed.",
+      "tools": [
+        {
+          "id": "email-headers",
+          "name": "Reading the headers, not just the address",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/02-email.md#email-headers"
+        }
+      ]
+    },
+    {
+      "from": "email",
+      "to": "name",
+      "label": "Search the address as a quoted string; pages that list it may attach a name.",
+      "tools": [
+        {
+          "id": "search-operators",
+          "name": "Search operators, used properly",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/04-real-name.md#search-operators"
+        }
+      ]
+    },
+    {
+      "from": "phone",
+      "to": "account",
+      "label": "See registered services, then which messaging apps show a profile for the number.",
+      "tools": [
+        {
+          "id": "epieos",
+          "name": "Epieos",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/02-email.md#epieos"
+        },
+        {
+          "id": "messaging-presence",
+          "name": "Messaging-app presence check",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/03-phone.md#messaging-presence"
+        }
+      ]
+    },
+    {
+      "from": "phone",
+      "to": "org",
+      "label": "Get the country, carrier and line type, then sweep public sources.",
+      "tools": [
+        {
+          "id": "phoneinfoga",
+          "name": "PhoneInfoga",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/03-phone.md#phoneinfoga"
+        }
+      ]
+    },
+    {
+      "from": "phone",
+      "to": "name",
+      "label": "Search the number in each written format, quoted.",
+      "tools": [
+        {
+          "id": "search-operators",
+          "name": "Search operators, used properly",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/04-real-name.md#search-operators"
+        }
+      ]
+    },
+    {
+      "from": "name",
+      "to": "account",
+      "label": "Use each platform's own search, then quoted-name queries with site: operators.",
+      "tools": [
+        {
+          "id": "platform-search",
+          "name": "Native platform search, used hard",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/08-social.md#platform-search"
+        },
+        {
+          "id": "search-operators",
+          "name": "Search operators, used properly",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/04-real-name.md#search-operators"
+        }
+      ]
+    },
+    {
+      "from": "name",
+      "to": "org",
+      "label": "Find companies where the person is an officer or director, and any public filings.",
+      "tools": [
+        {
+          "id": "opencorporates",
+          "name": "OpenCorporates & national registries",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/06-organization.md#opencorporates"
+        },
+        {
+          "id": "edgar-aleph",
+          "name": "SEC EDGAR & OCCRP Aleph",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/06-organization.md#edgar-aleph"
+        }
+      ]
+    },
+    {
+      "from": "name",
+      "to": "org",
+      "label": "Check ownership, sanctions and offshore-leak databases for the name.",
+      "tools": [
+        {
+          "id": "sanctions-ownership",
+          "name": "OpenSanctions, ICIJ Offshore Leaks & Open Ownership",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/06-organization.md#sanctions-ownership"
+        }
+      ]
+    },
+    {
+      "from": "name",
+      "to": "location",
+      "label": "Court, property and voter records are the primary sources the aggregators scrape.",
+      "tools": [
+        {
+          "id": "public-records",
+          "name": "Court, property & voter records",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/04-real-name.md#public-records"
+        }
+      ]
+    },
+    {
+      "from": "name",
+      "to": "name",
+      "label": "Obituaries and genealogy sites can name a whole family in one document.",
+      "tools": [
+        {
+          "id": "genealogy",
+          "name": "Obituaries & genealogy sources",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/04-real-name.md#genealogy"
+        }
+      ]
+    },
+    {
+      "from": "domain",
+      "to": "domain",
+      "label": "List every subdomain the domain has ever certified.",
+      "tools": [
+        {
+          "id": "crtsh",
+          "name": "Certificate transparency logs",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#crtsh"
+        }
+      ]
+    },
+    {
+      "from": "domain",
+      "to": "domain",
+      "label": "Enumerate subdomains from more sources, then see which ones answer.",
+      "tools": [
+        {
+          "id": "projectdiscovery",
+          "name": "subfinder + httpx",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#projectdiscovery"
+        },
+        {
+          "id": "amass",
+          "name": "OWASP Amass",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#amass"
+        },
+        {
+          "id": "dns-browser",
+          "name": "DNSDumpster, Robtex & DNSViz",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#dns-browser"
+        }
+      ]
+    },
+    {
+      "from": "domain",
+      "to": "domain",
+      "label": "Shared analytics and ad IDs can link several sites to one operator.",
+      "tools": [
+        {
+          "id": "tracker-ids",
+          "name": "Shared tracker & analytics IDs",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/06-organization.md#tracker-ids"
+        }
+      ]
+    },
+    {
+      "from": "domain",
+      "to": "domain",
+      "label": "Read what the site used to say, and preserve what it says now.",
+      "tools": [
+        {
+          "id": "wayback",
+          "name": "Wayback Machine & archive.today",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#wayback"
+        }
+      ]
+    },
+    {
+      "from": "domain",
+      "to": "ip",
+      "label": "Map hosts to addresses, then see what a scan of the page requested.",
+      "tools": [
+        {
+          "id": "dns-browser",
+          "name": "DNSDumpster, Robtex & DNSViz",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#dns-browser"
+        },
+        {
+          "id": "urlscan-osint",
+          "name": "urlscan.io",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#urlscan-osint"
+        }
+      ]
+    },
+    {
+      "from": "domain",
+      "to": "org",
+      "label": "Registrar, nameservers and DNS history from before privacy was switched on.",
+      "tools": [
+        {
+          "id": "whois-rdap",
+          "name": "WHOIS / RDAP & DNS history",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#whois-rdap"
+        }
+      ]
+    },
+    {
+      "from": "domain",
+      "to": "org",
+      "label": "Fingerprint the stack and read the job postings that list the rest.",
+      "tools": [
+        {
+          "id": "tech-stack",
+          "name": "Tech-stack fingerprinting & job postings",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/06-organization.md#tech-stack"
+        }
+      ]
+    },
+    {
+      "from": "domain",
+      "to": "email",
+      "label": "Get the organization's address pattern and the addresses already known.",
+      "tools": [
+        {
+          "id": "hunterio",
+          "name": "Hunter.io & email-format guessing",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/02-email.md#hunterio"
+        },
+        {
+          "id": "theharvester",
+          "name": "theHarvester",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/06-organization.md#theharvester"
+        }
+      ]
+    },
+    {
+      "from": "domain",
+      "to": "name",
+      "label": "Collect employee names for the domain from search engines and logs.",
+      "tools": [
+        {
+          "id": "theharvester",
+          "name": "theHarvester",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/06-organization.md#theharvester"
+        }
+      ]
+    },
+    {
+      "from": "domain",
+      "to": "exposure",
+      "label": "Look for open databases, Git directories and publicly readable storage buckets.",
+      "tools": [
+        {
+          "id": "leakix",
+          "name": "LeakIX",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#leakix"
+        },
+        {
+          "id": "bucket-search",
+          "name": "GrayhatWarfare — exposed cloud storage",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#bucket-search"
+        }
+      ]
+    },
+    {
+      "from": "ip",
+      "to": "org",
+      "label": "Map the address to its network block and the autonomous system that runs it.",
+      "tools": [
+        {
+          "id": "asn-bgp",
+          "name": "ASN, BGP & netblock lookups",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#asn-bgp"
+        }
+      ]
+    },
+    {
+      "from": "ip",
+      "to": "domain",
+      "label": "Use reverse nameserver and IP pivots, and search past scans for the address.",
+      "tools": [
+        {
+          "id": "dns-browser",
+          "name": "DNSDumpster, Robtex & DNSViz",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#dns-browser"
+        },
+        {
+          "id": "urlscan-osint",
+          "name": "urlscan.io",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#urlscan-osint"
+        }
+      ]
+    },
+    {
+      "from": "ip",
+      "to": "exposure",
+      "label": "See whether the address is serving anything it should not.",
+      "tools": [
+        {
+          "id": "leakix",
+          "name": "LeakIX",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#leakix"
+        }
+      ]
+    },
+    {
+      "from": "ip",
+      "to": "ip",
+      "label": "Check whether the indicator is already known bad before investigating from scratch.",
+      "tools": [
+        {
+          "id": "enrichment",
+          "name": "Indicator enrichment — is this already known bad?",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#enrichment"
+        }
+      ]
+    },
+    {
+      "from": "org",
+      "to": "name",
+      "label": "Read officers, incorporation dates and filings for the people behind it.",
+      "tools": [
+        {
+          "id": "opencorporates",
+          "name": "OpenCorporates & national registries",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/06-organization.md#opencorporates"
+        },
+        {
+          "id": "edgar-aleph",
+          "name": "SEC EDGAR & OCCRP Aleph",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/06-organization.md#edgar-aleph"
+        }
+      ]
+    },
+    {
+      "from": "org",
+      "to": "org",
+      "label": "Follow ownership chains and check sanctions and offshore-leak records.",
+      "tools": [
+        {
+          "id": "sanctions-ownership",
+          "name": "OpenSanctions, ICIJ Offshore Leaks & Open Ownership",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/06-organization.md#sanctions-ownership"
+        }
+      ]
+    },
+    {
+      "from": "org",
+      "to": "exposure",
+      "label": "Search exposed-service and open-bucket indexes by the organization's name, domain or network range.",
+      "tools": [
+        {
+          "id": "leakix",
+          "name": "LeakIX",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#leakix"
+        },
+        {
+          "id": "bucket-search",
+          "name": "GrayhatWarfare — exposed cloud storage",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/05-domain-ip-network.md#bucket-search"
+        }
+      ]
+    },
+    {
+      "from": "image",
+      "to": "location",
+      "label": "Read the embedded metadata first: GPS, timestamps, camera serial numbers.",
+      "tools": [
+        {
+          "id": "exif-osint",
+          "name": "ExifTool — read the metadata first",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/07-photo-video.md#exif-osint"
+        }
+      ]
+    },
+    {
+      "from": "image",
+      "to": "location",
+      "label": "Place and date the scene from terrain, signage and shadows, then compare imagery.",
+      "tools": [
+        {
+          "id": "geolocation",
+          "name": "Geolocation — the chronolocation toolkit",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/07-photo-video.md#geolocation"
+        },
+        {
+          "id": "change-detection",
+          "name": "Reading imagery — date, resolution, shadows, clouds",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/12-tracking.md#change-detection"
+        }
+      ]
+    },
+    {
+      "from": "image",
+      "to": "account",
+      "label": "Find other copies and the accounts that posted them. Each engine finds different things.",
+      "tools": [
+        {
+          "id": "reverse-image",
+          "name": "Reverse image search — all four engines",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/07-photo-video.md#reverse-image"
+        }
+      ]
+    },
+    {
+      "from": "image",
+      "to": "image",
+      "label": "Check provenance and signs of manipulation. Call it fake or real only on two indicators.",
+      "tools": [
+        {
+          "id": "c2pa",
+          "name": "Check provenance first — Content Credentials (C2PA)",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/13-synthetic-media.md#c2pa"
+        },
+        {
+          "id": "image-forensics",
+          "name": "Image forensics — FotoForensics, Forensically & ExifTool",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/13-synthetic-media.md#image-forensics"
+        },
+        {
+          "id": "two-indicators",
+          "name": "The two-indicator rule — context beats classifiers",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/13-synthetic-media.md#two-indicators"
+        }
+      ],
+      "note": "A missing Content Credentials manifest means unknown, not clean."
+    },
+    {
+      "from": "image",
+      "to": "image",
+      "label": "For video, extract keyframes and reverse-search them.",
+      "tools": [
+        {
+          "id": "invid",
+          "name": "InVID / WeVerify — video verification",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/07-photo-video.md#invid"
+        }
+      ]
+    },
+    {
+      "from": "account",
+      "to": "username",
+      "label": "Take the handle and vary it by hand to find the same person elsewhere.",
+      "tools": [
+        {
+          "id": "handle-pivot",
+          "name": "Manual handle pivoting",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/01-username.md#handle-pivot"
+        }
+      ]
+    },
+    {
+      "from": "account",
+      "to": "image",
+      "label": "Reverse-search the profile photo and any original images.",
+      "tools": [
+        {
+          "id": "reverse-image",
+          "name": "Reverse image search — all four engines",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/07-photo-video.md#reverse-image"
+        }
+      ]
+    },
+    {
+      "from": "account",
+      "to": "account",
+      "label": "Recover deleted posts from archives and caches.",
+      "tools": [
+        {
+          "id": "social-archives",
+          "name": "Deleted posts & social archives",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/08-social.md#social-archives"
+        }
+      ]
+    },
+    {
+      "from": "account",
+      "to": "account",
+      "label": "Read channels and servers where related activity lives, without joining in.",
+      "tools": [
+        {
+          "id": "telegram-discord",
+          "name": "Telegram & Discord",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/08-social.md#telegram-discord"
+        }
+      ]
+    },
+    {
+      "from": "account",
+      "to": "account",
+      "label": "Check it is a real account by observable behaviour before building on it.",
+      "tools": [
+        {
+          "id": "bot-detection",
+          "name": "Telling a real account from a fake one",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/08-social.md#bot-detection"
+        }
+      ]
+    },
+    {
+      "from": "repo",
+      "to": "exposure",
+      "label": "Scan the full history for committed credentials and test whether they still work.",
+      "tools": [
+        {
+          "id": "secret-scanners",
+          "name": "TruffleHog",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/10-code-and-apps.md#secret-scanners"
+        },
+        {
+          "id": "github-dorking",
+          "name": "GitHub code search & dorking",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/10-code-and-apps.md#github-dorking"
+        }
+      ]
+    },
+    {
+      "from": "repo",
+      "to": "repo",
+      "label": "Reach code that GitHub search does not index.",
+      "tools": [
+        {
+          "id": "code-search-engines",
+          "name": "grep.app, Sourcegraph, GitLab & Searchcode",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/10-code-and-apps.md#code-search-engines"
+        }
+      ]
+    },
+    {
+      "from": "wallet",
+      "to": "wallet",
+      "label": "Read counterparties and the first funding source, then cluster addresses into entities.",
+      "tools": [
+        {
+          "id": "block-explorers",
+          "name": "Block explorers — read the ledger directly",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/11-wallets-tokens.md#block-explorers"
+        },
+        {
+          "id": "chain-tracing",
+          "name": "Visual tracing & address clustering",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/11-wallets-tokens.md#chain-tracing"
+        }
+      ]
+    },
+    {
+      "from": "wallet",
+      "to": "wallet",
+      "label": "For a token, check the contract and liquidity before trusting it.",
+      "tools": [
+        {
+          "id": "rugpull-checks",
+          "name": "Token & rug-pull checks",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/11-wallets-tokens.md#rugpull-checks"
+        }
+      ]
+    },
+    {
+      "from": "craft",
+      "to": "location",
+      "label": "Pull live and historical positions from transponder and AIS broadcasts.",
+      "tools": [
+        {
+          "id": "air-tracking",
+          "name": "Flightradar24, FlightAware & ADS-B Exchange",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/12-tracking.md#air-tracking"
+        },
+        {
+          "id": "ship-tracking",
+          "name": "MarineTraffic, VesselFinder, Equasis & Global Fishing Watch",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/12-tracking.md#ship-tracking"
+        }
+      ]
+    },
+    {
+      "from": "craft",
+      "to": "org",
+      "label": "Follow the registry layer behind a vessel to its owner and operator.",
+      "tools": [
+        {
+          "id": "ship-tracking",
+          "name": "MarineTraffic, VesselFinder, Equasis & Global Fishing Watch",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/12-tracking.md#ship-tracking"
+        }
+      ]
+    },
+    {
+      "from": "location",
+      "to": "location",
+      "label": "Look at free satellite imagery, and ask date, resolution, shadows and what changed.",
+      "tools": [
+        {
+          "id": "sat-free",
+          "name": "Free satellite imagery — Copernicus, NASA Worldview & FIRMS, Google Earth Pro",
+          "tier": "start",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/12-tracking.md#sat-free"
+        },
+        {
+          "id": "change-detection",
+          "name": "Reading imagery — date, resolution, shadows, clouds",
+          "tier": "deeper",
+          "url": "https://github.com/iijarrett/osint-field-guide/blob/main/docs/12-tracking.md#change-detection"
+        }
+      ]
+    }
+  ],
+  "toolCount": 87
+}

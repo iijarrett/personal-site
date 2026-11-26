@@ -1,0 +1,211 @@
+---
+import raw from "../data/osint-pivot-map.json";
+import { heading, moreLabel, type PivotData, plural, ring, targets } from "../lib/pivot-map.ts";
+
+const data = raw as PivotData;
+const { nodes, edges, toolCount } = data;
+const byId = new Map(nodes.map((n) => [n.id, n]));
+const GUIDE = "https://github.com/iijarrett/osint-field-guide/blob/main/docs/";
+
+// The radial map: every node on a circle, a faint curve for each pair that has a pivot.
+const pos = ring(nodes.length, 280, 280, 178);
+const at = (id: string) => pos[nodes.findIndex((n) => n.id === id)] ?? { x: 0, y: 0, a: 0 };
+const pairs = new Map<string, number>();
+for (const e of edges) {
+  if (e.from !== e.to) pairs.set(`${e.from}>${e.to}`, (pairs.get(`${e.from}>${e.to}`) ?? 0) + 1);
+}
+const selfLoops = new Set(edges.filter((e) => e.from === e.to).map((e) => e.from));
+const curves = [...pairs].map(([key, count]) => {
+  const [from = "", to = ""] = key.split(">");
+  const a = at(from);
+  const b = at(to);
+  const cx = (a.x + b.x) / 2 + (280 - (a.x + b.x) / 2) * 0.7;
+  const cy = (a.y + b.y) / 2 + (280 - (a.y + b.y) / 2) * 0.7;
+  const d = `M${a.x.toFixed(1)},${a.y.toFixed(1)} Q${cx.toFixed(1)},${cy.toFixed(1)} ${b.x.toFixed(1)},${b.y.toFixed(1)}`;
+  return { from, to, d, width: 1 + 0.6 * (count - 1) };
+});
+const label = (a: number, x: number, y: number) => {
+  const c = Math.cos(a);
+  return {
+    x: x + c * 16,
+    y: y + Math.sin(a) * 16 + 4,
+    anchor: Math.abs(c) < 0.2 ? "middle" : c > 0 ? "start" : "end",
+  };
+};
+
+// The phone view: the chosen node on the left, the places it leads to in a column.
+const ROW = 44;
+const panels = nodes.map((node, i) => {
+  const out = edges.filter((e) => e.from === node.id);
+  const rows = targets(edges, node.id);
+  const height = Math.max(rows.length, 1) * ROW + 16;
+  return { node, out, rows, height, first: i === 0, self: selfLoops.has(node.id) };
+});
+---
+
+<section class="pm" data-pm aria-labelledby="pm-title">
+  <h2 id="pm-title">Pivot map</h2>
+  <p class="pm-intro">
+    {nodes.length} kinds of data, {edges.length} pivots and {toolCount} tools. Pick what you
+    already hold, then follow a pivot to what you can reach from it.
+  </p>
+
+  <svg class="sr-only" width="0" height="0" aria-hidden="true" focusable="false">
+    <defs>
+      <marker id="pm-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path class="pm-arr" d="M0,0 L10,5 L0,10 z"></path>
+      </marker>
+    </defs>
+  </svg>
+
+  <p class="label pm-have" id="pm-have" data-js hidden>I have</p>
+  <ul class="pm-chips" aria-labelledby="pm-have" data-js hidden>
+    {
+      nodes.map((n, i) => (
+        <li>
+          <button type="button" class="btn pm-chip" data-start={n.id} aria-pressed={i === 0 ? "true" : "false"}>
+            {n.short}
+          </button>
+        </li>
+      ))
+    }
+  </ul>
+
+  <div class="pm-bar" role="group" aria-label="Your trail" hidden>
+        <button type="button" class="btn" data-copy>Copy trail</button>
+    <button type="button" class="btn" data-clear>Clear</button>
+    <span class="pm-toast" role="status"></span>
+  </div>
+
+  <div class="pm-grid">
+    <div class="pm-map" data-js hidden>
+    <svg viewBox="0 0 560 560" role="group" aria-label="Map of every kind of data and the pivots between them">
+      {
+        curves.map((c) => (
+          <path class="pm-e" fill="none" data-f={c.from} data-t={c.to} d={c.d} stroke-width={c.width.toFixed(1)}></path>
+        ))
+      }
+      {
+        nodes.map((n) => {
+          const p = at(n.id);
+          const t = label(p.a, p.x, p.y);
+          return (
+            <g class="pm-n" data-start={n.id} tabindex="0" role="button" aria-label={n.label}>
+              {selfLoops.has(n.id) && <circle class="ring" fill="none" cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r="11"></circle>}
+              <circle class="dot" cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r="6.5"></circle>
+              <text x={t.x.toFixed(1)} y={t.y.toFixed(1)} text-anchor={t.anchor} font-size="13">{n.short}</text>
+            </g>
+          );
+        })
+      }
+    </svg>
+    </div>
+
+    <div class="pm-results">
+      <p class="sr-only" role="status" data-live></p>
+      {
+        panels.map(({ node, out, rows, height, first, self }) => (
+          <section class={first ? "pm-panel on" : "pm-panel"} data-id={node.id} data-short={node.short} data-head={heading(node)}>
+            <h3 tabindex="-1">{heading(node)}</h3>
+            <p class="pm-sub">
+              {plural(out.length, "pivot")}.{out.length > 0 && " Choose a result type to carry on from there."}
+            </p>
+            {rows.length > 0 && (
+              <svg class="pm-hub" viewBox={`0 0 340 ${height}`} role="group" aria-label={`${node.short} and where it leads`}>
+                {rows.map((_, i) => (
+                  <path class="pm-e on" fill="none" stroke-width="2" marker-end="url(#pm-arr)" d={`M62,${height / 2} C110,${height / 2} 110,${i * ROW + 30} 150,${i * ROW + 30}`}></path>
+                ))}
+                <g class="pm-n sel">
+                  {self && <circle class="ring" fill="none" cx="44" cy={height / 2} r="17"></circle>}
+                  <circle class="dot" cx="44" cy={height / 2} r="11"></circle>
+                </g>
+                {rows.map((r, i) => (
+                  <g class="pm-n reach" data-go={r.to} data-tools={r.tools.join(", ")} tabindex="0" role="button" aria-label={`Go to ${byId.get(r.to)?.label}`}>
+                    <circle class="dot" cx="160" cy={i * ROW + 30} r="7"></circle>
+                    <text x="176" y={i * ROW + 35} font-size="15">{byId.get(r.to)?.short}</text>
+                  </g>
+                ))}
+              </svg>
+            )}
+            {out.length === 0 && (
+              <p>
+                An end point: nothing to pivot to from here. The guide says what to do with it.
+              </p>
+            )}
+            <ul class="rows">
+              {out.map((e) => (
+                <li class="pm-card">
+                  <div class="pm-head">
+                    <button type="button" class="btn pm-go" disabled data-go={e.to} data-tools={e.tools.map((t) => t.name).join(", ")}>
+                      {e.to === e.from ? `↻ ${moreLabel(node)}` : `→ ${byId.get(e.to)?.label}`}
+                    </button>
+                    <span class="label">{plural(e.tools.length, "tool")}</span>
+                  </div>
+                  <p>{e.label}</p>
+                  <ul class="pm-tools">
+                    {e.tools.map((t) => (
+                      <li>
+                        <a href={t.url} target="_blank" rel="noopener">
+                          {t.name}<span class="sr-only"> (opens in a new tab)</span>
+                        </a>
+                        <span class="label">{t.tier}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {e.note && (
+                    <p class="pm-note">
+                      <b class="label">Careful</b> {e.note}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <p><a href={node.guide}>Guide section for {node.short.toLowerCase()}</a></p>
+          </section>
+        ))
+      }
+    </div>
+  </div>
+
+  <p class="pm-loop">
+    At every hop: <a href={`${GUIDE}00-bench-and-loop.md`}>capture the page first, log what you found with the time, and verify it before it counts</a>.
+  </p>
+</section>
+
+<script>
+  import "../scripts/pivot-map.ts";
+</script>
+
+<style is:global>
+  .pm :is(.pm-chips, .pm-bar, .pm-tools, .pm-head) { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0.5rem 0 1rem; padding: 0; list-style: none; max-width: none; }
+  .pm .btn { padding: 0.45rem 0.8rem; background: none; font-size: 0.875rem; cursor: pointer; }
+  .pm [aria-pressed="true"], .pm [aria-current] { border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+  .js .pm-panel:not(.on) { display: none; }
+  .pm-grid { display: grid; gap: 1.5rem; }
+  .pm-map { display: none; width: 100%; max-width: 34rem; margin-inline: auto; }
+  .pm-hub { max-width: 22rem; }
+  .pm-panel h3 { margin: 0 0 0.25rem; }
+  .pm-sub, .pm-toast, .pm-note { color: var(--muted); }
+  .pm-card { display: flex; flex-direction: column; gap: 0.5rem; }
+  .pm-head { justify-content: space-between; margin: 0 !important; }
+  .pm-tools { margin: 0 !important; }
+  .pm-tools li { display: flex; gap: 0.4rem; padding: 0.2rem 0.55rem; border: 1px solid var(--border); border-radius: var(--radius); }
+  .pm-note { padding-left: 0.5rem; border-left: 3px solid var(--accent); }
+  .pm-e { stroke: var(--border); }
+  .pm-e.on { stroke: var(--accent); }
+  .pm-n .dot { fill: var(--surface); }
+  .pm-n circle { stroke: var(--muted); stroke-width: 1.5; }
+  .pm-n text { fill: var(--muted); }
+  .pm-arr, .sel .dot { fill: var(--accent); }
+  .pm-hub text, .reach text, .sel text { fill: var(--text); }
+  .ring, .reach circle, .sel circle { stroke: var(--accent); }
+  .sel text { font-weight: 700; }
+  @media (min-width: 48rem) {
+    .pm-map { display: block; }
+    .pm-hub { display: none; }
+  }
+  @media (min-width: 62rem) {
+    .pm-grid { grid-template-columns: 30rem minmax(0, 1fr); align-items: start; }
+    .pm-map { position: sticky; top: 5rem; max-width: none; }
+  }
+</style>

@@ -1,5 +1,6 @@
 ---
 import { getCollection, render } from "astro:content";
+import PivotMap from "../../components/PivotMap.astro";
 import Page from "../../layouts/Page.astro";
 import { statusLabel } from "../../lib/format";
 
@@ -20,5 +21,6 @@ const { Content } = await render(entry);
   <div class="prose">
     <Content />
   </div>
+  {entry.id === "osint-field-guide" && <PivotMap />}
   <p><a href="/projects/">All projects</a></p>
 </Page>
