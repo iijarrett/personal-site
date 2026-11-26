@@ -72,7 +72,9 @@ const panels = nodes.map((node, i) => {
   </ul>
 
   <div class="pm-bar" role="group" aria-label="Your trail" hidden>
-        <button type="button" class="btn" data-copy>Copy trail</button>
+    <button type="button" class="btn" data-copy="text">Copy trail</button>
+    <button type="button" class="btn" data-copy="md">Copy as Markdown</button>
+    <button type="button" class="btn" data-copy="link">Copy link</button>
     <button type="button" class="btn" data-clear>Clear</button>
     <span class="pm-toast" role="status"></span>
   </div>

@@ -61,3 +61,12 @@ export function trailText(shorts: string[], tools: string[][]): string {
     .map((s, i) => `${i + 1}. ${shorts[i]} -> ${s} (${tools[i + 1]?.join(", ")})`)
     .join("\n");
 }
+
+/** The trail as Markdown: a heading, one numbered line per step, and a link back to it. */
+export function markdownText(shorts: string[], tools: string[][], url: string): string {
+  const steps = shorts
+    .slice(1)
+    .map((s, i) => `${i + 1}. **${shorts[i]}** \u2192 **${s}** (${tools[i + 1]?.join(", ")})`)
+    .join("\n");
+  return `### Pivot trail: ${shorts.join(" \u2192 ")}\n\n${steps}\n\n[Open this trail](${url})`;
+}

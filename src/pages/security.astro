@@ -1,4 +1,5 @@
 ---
+import headersFile from "../../public/_headers?raw";
 import Page from "../layouts/Page.astro";
 
 // Every rule here is something scripts/check_dist.py (or the review workflow) really does.
@@ -29,6 +30,49 @@ const layers = [
     command: "npm ci --ignore-scripts && npm run verify",
   },
 ];
+
+// The headers the site ships, read from the file the host serves, so this table cannot drift.
+const shipped = (headersFile.split(/\n\s*\n/).find((b) => b.includes("\n/*\n")) ?? "")
+  .split("\n")
+  .filter((l) => /^\s+[A-Za-z-]+: /.test(l))
+  .map((l) => {
+    const at = l.indexOf(": ");
+    return { name: l.slice(0, at).trim(), value: l.slice(at + 2).trim() };
+  });
+
+// What an attacker might want, what stands in the way, and where it stops.
+const threats = [
+  {
+    goal: "Run a script in a visitor's browser",
+    answer:
+      "The policy allows scripts from this origin only, with no inline code, and Trusted Types are required. There is no input anywhere on the site to inject into.",
+  },
+  {
+    goal: "Load something hostile from another site",
+    answer:
+      "Nothing is loaded from another origin, so there is nothing to swap. Fonts are self-hosted and checked, and a built file that points off-site fails the build.",
+  },
+  {
+    goal: "Change the site through the repository",
+    answer:
+      "The main branch accepts pull requests only, with the Verify and Lighthouse checks required, and every action is pinned to a commit hash.",
+  },
+  {
+    goal: "Slip in through a dependency",
+    answer:
+      "Installs run with scripts off, updates wait seven days before they are offered, and CodeQL and the Scorecard run weekly. This lowers the risk; it does not remove it.",
+  },
+  {
+    goal: "Ship a build that is not the reviewed one",
+    answer:
+      "The release is built once, and the deploy verifies its provenance and SBOM attestations before it publishes. You can run the same check.",
+  },
+  {
+    goal: "Pretend to be this domain by email",
+    answer: "SPF, DKIM and a DMARC policy of reject are published for the domain.",
+  },
+];
+const REPO = "https://github.com/iijarrett/personal-site";
 ---
 
 <Page title="Security" description="How this site is built and secured.">
@@ -68,6 +112,72 @@ const layers = [
       }
     </ol>
   </section>
+
+  <h2 id="threats">What it defends against</h2>
+  <ul class="rows">
+    {
+      threats.map((t) => (
+        <li>
+          <p class="label">{t.goal}</p>
+          <p>{t.answer}</p>
+        </li>
+      ))
+    }
+  </ul>
+
+  <h2 id="trust">What it does not defend against</h2>
+  <p>
+    The site trusts its host and its domain registrar, and the sign-in protections on those
+    accounts are set outside this repository, so a visitor cannot check them from here. It trusts
+    the build tools it installs, within the limits above. A visitor's own browser and network are
+    theirs. Naming these is part of the model: a control list that leaves them out is not honest.
+  </p>
+
+  <h2 id="headers">The headers it sends</h2>
+  <p>
+    Read from <code>public/_headers</code> when the site is built, so this list is the file, not a
+    description of it.
+  </p>
+  <ul class="rows">
+    {
+      shipped.map((h) => (
+        <li>
+          <p class="label">{h.name}</p>
+          <p><code>{h.value}</code></p>
+        </li>
+      ))
+    }
+  </ul>
+
+  <h2 id="release">Check a release yourself</h2>
+  <p>
+    Each release is built once. The deploy runs these two checks and stops if either fails. With the
+    GitHub CLI and a downloaded site-dist.tar.gz from a release run, you can run them
+    too:
+  </p>
+  <p>
+    <code>gh attestation verify site-dist.tar.gz --repo iijarrett/personal-site</code><br />
+    <code
+      >gh attestation verify site-dist.tar.gz --repo iijarrett/personal-site --predicate-type
+      https://cyclonedx.org/bom</code
+    >
+  </p>
+
+  <h2 id="outside">Check it from outside</h2>
+  <p>
+    Three public scanners will test the live site. Their results change as the site and the
+    scanners do, so run them rather than trust a number copied here.
+  </p>
+  <ul>
+    <li><a href="https://securityheaders.com/?q=jarrettd.com&followRedirects=on" target="_blank" rel="noopener">securityheaders.com<span class="sr-only"> (opens in a new tab)</span></a></li>
+    <li><a href="https://developer.mozilla.org/en-US/observatory/analyze?host=jarrettd.com" target="_blank" rel="noopener">MDN HTTP Observatory<span class="sr-only"> (opens in a new tab)</span></a></li>
+    <li><a href="https://www.ssllabs.com/ssltest/analyze.html?d=jarrettd.com" target="_blank" rel="noopener">SSL Labs<span class="sr-only"> (opens in a new tab)</span></a></li>
+  </ul>
+  <p>
+    The repository also runs <a href={`${REPO}/actions/workflows/codeql.yml`} target="_blank" rel="noopener">CodeQL<span class="sr-only"> (opens in a new tab)</span></a>
+    and the <a href="https://scorecard.dev/viewer/?uri=github.com/iijarrett/personal-site" target="_blank" rel="noopener">OpenSSF Scorecard<span class="sr-only"> (opens in a new tab)</span></a>
+    on a schedule. To report a problem, see <a href="/.well-known/security.txt">security.txt</a>.
+  </p>
 
   <h2>Not here yet</h2>
   <p>

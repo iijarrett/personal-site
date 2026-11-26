@@ -1,14 +1,18 @@
 /**
- * What the OSINT page's scripts share: which tab is showing and which kind of data the pivot
- * map starts from. One copy, held here, so the tabs, the map and the tool list never have to
- * reach into each other. `hashFor` and `fromHash` are the only place the address bar is read
- * or written: #all-tools for the list, #pivot-map or a data type (#email) for the map.
+ * What the OSINT page's scripts share: which tab is showing, the pivot map's trail and the tool
+ * the list was sent to. One copy, held here, so the tabs, the map and the tool list never have
+ * to reach into each other. `hashFor` and `fromHash` are the only place the address bar is read
+ * or written:
+ *   #all-tools        the tool list
+ *   #tool-<id>        the tool list, at one tool
+ *   #pivot-map        the map, as it is
+ *   #email.account    the map, on a trail of data types (one type is a trail of one)
  */
 
 export type Tab = "pivot" | "tools";
-export type State = { tab: Tab; type: string };
+export type State = { tab: Tab; type: string; trail: string[]; tool: string };
 
-export const state: State = { tab: "pivot", type: "" };
+export const state: State = { tab: "pivot", type: "", trail: [], tool: "" };
 
 const listeners: (() => void)[] = [];
 
@@ -21,11 +25,25 @@ export function set(patch: Partial<State>): void {
   for (const fn of listeners) fn();
 }
 
-export const hashFor = (s: State): string => (s.tab === "tools" ? "all-tools" : s.type);
+export function hashFor(s: State): string {
+  if (s.tab === "tools") return s.tool ? `tool-${s.tool}` : "all-tools";
+  return s.trail.length > 1 ? s.trail.join(".") : s.type;
+}
 
 /** What an address-bar hash asks for, or null when it asks for nothing this page knows. */
-export function fromHash(hash: string, types: string[]): Partial<State> | null {
-  if (hash === "all-tools") return { tab: "tools" };
+export function fromHash(
+  hash: string,
+  types: string[],
+  tools: string[] = [],
+): Partial<State> | null {
+  if (hash === "all-tools") return { tab: "tools", tool: "" };
   if (hash === "pivot-map") return { tab: "pivot" };
-  return types.includes(hash) ? { tab: "pivot", type: hash } : null;
+  if (hash.startsWith("tool-")) {
+    const tool = hash.slice(5);
+    return tools.includes(tool) ? { tab: "tools", tool } : null;
+  }
+  const trail = hash.split(".");
+  return trail.every((t) => types.includes(t))
+    ? { tab: "pivot", type: trail[0] ?? "", trail }
+    : null;
 }

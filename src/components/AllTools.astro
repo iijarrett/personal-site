@@ -1,12 +1,21 @@
 ---
 import pivot from "../data/osint-pivot-map.json";
 import raw from "../data/osint-tools.json";
-import { countLine, rowView, type ToolsData, tierName } from "../lib/osint-tools.ts";
+import {
+  COSTS,
+  checkRange,
+  countLine,
+  rowView,
+  type ToolsData,
+  tierName,
+} from "../lib/osint-tools.ts";
 
 const data = raw as ToolsData;
 const { toolCount, tierCounts, sections, tools } = data;
 const tiers = ["start", "deeper", "gated"] as const;
 const short = new Map(pivot.nodes.map((n) => [n.id, n.short]));
+const range = checkRange(tools);
+const costCount = (id: string) => tools.filter((t) => rowView(t).cost === id).length;
 const groups = sections.map((s) => ({
   s,
   rows: tools.filter((t) => t.section === s.id).map((t) => ({ t, v: rowView(t) })),
@@ -17,12 +26,12 @@ const groups = sections.map((s) => ({
   <h2 id="at-title">All tools</h2>
   <p class="pm-intro">
     All {toolCount} entries in guide order. Gated entries are named only: the guide holds their
-    details and cautions.
+    details and cautions. {range.count} open entries carry a check date, from {range.oldest} to {range.newest}.
   </p>
 
   <div class="at-filters" data-js hidden>
     <label class="sr-only" for="at-q">Search tools by name or summary</label>
-    <input id="at-q" class="at-q" type="search" placeholder="Search by name or summary" autocomplete="off" data-q />
+    <input id="at-q" class="at-q" type="search" placeholder="Search by name or summary (press /)" autocomplete="off" data-q />
     <p class="label" id="at-tier">Tier</p>
     <ul class="pm-chips" aria-labelledby="at-tier">
       {
@@ -30,6 +39,18 @@ const groups = sections.map((s) => ({
           <li>
             <button type="button" class="btn" data-ftier={t} aria-pressed="false">
               {tierName(t)} ({tierCounts[t]})
+            </button>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="label" id="at-cost">Cost</p>
+    <ul class="pm-chips" aria-labelledby="at-cost">
+      {
+        COSTS.map((c) => (
+          <li>
+            <button type="button" class="btn" data-fcost={c.id} aria-pressed="false">
+              {c.label} ({costCount(c.id)})
             </button>
           </li>
         ))
@@ -63,9 +84,9 @@ const groups = sections.map((s) => ({
         <h3 id={`at-h-${s.id}`}>{s.title}</h3>
         <ul class="rows">
           {rows.map(({ t, v }) => (
-            <li class="pm-card at-row" data-sec={t.section} data-tier={t.tier} data-text={v.text}>
+            <li class="pm-card at-row" id={`tool-${t.id}`} data-sec={t.section} data-tier={t.tier} data-cost={v.cost} data-text={v.text}>
               <div class="pm-head">
-                <h4 class="at-name">{v.name}</h4>
+                <h4 class="at-name"><a href={`#tool-${t.id}`}>{v.name}</a></h4>
                 <span class={v.gatedLine ? "label at-gated" : "label"}>{v.tier}</span>
               </div>
               {v.detail && <p class="at-kind">{v.detail}</p>}
@@ -100,6 +121,9 @@ const groups = sections.map((s) => ({
   .at-secs li { flex: none; }
   .at-name { margin: 0; font-size: 1.05rem; }
   .at-kind, .at-count { margin: 0; color: var(--muted); font-size: 0.875rem; }
+  .at-hit { outline: 2px solid var(--accent); outline-offset: 0.5rem; }
+  .at-name a { color: inherit; text-decoration: none; }
+  .at-name a:hover { text-decoration: underline; }
   .at-gated { padding: 0 0.4rem; border: 1px solid var(--accent); border-radius: var(--radius); color: var(--accent-text); }
   @media (min-width: 48rem) {
     .at-secs { flex-wrap: wrap !important; }
