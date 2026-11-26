@@ -1,0 +1,107 @@
+---
+import pivot from "../data/osint-pivot-map.json";
+import raw from "../data/osint-tools.json";
+import { countLine, rowView, type ToolsData, tierName } from "../lib/osint-tools.ts";
+
+const data = raw as ToolsData;
+const { toolCount, tierCounts, sections, tools } = data;
+const tiers = ["start", "deeper", "gated"] as const;
+const short = new Map(pivot.nodes.map((n) => [n.id, n.short]));
+const groups = sections.map((s) => ({
+  s,
+  rows: tools.filter((t) => t.section === s.id).map((t) => ({ t, v: rowView(t) })),
+}));
+---
+
+<section class="pm at" data-at aria-labelledby="at-title">
+  <h2 id="at-title">All tools</h2>
+  <p class="pm-intro">
+    All {toolCount} entries in guide order. Gated entries are named only: the guide holds their
+    details and cautions.
+  </p>
+
+  <div class="at-filters" data-js hidden>
+    <label class="sr-only" for="at-q">Search tools by name or summary</label>
+    <input id="at-q" class="at-q" type="search" placeholder="Search by name or summary" autocomplete="off" data-q />
+    <p class="label" id="at-tier">Tier</p>
+    <ul class="pm-chips" aria-labelledby="at-tier">
+      {
+        tiers.map((t) => (
+          <li>
+            <button type="button" class="btn" data-ftier={t} aria-pressed="false">
+              {tierName(t)} ({tierCounts[t]})
+            </button>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="label" id="at-sec">Section</p>
+    <ul class="pm-chips at-secs" aria-labelledby="at-sec">
+      {
+        sections.map((s) => (
+          <li>
+            <button type="button" class="btn" data-fsec={s.id} aria-pressed="false">
+              {s.title}
+            </button>
+          </li>
+        ))
+      }
+    </ul>
+    <div class="pm-head">
+      <p class="at-count" role="status" aria-live="polite" data-count>{countLine(toolCount, toolCount)}</p>
+      <button type="button" class="btn" data-clear hidden>Clear filters</button>
+    </div>
+  </div>
+
+  <p class="at-empty" role="status" hidden data-empty>
+    No tools match. Try fewer words, or clear the filters.
+  </p>
+
+  {
+    groups.map(({ s, rows }) => (
+      <section class="at-group" data-group={s.id} aria-labelledby={`at-h-${s.id}`}>
+        <h3 id={`at-h-${s.id}`}>{s.title}</h3>
+        <ul class="rows">
+          {rows.map(({ t, v }) => (
+            <li class="pm-card at-row" data-sec={t.section} data-tier={t.tier} data-text={v.text}>
+              <div class="pm-head">
+                <h4 class="at-name">{v.name}</h4>
+                <span class={v.gatedLine ? "label at-gated" : "label"}>{v.tier}</span>
+              </div>
+              {v.detail && <p class="at-kind">{v.detail}</p>}
+              {v.summary && <p>{v.summary}</p>}
+              {v.gatedLine && <p class="pm-note">{v.gatedLine}</p>}
+              {v.reach && v.reach.length > 0 && (
+                <div class="pm-head">
+                  <span class="label">Reach from:</span>
+                  {v.reach.map((id) => (
+                    <button type="button" class="btn" data-reach={id} disabled>
+                      {short.get(id) ?? id}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <p>
+                <a href={v.url} target="_blank" rel="noopener">
+                  Full entry<span class="sr-only"> for {v.name} (opens in a new tab)</span>
+                </a>
+              </p>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))
+  }
+</section>
+
+<style is:global>
+  .at-q { width: 100%; max-width: 24rem; padding: 0.5rem 0.7rem; border: 1px solid var(--muted); border-radius: var(--radius); background: var(--surface); color: var(--text); font: inherit; }
+  .at-secs { flex-wrap: nowrap !important; overflow-x: auto; padding-bottom: 0.3rem !important; }
+  .at-secs li { flex: none; }
+  .at-name { margin: 0; font-size: 1.05rem; }
+  .at-kind, .at-count { margin: 0; color: var(--muted); font-size: 0.875rem; }
+  .at-gated { padding: 0 0.4rem; border: 1px solid var(--accent); border-radius: var(--radius); color: var(--accent-text); }
+  @media (min-width: 48rem) {
+    .at-secs { flex-wrap: wrap !important; }
+  }
+</style>

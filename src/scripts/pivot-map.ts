@@ -4,6 +4,7 @@
  * lit nodes. It reads text from the page and writes only text and classes.
  */
 
+import { set, state, subscribe } from "../lib/osint-state.ts";
 import { trailText } from "../lib/pivot-map.ts";
 
 type Step = { id: string; tools: string[] };
@@ -61,17 +62,18 @@ function init(root: HTMLElement): void {
     bar.hidden = trail.length < 2;
     if (toast) toast.textContent = "";
     if (live) live.textContent = cur.dataset.head ?? "";
-    try {
-      history.replaceState(null, "", `#${trail[0]?.id}`);
-    } catch {
-      // The address bar stays as it is.
-    }
   };
 
-  const start = (id: string): void => {
+  // Starting from a type: the map shows it, and the shared state (which the tabs turn into the
+  // address bar) hears of it, unless the state is where the change came from.
+  const begin = (id: string): void => {
     if (!find(id)) return;
     trail = [{ id, tools: [] }];
     render();
+  };
+  const start = (id: string): void => {
+    begin(id);
+    set({ type: id });
   };
 
   const copy = async (): Promise<void> => {
@@ -113,10 +115,8 @@ function init(root: HTMLElement): void {
     }
   });
 
-  const id = location.hash.slice(1);
-  start(find(id) ? id : (panels[0]?.dataset.id ?? ""));
-  addEventListener("hashchange", () => {
-    const h = location.hash.slice(1);
-    if (h !== trail[0]?.id) start(h);
+  subscribe(() => {
+    if (state.type !== trail[0]?.id) begin(state.type);
   });
+  start(find(state.type) ? state.type : (panels[0]?.dataset.id ?? ""));
 }
