@@ -1,0 +1,42 @@
+---
+const items = [
+  {
+    k: "Data",
+    t: "A guide built from data",
+    p: "Every tool is an entry in a YAML file and the pages are generated from those files, so a fix is made once and shows up everywhere.",
+  },
+  {
+    k: "Install",
+    t: "Install lines for three systems",
+    p: "Each entry says how to install the tool on Windows, macOS and Linux.",
+  },
+  {
+    k: "CLI",
+    t: "A small command-line reader",
+    p: "osint-guide, written in Python, looks entries up from a terminal.",
+  },
+  {
+    k: "CI",
+    t: "A weekly tool-health check",
+    p: "A tool that has moved, been renamed or gone quiet shows up as a failing check instead of a broken link nobody notices.",
+  },
+  {
+    k: "Method",
+    t: "A methodology page",
+    p: "It maps the guide to the Berkeley Protocol, the UN human rights standard for open-source investigations.",
+  },
+];
+---
+
+<section class="of" aria-labelledby="of-title">
+  <h2 id="of-title">What is in the guide</h2>
+  <div class="of-grid">
+    {items.map((i) => (
+      <div class="card">
+        <p class="label">{i.k}</p>
+        <h3>{i.t}</h3>
+        <p>{i.p}</p>
+      </div>
+    ))}
+  </div>
+</section>

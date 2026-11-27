@@ -1,0 +1,35 @@
+---
+import pivot from "../data/osint-pivot-map.json";
+import tools from "../data/osint-tools.json";
+
+const REPO = "https://github.com/iijarrett/osint-field-guide";
+const stats = [
+  { n: tools.toolCount, l: "tools" },
+  { n: tools.sections.length, l: "sections" },
+  { n: pivot.nodes.length, l: "kinds of data" },
+  { n: pivot.edges.length, l: "pivots" },
+];
+---
+
+<div class="oh">
+  <p class="oh-lead">
+    A public, curated guide to open-source intelligence tools, written ethics-first: each section
+    starts from what you are allowed to do and why, and the tools come after that. The repository
+    is open, so the data, the checks and the history can all be read.
+  </p>
+  <ul class="oh-stats" aria-label="The guide in numbers">
+    {stats.map((s) => <li><b>{s.n}</b><span>{s.l}</span></li>)}
+  </ul>
+  <div class="oh-actions">
+    <a class="btn oh-primary" href={REPO} target="_blank" rel="noopener">Open the repository<span class="sr-only"> (opens in a new tab)</span></a>
+    <a class="btn" href={`${REPO}/blob/main/docs/METHODOLOGY.md`} target="_blank" rel="noopener">Read the methodology<span class="sr-only"> (opens in a new tab)</span></a>
+  </div>
+  <aside class="oh-note" aria-label="How to use the map">
+    <p class="label">Start here</p>
+    <p>
+      <b>Pivot, don't search.</b> An investigation moves from one thing you hold to the next: a
+      username leads to an account, an account to a photo, a photo to a place. Pick what you hold
+      on the map below, follow a pivot, and keep a trail someone else can check.
+    </p>
+  </aside>
+</div>

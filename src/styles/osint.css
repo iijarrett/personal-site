@@ -1,0 +1,105 @@
+.osp {
+  counter-reset: sec;
+}
+.osp h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+.osp h2::before {
+  counter-increment: sec;
+  content: counter(sec, decimal-leading-zero);
+  flex: none;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.25rem;
+  background: var(--accent-text);
+  color: var(--on-accent);
+  font: 600 0.8125rem / 1.5 var(--font-mono);
+}
+.oh-lead {
+  max-width: 46rem;
+  font-size: 1.25rem;
+  font-weight: 300;
+  line-height: 1.6;
+}
+.oh-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+  margin: var(--space-5) 0 var(--space-4);
+  padding: 0;
+  list-style: none;
+}
+.oh-stats li {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.oh-stats b {
+  display: block;
+  color: var(--accent-text);
+  font: 600 2rem / 1.15 var(--font-mono);
+}
+.oh-stats span {
+  color: var(--muted);
+  font: 0.75rem var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.oh-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.oh-primary {
+  border-color: var(--ring);
+  background: color-mix(in srgb, var(--glow) var(--glow-rest), var(--bg));
+}
+.oh-note {
+  margin: var(--space-5) 0 0;
+  padding: var(--space-4);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--surface);
+}
+.oh-note p {
+  max-width: 60ch;
+  margin: 0;
+}
+.oh-note .label {
+  margin-bottom: var(--space-2);
+}
+.of-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-3);
+}
+.of .card {
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+}
+.osp .example .rows,
+.osp .proof .rows {
+  display: grid;
+  gap: var(--space-3);
+  border-top: 0;
+}
+.osp .proof .rows {
+  grid-template-columns: repeat(auto-fit, minmax(24rem, 1fr));
+}
+.osp .example .rows li,
+.osp .proof .rows li {
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+@media (max-width: 40rem) {
+  .oh-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
