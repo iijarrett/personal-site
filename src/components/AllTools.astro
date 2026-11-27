@@ -81,16 +81,16 @@ const groups = sections.map((s) => ({
   {
     groups.map(({ s, rows }) => (
       <section class="at-group" data-group={s.id} aria-labelledby={`at-h-${s.id}`}>
-        <h3 id={`at-h-${s.id}`}>{s.title}</h3>
+        <h3 id={`at-h-${s.id}`}><span class="at-rank">{s.rank}</span>{s.title}</h3>
         <ul class="rows">
           {rows.map(({ t, v }) => (
             <li class="pm-card at-row" id={`tool-${t.id}`} data-sec={t.section} data-tier={t.tier} data-cost={v.cost} data-text={v.text}>
-              <div class="pm-head">
+              <div class="at-top">
                 <h4 class="at-name"><a href={`#tool-${t.id}`}>{v.name}</a></h4>
-                <span class={v.gatedLine ? "label at-gated" : "label"}>{v.tier}</span>
+                {v.detail && <span class="at-kind">{v.detail}</span>}
+                <span class={`at-tier at-${v.tier}`}>{tierName(v.tier)}</span>
               </div>
-              {v.detail && <p class="at-kind">{v.detail}</p>}
-              {v.summary && <p>{v.summary}</p>}
+              {v.summary && <p class="at-sum">{v.summary}</p>}
               {v.gatedLine && <p class="pm-note">{v.gatedLine}</p>}
               {v.reach && v.reach.length > 0 && (
                 <div class="pm-head">
@@ -102,7 +102,7 @@ const groups = sections.map((s) => ({
                   ))}
                 </div>
               )}
-              <p>
+              <p class="at-link">
                 <a href={v.url} target="_blank" rel="noopener">
                   Full entry<span class="sr-only"> for {v.name} (opens in a new tab)</span>
                 </a>

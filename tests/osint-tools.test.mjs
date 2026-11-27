@@ -232,18 +232,6 @@ test("the worked example walks real pivots, in order, and the page replays them"
   assert.match(page, /shop\.example/);
 });
 
-test("the proof strip counts from the data and links only where the repositories are", () => {
-  const strip = read("../src/components/ProofStrip.astro");
-  assert.match(strip, /tools\.toolCount/);
-  assert.match(strip, /pivot\.edges\.length/);
-  for (const href of strip.matchAll(/href="(https:[^"]+)"/g)) {
-    assert.match(
-      href[1],
-      /^https:\/\/(github\.com\/iijarrett\/|scorecard\.dev\/viewer\/\?uri=github\.com\/iijarrett\/)/,
-    );
-  }
-});
-
 // ---- the page's markup and scripts --------------------------------------------------
 
 test("the tabs have tablist, tab and tabpanel roles wired by id", () => {

@@ -3,7 +3,6 @@ import { getCollection, render } from "astro:content";
 import OsintFeatures from "../../components/OsintFeatures.astro";
 import OsintHero from "../../components/OsintHero.astro";
 import OsintTabs from "../../components/OsintTabs.astro";
-import ProofStrip from "../../components/ProofStrip.astro";
 import WorkedExample from "../../components/WorkedExample.astro";
 import { Content as CaseStudy } from "../../copy/osint-case-study.md";
 import Page from "../../layouts/Page.astro";
@@ -30,13 +29,12 @@ const { Content } = await render(entry);
       <OsintTabs />
       <WorkedExample />
       <OsintFeatures />
-      <ProofStrip />
-      <div class="prose">
-        <CaseStudy />
-      </div>
-      <div class="prose">
-        <Content />
-      </div>
+      <details class="cs">
+        <summary>Read the case study</summary>
+        <div class="prose">
+          <CaseStudy />
+        </div>
+      </details>
       <p><a href="/projects/">All projects</a></p>
     </div>
   ) : (
