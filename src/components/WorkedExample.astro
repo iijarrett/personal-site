@@ -39,12 +39,20 @@ const trail = [found[0]?.from ?? "", ...found.map((s) => s.to)];
 ---
 
 <section class="example" aria-labelledby="example-title">
-  <h2 id="example-title">A worked example</h2>
+  <h2 id="example-title">How to use it</h2>
+  <ol class="use">
+    <li><b>Pick what you hold.</b><span>A domain, a name, an email, a photo. Choose it on the map.</span></li>
+    <li><b>Follow a pivot.</b><span>Each pivot leads to something new you can reach from it.</span></li>
+    <li><b>Open a tool.</b><span>Every pivot names its tools. Start with the ones tagged start.</span></li>
+    <li><b>Log and check.</b><span>Capture the page, note the time, confirm with a second source.</span></li>
+  </ol>
+  <h3>A worked example</h3>
   <p>
-    A made-up case, to show the method: you are asked whether a new online shop, <code>shop.example</code>,
-    is run by a real business. It starts from a domain and takes {plural(found.length, "pivot")}.
-    At every step the same three things happen: capture the page, log what you found with the
-    time, and check it against a second source before it counts.
+    A made-up case: you are asked whether a new online shop, <code>shop.example</code>, is run by a
+    real business. It starts from a domain and takes {plural(found.length, "pivot")}.
+  </p>
+  <p class="trail" aria-label="The trail">
+    {trail.map((id, i) => (<>{i > 0 && <span aria-hidden="true">&rarr;</span>}<b>{byId.get(id)?.short}</b></>))}
   </p>
   <ol class="rows">
     {
@@ -54,16 +62,18 @@ const trail = [found[0]?.from ?? "", ...found.map((s) => s.to)];
             Step {i + 1}: {byId.get(s.from)?.short} to {byId.get(s.to)?.short}
           </p>
           <p>{s.say}</p>
-          <p>
-            <b>The pivot:</b> {s.edge.label} <b>Tools:</b> {s.edge.tools.map((t) => t.name).join("; ")}.
-          </p>
+          <p><b>The pivot:</b> {s.edge.label}</p>
+          <ul class="tl" aria-label="Tools for this pivot">
+            {s.edge.tools.map((t) => <li>{t.name}</li>)}
+          </ul>
         </li>
       ))
     }
   </ol>
   <p>
-    <a href={`#${trail.join(".")}`}>Replay this trail on the map</a>, then copy it as Markdown or as
-    a link to keep your own notes. The end is not a verdict: it is a list of claims, each with a
-    source and a time, that someone can check.
+    <a href={`#${trail.join(".")}`}>Replay this trail on the map</a> and copy it as Markdown or as
+    a link. Every step gets the same treatment: capture the page, log the time, and check it
+    against a second source before it counts. The end is not a verdict: it is a list of claims,
+    each with a source and a time.
   </p>
 </section>
