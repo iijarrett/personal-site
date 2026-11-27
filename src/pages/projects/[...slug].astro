@@ -1,11 +1,14 @@
 ---
 import { getCollection, render } from "astro:content";
+import OsintFeatures from "../../components/OsintFeatures.astro";
+import OsintHero from "../../components/OsintHero.astro";
 import OsintTabs from "../../components/OsintTabs.astro";
 import ProofStrip from "../../components/ProofStrip.astro";
 import WorkedExample from "../../components/WorkedExample.astro";
 import { Content as CaseStudy } from "../../copy/osint-case-study.md";
 import Page from "../../layouts/Page.astro";
 import { statusLabel } from "../../lib/format";
+import "../../styles/osint.css";
 
 export async function getStaticPaths() {
   const projects = await getCollection("projects");
@@ -17,22 +20,35 @@ const { Content } = await render(entry);
 ---
 
 <Page title={entry.data.title} description={entry.data.summary}>
-  <p class="label">
-    {entry.data.kind} <span class="status">{statusLabel(entry.data.status)}</span>
-  </p>
-  <h1>{entry.data.title}</h1>
-  <div class="prose">
-    <Content />
-  </div>
-  {entry.id === "osint-field-guide" && (
-    <>
-      <ProofStrip />
-      <WorkedExample />
+  {entry.id === "osint-field-guide" ? (
+    <div class="osp">
+      <p class="label">
+        {entry.data.kind} <span class="status">{statusLabel(entry.data.status)}</span>
+      </p>
+      <h1>{entry.data.title}</h1>
+      <OsintHero />
       <OsintTabs />
+      <WorkedExample />
+      <OsintFeatures />
+      <ProofStrip />
       <div class="prose">
         <CaseStudy />
       </div>
+      <div class="prose">
+        <Content />
+      </div>
+      <p><a href="/projects/">All projects</a></p>
+    </div>
+  ) : (
+    <>
+      <p class="label">
+        {entry.data.kind} <span class="status">{statusLabel(entry.data.status)}</span>
+      </p>
+      <h1>{entry.data.title}</h1>
+      <div class="prose">
+        <Content />
+      </div>
+      <p><a href="/projects/">All projects</a></p>
     </>
   )}
-  <p><a href="/projects/">All projects</a></p>
 </Page>
